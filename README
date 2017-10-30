@@ -1,0 +1,45 @@
+Celem tego projektu jest utworzenie biblioteki (sigman) pozwalającej na dowolną analizę danych biomedycznych za pomocą prostych do utworzenia zewnętrznych procedur, a także programu (qtsigman) który pozwoli na korzystanie z tej biblioteki przez interfejs graficzny.
+
+Kod projektu powinien być utrzymywany jak najbliżej norm PEP-8 (zawarte w pliku PEP-8-style-guide.pdf).
+W pliku ./struktura_sigman opisana jest struktura fundamentalnych klas oraz ich metod a także funkcji zawartych w plikach biblioteki sigman.
+
+Dokładniejsze cele projektu:
+1)Wczytywanie i zapisywanie danych                  [ ]
+    = wczytywanie                                   [ ]
+        - z plików .dat                             [x]
+        - z sequence analyzera                      [ ]
+    = zapisywanie                                   [x]
+        - przefiltrowanych danych liniowych / punktowych w plikach .dat [x]
+        - całych projektów / niedokończonej pracy   [x]
+2)Operowanie na danych                              [x]
+    = obróbkę danych na odcinkach czasowych         [x]
+        - filtracja przez zewnętrzne procedury      [x]
+        - wykrycie punktów przez zewnętrzne procedury   [x]
+        - obliczanie parametrów przez zewnętrzne procedury  [x]
+    = manualną edycję i poprawki wykrytych punktów  [x]
+    = przesuwanie wykresów względem siebie w czasie [x]
+3)Wizualizację danych                               [ ]
+    = okno edytora                                  [ ]
+        - menu edycji                               [ ]
+            o znajdź punkty                         [ ]
+            o filtruj dane                          [ ]
+            o użyj procedury                        [ ]
+        - panel danych                              [ ]
+            o pokaż wykresy liniowe                 [ ]
+            o pokaż punkty                          [ ]
+            o przełącz tryb edycji punktów          [ ]
+        - panel wykresu                             [ ]
+            o przybliżanie                          [x] w matplotlib
+            o przesuwanie                           [x] w matplotlib
+            o szczegółowe informacje                [ ]
+            o edycja                                [ ]
+    = okno obliczonych parametrów                   [ ]
+
+
+Technologie i biblioteki:
+> Całość - Python 3
+> GUI - PyQt5
+> Wizualizacja wykresów - matplotlib
+> Obsługa danych - NumPy
+> Filtracja/dodatkowe funkcje - SciPy
+> Zapisywanie i otwieranie plików .dat - csv
