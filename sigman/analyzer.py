@@ -70,7 +70,7 @@ def filter_line(data_line, begin_time, end_time,
                 line_type = None):
     """Filtruje Data_line podaną procedurą filtracji."""
     if line_type is None:
-        line_type = data_line.line_type
+        line_type = data_line.type
     if (not all(settings[setting] is not None 
                for setting in procedure.required_arguments)):
         raise ValueError('Nie wszystkie wymagane argumenty z %s'
@@ -102,6 +102,28 @@ def find_points(composite_data, begin_time, end_time,
         settings)
     return sm.Data_points(found_points_x, found_points_y, 
                           point_type = point_type)
+
+def calculate_parameter(composite_data, time_tuples,
+                         procedure, settings, parameter_type):
+    """Przeprowadza procedurę obliczającą parametry na danym 
+    Composite_data w danych zakresach czasowych i zwraca utworzony Parameter.
+    """
+    if (not all(settings[setting] is not None 
+               for setting in procedure.required_arguments)):
+        raise ValueError('Nie wszystkie wymagane argumenty z %s'
+                         'są ustalone' % procedure.required_arguments)
+    if not all(line in composite_data.data_lines for line in procedure.required_lines):
+        raise ValueError('Composite_data nie zawiera wymaganych linii z %s'
+                         % procedure.required_lines)
+    if not all(points in composite_data.data_points for points in procedure.required_points): 
+        raise ValueError('Composite_data nie zawiera wymaganych punktów z %s'
+                         % procedure.required_points)
+    parameter = sm.Parameter(parameter_type)
+    for begin_time, end_time in time_tuples:
+        value = procedure.procedure(composite_data, begin_time, end_time,
+                                    settings)
+        parameter.add_value(begin_time, end_time, value)
+    return parameter
 
 def run_misc_procedure(composite_data, begin_time, end_time,
                        procedure, settings):

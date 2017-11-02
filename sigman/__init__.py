@@ -29,13 +29,13 @@ class Data_line:
         """
         # Okres nagranych danych; odległość w czasie między
         # punktami wykresu.
-        self.sample_length = complete_length/len(data)         
+        self.sample_length = complete_length/len(data)
         # Częstotliwość danych.
         self.sample_rate = 1/self.sample_length        
         # Całkowita długość w czasie ciągu danych.
         self.complete_length = complete_length 
         # Typ wykresu, np. "ecg"
-        self.line_type = line_type 
+        self.type = line_type 
         # Wartości y danych.
         self.data = np.array(data) 
         # Przesunięcie w czasie względem pozostałych Data_line
@@ -155,7 +155,6 @@ class Data_line:
         output_y = np.array(output_y)
         return output_x, output_y
 
-
 class Data_points:
     def __init__(self, data_x, data_y, point_type='default'):
         # sortowanie by punkty były po kolei
@@ -165,7 +164,7 @@ class Data_points:
         # Wartości y punktów
         self.data_y = np.array(temp_data_y) 
         # Typ punktów, np. "R"
-        self.point_type = point_type 
+        self.type = point_type 
     
     def __len__(self):
         return len(self.data_x)
@@ -270,14 +269,66 @@ class Data_points:
         for i in range(len(self)):
             self.data_x[i] += time
 
+class Parameter():
+    """Parameter jest klasą odpowiadającą za przechowywanie kilku obliczonych
+    wartości parametru tego zamego typu, wraz z ich wartością oraz informacjami
+    czasowymi. Parametry powstają jako wynik działania procedur.
+    
+    Parametry przechowywane są w dwóch listach, w kolejności czasu początkowego:
+        self.parmaeter_begin_times - zawiera czasy początkowe parametrów
+        self.parameter_end_times - zawiera czasy końcowe parametrów
+        self.parameter_values - zawiera wartość parametru"""
+    def __init__(self, parameter_type):
+        self.type = parameter_type
+        self.begin_times = np.array([])
+        self.end_times = np.array([])
+        self.values = np.array([])
+
+    def __len__(self):
+        return len(self.begin_times)
+
+    def add_value(self, begin_time, end_time, value):
+        """Dodaje wartość parametru odpowiadającą danemu czasowi"""
+        if len(self)==0: 
+            self.begin_times = np.append(self.begin_times, begin_time)
+            self.end_times = np.append(self.end_times, end_time)
+            self.values = np.append(self.values, value)
+        else:
+            i = np.searchsorted(self.begin_times, begin_time)
+            self.begin_times = np.insert(self.begin_times, i, begin_time)
+            self.end_times = np.insert(self.end_times, i, end_time)
+            self.values = np.insert(self.values, i, value)
+
+    def contained_in(self, time):
+        """Zwraca indeksy wartości parametru, które zawierają dany punkt czasu
+        w sobie."""
+        contained_indices = []
+        for index, begin_time, end_time in zip(range(len(self)),self.begin_times,
+                                        self.end_times):
+            if time >= begin_time and time <= end_time:
+                contained_indices.append(index)
+            elif time > begin_time:
+                break
+        return contained_indices
+
+    def value_at(self, time):
+        parameter_indices = self.contained_in(time)
+        if len(parameter_indices) == 0:
+            return None
+        else:
+            return np.average(self.values[parameter_indices])
+
 class Composite_data:
-    def __init__(self, data_lines=None, data_points=None):
+    def __init__(self, data_lines=None, data_points=None, parameters=None):
         self.data_lines = {}
         self.data_points = {}
+        self.parameters = {}
         if data_lines is not None: 
             self.data_lines = data_lines
         if data_points is not None: 
             self.data_points = data_points
+        if parameters is not None:
+            self.parameters = parameters
 
     def calculate_complete_time_span(self):
         """Zwraca początek oraz koniec zakresu czasowego w sekundach,
@@ -318,7 +369,7 @@ class Composite_data:
 
     def add_data_line(self, data_line, dict_type=None, replace=False):
         if dict_type is None:
-            dict_type = data_line.line_type
+            dict_type = data_line.type
             if dict_type is None:
                 raise ValueError('Etykieta (dictionary key; tutaj dict_type) '
                                  'linii danych nie może być pusta')
@@ -333,7 +384,7 @@ class Composite_data:
     def add_data_points(self, data_points, dict_type=None, join=False):
         # TODO: czy defaultowo join powinno być False?
         if dict_type is None:
-            dict_type = data_points.point_type
+            dict_type = data_points.type
         if dict_type in self.data_points:
             if join:
                 self.data_points[dict_type].add_points(data_points)
@@ -345,3 +396,17 @@ class Composite_data:
 
     def delete_data_points(self, dict_type):
         self.data_points.pop(dict_type)
+
+    def add_parameter(self, parameter, dict_type=None, replace=False):
+        if dict_type is None:
+            dict_type = parameter.type
+            if dict_type is None:
+                raise ValueError('Etykieta (dictionary key; tutaj dict_type) '
+                                 'parametru nie może być pusta')
+        if dict_type in self.parameters and not replace:
+            raise ValueError('Etykieta %s w parameters już zajęta.' 
+                             % dict_type)
+        self.parameters[dict_type] = parameter
+
+    def delete_parameter(self, dict_type):
+        self.parameters.pop(dict_type)

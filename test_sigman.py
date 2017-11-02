@@ -81,10 +81,15 @@ complete_data.add_data_points(found_points)
 vis.visualize_composite_data(complete_data, title = "Dane z całkowicie nowymi R-ami")
 
 print(">Próba obliczenia tempa bicia serca na kilku interwałach")
-calculate_hr = analyzer.import_procedure('misc_heart_rate')
+calculate_hr = analyzer.import_procedure('param_heart_rate')
+param_tuples = []
 for i in range(10,100,10):
-    hr = analyzer.run_misc_procedure(complete_data, i-10, i, calculate_hr, calculate_hr.default_settings)
-    print(i,hr)
+    param_tuples.append((i-10,i))
+hr = analyzer.calculate_parameter(complete_data, param_tuples ,calculate_hr,
+                                  calculate_hr.default_settings, 'hr')
+complete_data.add_parameter(hr)
+vis.visualize_composite_data(complete_data, begin_time = 0, end_time = 120,
+                             title = "Wycinek <0s; 120s> z parametrem")
 
 
 print(">Próba usunięcia pojedynczego punktu r i zastąpienia go nowym")

@@ -1,6 +1,6 @@
 from sigman import analyzer 
 import numpy as np
-procedure_type = 'misc'
+procedure_type = 'param'
 description = """Procedura obliczająca częstotliwość bicia serca na 
 minutę w oparciu o punkty R.
 """
