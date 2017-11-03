@@ -318,6 +318,20 @@ class Parameter():
         else:
             return np.average(self.values[parameter_indices])
 
+    def generate_parameter_line_tuples(self, begin_time=None, end_time=None):
+        line_tuples = []
+        for param_begin_time, param_end_time, value in zip(self.begin_times,
+                                                           self.end_times,
+                                                           self.values):
+            if begin_time is not None and param_end_time < begin_time:
+                continue
+            if end_time is not None and param_begin_time > end_time:
+                break
+            temp_begin_time = max(begin_time, param_begin_time)
+            temp_end_time = min(end_time, param_end_time)
+            line_tuples.append(((temp_begin_time, temp_end_time),(value, value)))
+        return line_tuples
+
 class Composite_data:
     def __init__(self, data_lines=None, data_points=None, parameters=None):
         self.data_lines = {}
@@ -367,7 +381,7 @@ class Composite_data:
                                end_time)
         return begin_time, end_time
 
-    def add_data_line(self, data_line, dict_type=None, replace=False):
+    def add_data_line(self, data_line, dict_type, replace=False):
         if dict_type is None:
             dict_type = data_line.type
             if dict_type is None:
@@ -381,7 +395,7 @@ class Composite_data:
     def delete_data_line(self, dict_type):
         self.data_lines.pop(dict_type)
 
-    def add_data_points(self, data_points, dict_type=None, join=False):
+    def add_data_points(self, data_points, dict_type, join=False):
         # TODO: czy defaultowo join powinno być False?
         if dict_type is None:
             dict_type = data_points.type
@@ -397,7 +411,7 @@ class Composite_data:
     def delete_data_points(self, dict_type):
         self.data_points.pop(dict_type)
 
-    def add_parameter(self, parameter, dict_type=None, replace=False):
+    def add_parameter(self, parameter, dict_type, replace=False):
         if dict_type is None:
             dict_type = parameter.type
             if dict_type is None:

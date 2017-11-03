@@ -15,20 +15,6 @@ type_colors={'ecg':'C0', 'bp':'C1',
              'sbp':'#886600', 'dbp':'#AA9900', 'dn':'y',
              'hr':'C2'}
 
-def _generate_parameter_line_tuples(parameter, begin_time=None, end_time=None):
-    line_tuples = []
-    for param_begin_time, param_end_time, value in zip(parameter.begin_times,
-                                                       parameter.end_times,
-                                                       parameter.values):
-        if begin_time is not None and param_end_time < begin_time:
-            continue
-        if end_time is not None and param_begin_time > end_time:
-            break
-        temp_begin_time = max(begin_time, param_begin_time)
-        temp_end_time = min(end_time, param_end_time)
-        line_tuples.append(((temp_begin_time, temp_end_time),(value, value)))
-    return line_tuples
-
 def visualize_composite_data(comp_data, begin_time=None, end_time=None, 
     title="", wanted_lines=None, wanted_points=None, wanted_parameters=None):
     """Szybka i nieestetyczna funkcja do wizualizacji danych zawartych
@@ -98,9 +84,9 @@ def visualize_composite_data(comp_data, begin_time=None, end_time=None,
             marker='o', linestyle='None')
     if wanted_parameters is None:
         for key, parameter in comp_data.parameters.items():
-            line_tuples = _generate_parameter_line_tuples(parameter,
-                                                          begin_time, 
-                                                          end_time)
+            line_tuples = parameter.generate_parameter_line_tuples(
+                begin_time = begin_time, 
+                end_time = end_time)
             if parameter.type in type_colors:
                 color = type_colors[parameter.type]
             else:
@@ -110,9 +96,9 @@ def visualize_composite_data(comp_data, begin_time=None, end_time=None,
     else:
         for dict_type in wanted_parameters:
             parameter = comp_data.parameters[dict_type]
-            line_tuples = _generate_parameter_line_tuples(parameter,
-                                                          begin_time, 
-                                                          end_time)
+            line_tuples = parameter.generate_parameter_line_tuples(
+                begin_time = begin_time, 
+                end_time = end_time)
             if parameter.type in type_colors:
                 color = type_colors[parameter.type]
             else:
