@@ -90,7 +90,7 @@ def editParameterSettings(compositeDataWrapper, dictType):
         color = compositeDataWrapper.parameters[dictType].color,
         offset = None)
     if status is DataActionStatus.Ok:
-        compositeDataWrapper.editDataPointsSettings(
-            dictType, newDictType, color, axis, offset)
+        compositeDataWrapper.editParameterSettings(
+            dictType, newDictType, color, axis)
     if status is DataActionStatus.Delete:
         compositeDataWrapper.delete_parameter(dictType)

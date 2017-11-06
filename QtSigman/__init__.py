@@ -20,9 +20,19 @@ class VisualDataObject():
     def __init__(self, data, color, axis):
         self.color = color
         self.axis = axis
+        self.mplObject = None
 
     def plot(self, axis, beginTime, endTime):
         pass
+
+    def removeMplObject(self):
+        if self.mplObject is not None:
+            self.mplObject.remove()
+            self.mplObject = None
+
+    def setMplColor(self, color):
+        if self.mplObject is not None:
+            self.mplObject.set_color(color)
 
 class VisualDataLine(VisualDataObject, sm.Data_line):
     def __init__(self, data, color, axis):
@@ -41,7 +51,11 @@ class VisualDataLine(VisualDataObject, sm.Data_line):
             begin_time = tempBeginTime,
             end_time = tempEndTime,
             begin_x = tempBeginTime)
-        axis.plot(x, y, color = self.color)
+        if self.mplObject is None:
+            self.mplObject, = axis.plot(x, y, color = self.color)
+        else:
+            self.mplObject.set_xdata(x)
+            self.mplObject.set_ydata(y)
 
 class VisualDataPoints(VisualDataObject, sm.Data_points):
     def __init__(self, data, color, axis):
@@ -53,7 +67,11 @@ class VisualDataPoints(VisualDataObject, sm.Data_points):
 
     def plot(self, axis, beginTime, endTime):
         x, y = self.data_slice(beginTime, endTime)
-        axis.plot(x, y, color = self.color, marker = 'o', linestyle = 'None')
+        if self.mplObject is None:
+            self.mplObject, = axis.plot(x, y, color = self.color, marker = 'o', linestyle = 'None')
+        else:
+            self.mplObject.set_xdata(x)
+            self.mplObject.set_ydata(y)
 
 class VisualParameter(VisualDataObject, sm.Parameter):
     def __init__(self, data, color, axis):
@@ -63,12 +81,30 @@ class VisualParameter(VisualDataObject, sm.Parameter):
         self.begin_times = data.begin_times
         self.end_times = data.end_times
         self.values = data.values
+        self.mplObjects = []
 
     def plot(self, axis, beginTime, endTime):
         lineTuples = self.generate_parameter_line_tuples(
             begin_time = beginTime, end_time = endTime)
-        for tup in lineTuples:
-            axis.plot(tup[0], tup[1], color = self.color)
+        if len(self.mplObjects) != len(lineTuples):
+            self.removeMplObject()
+        if self.mplObjects == []:
+            for tup in lineTuples:
+                mplLine, = axis.plot(tup[0], tup[1], color = self.color)
+                self.mplObject.append(mplLine)
+        else:
+            for mplLine, tup in zip(self.mplObject, lineTuples):
+                mplLine.set_xdata(tup[0])
+                mplLine.set_ydata(tup[1])
+
+    def removeMplObject(self):
+        for mplLine in mplObject:
+            mplLine.remove()
+        self.mplObject = []
+
+    def setMplColor(self, color):
+        for mplLine in mplObject:
+            mplLine.set_color(color)
 
 class CompositeDataWrapper(sm.Composite_data, QC.QObject):
     """Klasa rozszerzająca sm.Composite_data o zmienne i funkcje 
@@ -119,11 +155,15 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
 
     def editDataLineSettings(self, dictType, newDictType, 
                                 color, axis, offset):
-        self.data_lines[dictType].color = color
-        self.data_lines[dictType].axis = axis
-        self.data_lines[dictType].offset = offset 
+        data_line = self.data_lines[dictType]
+        if data_line.color != color:
+            data_line.setMplColor(color)
+        if data_line.axis != axis:
+            data_line.axis = axis
+            data_line.removeMplObject()
+        data_line.offset = offset 
         if dictType != newDictType:
-            self.data_lines[newDictType] = self.data_lines[dictType]
+            self.data_lines[newDictType] = data_line
             self.data_lines.pop(dictType)
             self.lineNumberChanged.emit()
         self.lineChanged.emit()
@@ -145,11 +185,15 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
 
     def editDataPointsSettings(self, dictType, newDictType, 
                                 color, axis, offset):
-        self.data_points[dictType].color = color
-        self.data_points[dictType].axis = axis
-        self.data_points[dictType].move_in_time(offset)
+        data_points = self.data_points[dictType]
+        if data_points.color != color:
+            data_points.setMplColor(color)
+        if data_points.axis != axis:
+            data_points.axis = axis
+            data_points.removeMplObject()
+        data_points.move_in_time(offset)
         if dictType != newDictType:
-            self.data_points[newDictType] = self.data_points[dictType]
+            self.data_points[newDictType] = data_points
             self.data_points.pop(dictType)
             self.pointNumberChanged.emit()
         self.pointChanged.emit()
@@ -168,6 +212,19 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
             color,
             axis)
         self.parameterNumberChanged.emit()
+
+    def editParameterSettings(self, dictType, newDictType, 
+                                color, axis):
+        parameter = self.parameters[dictType]
+        parameter.color = color
+        if parameter.axis != axis:
+            parameter.axis = axis
+            parameter.removeMplObject()
+        if dictType != newDictType:
+            self.parameters[newDictType] = parameter
+            self.parameters.pop(dictType)
+            self.parameterNumberChanged.emit()
+        self.parameterChanged.emit()
 
     def delete_parameter(self, dict_type):
         super(CompositeDataWrapper, self).delete_parameter(dict_type)

@@ -19,20 +19,17 @@ class PlotCanvas(FigureCanvas):
     def __init__(self, parent=None):
         figure = matplotlib.figure.Figure()
         figure.set_tight_layout(True)
-
         super(PlotCanvas, self).__init__(figure)
         self.setParent(parent)
         FigureCanvas.setSizePolicy(self,
                                    QW.QSizePolicy.Expanding,
                                    QW.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
-        
-        
-    def plotCompositeDataWrapper(self, compositeDataWrapper, beginTime, endTime):
-        self.figure.clf()
         self.axisLeft = self.figure.add_subplot(1,1,1)
         self.axisRight = self.axisLeft.twinx()
         
+        
+    def plotCompositeDataWrapper(self, compositeDataWrapper, beginTime, endTime):
         for dataDict in compositeDataWrapper.dataDicts:
             for key, data in dataDict.items():
                 axis = data.axis
@@ -43,7 +40,9 @@ class PlotCanvas(FigureCanvas):
                 elif axis is Axis.Right:
                     plot_axis = self.axisRight
                 data.plot(plot_axis, beginTime, endTime)
-
+            for plot_axis in [self.axisLeft, self.axisRight]:
+                plot_axis.relim()
+                plot_axis.autoscale(axis='y')
         self.draw()
 
 class NavigationToolbar(NavigationToolbar2QT):
