@@ -11,14 +11,11 @@ Data_line -- podstawowy ciąg danych (np. sygnał EKG)
 Data_points -- zestaw punktów (np. punkty R)
 Composite_data -- klasa łącząca kilka Data_line oraz Data_points
 """
-
-
 from math import isclose
 
 import numpy as np
 
-
-class Data_line:
+class Data_line():
     """Klasa symbolizujaca ciąg danych liczbowych o stałej 
     częstotliwości w czasie, np sygnał ekg czy ciśnienia krwi z palca.
     """
@@ -40,7 +37,12 @@ class Data_line:
         self.data = np.array(data) 
         # Przesunięcie w czasie względem pozostałych Data_line
         self.offset = offset
-    
+
+    @classmethod
+    def copy(cls, data_line):
+        return cls(data_line.data, data_line.complete_length,
+                   line_type=data_line.type, offset=data_line.offset)
+
     def __len__(self):
         """Zwraca liczbę punktów zawartych w całym ciągu danych."""
         return len(self.data)
@@ -155,7 +157,7 @@ class Data_line:
         output_y = np.array(output_y)
         return output_x, output_y
 
-class Data_points:
+class Data_points():
     def __init__(self, data_x, data_y, point_type='default'):
         # sortowanie by punkty były po kolei
         temp_data_x, temp_data_y = zip(*sorted(zip(data_x,data_y)))
@@ -166,6 +168,11 @@ class Data_points:
         # Typ punktów, np. "R"
         self.type = point_type 
     
+    @classmethod
+    def copy(cls, data_points):
+        return cls(data_points.data_x, data_points.data_y,
+                   point_type = data_points.type)
+
     def __len__(self):
         return len(self.data_x)
 
@@ -284,6 +291,14 @@ class Parameter():
         self.end_times = np.array([])
         self.values = np.array([])
 
+    @classmethod
+    def copy(cls, parameter):
+        out = cls(parameter.type)
+        out.begin_times = parameter.begin_times
+        out.end_times = parameter.end_times
+        out.values = parameter.values
+        return out
+
     def __len__(self):
         return len(self.begin_times)
 
@@ -360,6 +375,18 @@ class Composite_data:
             else:
                 end_time = max(data_line.offset + data_line.complete_length,
                                end_time)
+        for key, data_points in self.data_points.items():
+            if begin_time is None:
+                begin_time = data_points.data_x[0]
+            else:
+                begin_time = min(data_points.data_x[0], begin_time)
+            if end_time is None:
+                end_time = data_points.data_x[-1]
+            else:
+                end_time = max(data_points.data_x[-1],
+                               end_time)
+        if begin_time and end_time is None:
+            begin_time = 0
         return begin_time, end_time
 
     def calculate_time_range(self, required_lines):

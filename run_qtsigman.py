@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# Ten skrypt uruchamia program qtsigman
+# Ten skrypt uruchamia program qtSigman
 
-import qtsigman
+import QtSigman
 
-qtsigman.initialize()
+QtSigman.initialize()
