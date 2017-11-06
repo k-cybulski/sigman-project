@@ -95,7 +95,7 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
                 colors.to_hex(defaultColors[key]),
                 Axis.Hidden)
         for key, item in self.data_points.items():
-            self.data_lines[key] = VisualDataPoints(
+            self.data_points[key] = VisualDataPoints(
                 item, 
                 colors.to_hex(defaultColors[key]),
                 Axis.Hidden)
@@ -254,16 +254,16 @@ class QtSigmanWindow(QW.QMainWindow):
         mainLayout.addLayout(rightVBoxLayout)
 
         # Ustawienie paska menu
-        self.file_menu = QW.QMenu('&Plik', self)
+        self.file_menu = QW.QMenu('Plik', self)
         self.file_menu.addAction('Importuj przebieg', lambda:
                                  DataActions.importLine(self.compositeDataWrapper))
         self.file_menu.addAction('Importuj punkty', lambda:
                                  DataActions.importPoints(self.compositeDataWrapper))
-        self.file_menu.addAction('&Quit', self.fileQuit)
+        self.file_menu.addAction('Zamknij', self.fileQuit)
         self.menuBar().addMenu(self.file_menu)
 
-        self.help_menu = QW.QMenu('&Help', self)
-        self.help_menu.addAction('&About', self.about)
+        self.help_menu = QW.QMenu('Pomoc', self)
+        self.help_menu.addAction('O programie', self.about)
         self.menuBar().addSeparator()
         self.menuBar().addMenu(self.help_menu)
 
@@ -274,10 +274,12 @@ class QtSigmanWindow(QW.QMainWindow):
         self.fileQuit()
 
     def about(self):
-        QW.QMessageBox.about(self, "About",
+        QW.QMessageBox.about(self, "O programie",
                                     """QtSigman
 Program zapewniający GUI do bezpośredniej obsługi biblioteki sigman do 
-analizy danych.""")
+analizy danych.
+Wersja pre-beta
+                                                                Krzysztof Cybulski 2017""")
 
         
 
