@@ -150,6 +150,9 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
         for dataDict, newDataDict in zip(self.dataDicts, newDataDicts):
             for key, item in dataDict.items():
                 item.removeMplObject()
+            # Oczyszczanie zapisanych danych graficznych
+            for key, item in newDataDict.items():
+                item.mplObject = None
         self.data_lines = compositeDataWrapper.data_lines
         self.data_points = compositeDataWrapper.data_points
         self.parameters = compositeDataWrapper.parameters

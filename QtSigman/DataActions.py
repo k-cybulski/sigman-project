@@ -107,9 +107,13 @@ class _PickledCompositeDataWrapper:
             compositeDataWrapper.data_lines,
             compositeDataWrapper.data_points,
             compositeDataWrapper.parameters]
-        for dataItem in data:
-            for key, item in dataItem.items():
-                item.removeMplObject()
+#       mplObject każdego obiektu danych powinien być usunięty, by nie
+#       przeszkadzać przy wczytywaniu, lecz jeśli zostanie to zrobione przy
+#       zapisywaniu to obecnie wyświetlone dane znikną. Zamiast tego jest to
+#       robione w trakcie wczytywania
+#        for dataItem in data:
+#            for key, item in dataItem.items():
+#                item.removeMplObject()
         self.data_lines = compositeDataWrapper.data_lines
         self.data_points = compositeDataWrapper.data_points
         self.parameters = compositeDataWrapper.parameters
