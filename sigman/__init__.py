@@ -4,7 +4,7 @@ sigman
 ======
 Biblioteka do manipulacji oraz analizy danych w formie ciągu punktów
 o równym odstępie czasowym (np. sygnał EKG) oraz punktów oznaczających
-wydarzenia w czasie.
+wydarzenia w czasie (np. punkty R na sygnale EKG).
 
 W tym pliku definiowane są klasy symbolizujące dane:
 Data_line -- podstawowy ciąg danych (np. sygnał EKG)

@@ -61,7 +61,7 @@ complete_data = sm.Composite_data(data_lines={'ecg_messy':ecg_line,'ecg':filtere
 vis.visualize_composite_data(complete_data, begin_time=10,end_time=15,title="EKG wejściowe (mocno zaburzone) oraz przefiltrowane filtrem 20 Hz")
 
 print(">Próba ponownego wczytania wcześniej zapisanego composite_data")
-complete_data = fm.open_composite_data('example_data/example_composite_data.pickle')
+complete_data = fm.load_composite_data('example_data/example_composite_data.pickle')
 vis.visualize_composite_data(complete_data, title="Wczytany ponownie")
 os.remove('example_data/example_composite_data.pickle')
 
@@ -70,14 +70,14 @@ print(">Próba odnalezienia r na odcinku <65s, 75s>")
 find_r = analyzer.import_procedure('points_r_simple')
 settings = find_r.default_settings
 found_points = analyzer.find_points(complete_data, 65, 75, find_r, settings, point_type = 'r')
-complete_data.add_data_points(found_points, join=True)
+complete_data.add_data_points(found_points, 'r', join=True)
 vis.visualize_composite_data(complete_data, begin_time = 60, end_time = 80, title = "Dane z odnalezionymi ponownie R-ami")
 
 print(">Próba usunięcia i odnalezienia wszystkich r")
 complete_data.delete_data_points('r')
 begin_time, end_time = complete_data.calculate_time_range(required_lines=['ecg'])
 found_points = analyzer.find_points(complete_data, begin_time, end_time, find_r, settings, point_type = 'r')
-complete_data.add_data_points(found_points)
+complete_data.add_data_points(found_points, 'r')
 vis.visualize_composite_data(complete_data, title = "Dane z całkowicie nowymi R-ami")
 
 print(">Próba obliczenia tempa bicia serca na kilku interwałach")
@@ -87,7 +87,7 @@ for i in range(10,100,10):
     param_tuples.append((i-10,i))
 hr = analyzer.calculate_parameter(complete_data, param_tuples ,calculate_hr,
                                   calculate_hr.default_settings, 'hr')
-complete_data.add_parameter(hr)
+complete_data.add_parameter(hr, 'hr')
 vis.visualize_composite_data(complete_data, begin_time = 0, end_time = 120,
                              title = "Wycinek <0s; 120s> z parametrem")
 
@@ -105,12 +105,12 @@ find_sbp = analyzer.import_procedure('points_sbp_simple')
 settings = find_sbp.default_settings
 begin_time, end_time = complete_data.calculate_time_range(required_lines=['bp'])
 found_sbp = analyzer.find_points(complete_data, begin_time, end_time, find_sbp, settings, point_type = 'sbp')
-complete_data.add_data_points(found_sbp)
+complete_data.add_data_points(found_sbp, 'sbp')
 find_dbp = analyzer.import_procedure('points_dbp_simple')
 settings = find_dbp.default_settings
 begin_time, end_time = complete_data.calculate_time_range(required_lines=['bp'])
 found_dbp = analyzer.find_points(complete_data, begin_time, end_time, find_dbp, settings, point_type = 'dbp')
-complete_data.add_data_points(found_dbp)
+complete_data.add_data_points(found_dbp, 'dbp')
 vis.visualize_composite_data(complete_data, title="Dane z odnalezionymi SBP i DBP")
 
 print(">Próba oznaczenia DN")
@@ -118,5 +118,5 @@ find_dn = analyzer.import_procedure('points_dn_net')
 settings = find_dn.default_settings
 begin_time, end_time = complete_data.calculate_time_range(required_lines=['ecg','bp'])
 found_dn = analyzer.find_points(complete_data, begin_time, end_time, find_dn, settings, point_type = 'dn')
-complete_data.add_data_points(found_dn)
+complete_data.add_data_points(found_dn, 'dn')
 vis.visualize_composite_data(complete_data, title="Dane z odnalezionymi DN")

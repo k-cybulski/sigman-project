@@ -1,8 +1,11 @@
 from os import getcwd
+import pickle
 
 from PyQt5 import QtWidgets as QW
 from sigman import file_manager as fm
+import sigman as sm
 
+import QtSigman
 from QtSigman import DataActionWidgets
 from QtSigman.DataActionWidgets import DataActionStatus
 
@@ -94,3 +97,56 @@ def editParameterSettings(compositeDataWrapper, dictType):
             dictType, newDictType, color, axis)
     if status is DataActionStatus.Delete:
         compositeDataWrapper.delete_parameter(dictType)
+
+class _PickledCompositeDataWrapper:
+    """Obiekt zawierający wszystkie kluczowe informacje zawarte w 
+    CompositeDataWrapper, lecz bez sygnałów Qt oraz informacji
+    graficznych które uniemożliwiają użycie na nim pickle."""
+    def __init__(self, compositeDataWrapper):
+        data = [
+            compositeDataWrapper.data_lines,
+            compositeDataWrapper.data_points,
+            compositeDataWrapper.parameters]
+        for dataItem in data:
+            for key, item in dataItem.items():
+                item.removeMplObject()
+        self.data_lines = compositeDataWrapper.data_lines
+        self.data_points = compositeDataWrapper.data_points
+        self.parameters = compositeDataWrapper.parameters
+
+def loadCompositeData():
+    fileFilter = "pickle (*.pickle)"
+    fileDialog = QW.QFileDialog()
+    fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
+    try:
+        path = fileDialog.getOpenFileName(filter = fileFilter)
+        assert path[0] != ""
+        with open(path[0], 'rb') as pickleFile:
+            compositeData = pickle.load(pickleFile)
+            if isinstance(compositeData, sm.Composite_data):
+                return QtSigman.CompositeDataWrapper.fromSigmanCompositeData(compositeData)
+            elif (isinstance(compositeData, QtSigman.CompositeDataWrapper) or
+                  isinstance(compositeData, _PickledCompositeDataWrapper)):
+                return compositeData
+            else:
+                msg = QW.QMessageBox()
+                msg.setIcon(QW.QMessageBox.Warning)
+                msg.setText("Niewłaściwy plik.")
+                msg.exec_()
+    # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się
+    # nie stało i nic nie zmieniamy
+    except AssertionError:
+        pass
+
+def saveCompositeData(compositeData):
+    fileDialog = QW.QFileDialog()
+    fileDialog.setFileMode(QW.QFileDialog.AnyFile)
+    fileDialog.setDefaultSuffix('.pickle')
+    try:
+        path = fileDialog.getSaveFileName()
+        assert path[0] != ""
+        with open(path[0], 'wb') as pickleFile:
+            pickledData = _PickledCompositeDataWrapper(compositeData)
+            pickle.dump(pickledData, pickleFile)
+    except AssertionError:
+        pass

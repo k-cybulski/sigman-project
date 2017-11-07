@@ -142,6 +142,36 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
                 Axis.Hidden)
         self.dataDicts = [self.data_lines, self.data_points, self.parameters]
 
+    def replaceWithCompositeDataWrapper(self, compositeDataWrapper):
+        newDataDicts = [
+            compositeDataWrapper.data_lines,
+            compositeDataWrapper.data_points,
+            compositeDataWrapper.parameters]
+        for dataDict, newDataDict in zip(self.dataDicts, newDataDicts):
+            for key, item in dataDict.items():
+                item.removeMplObject()
+        self.data_lines = compositeDataWrapper.data_lines
+        self.data_points = compositeDataWrapper.data_points
+        self.parameters = compositeDataWrapper.parameters
+        self.dataDicts = [
+            self.data_lines,
+            self.data_points,
+            self.parameters]
+
+        self.lineNumberChanged.emit()
+        self.pointNumberChanged.emit()
+        self.parameterNumberChanged.emit()
+        self.lineChanged.emit()
+        self.pointChanged.emit()
+        self.parameterChanged.emit()
+
+    @classmethod
+    def fromSigmanCompositeData(cls, compositeData):
+        return cls(
+            data_lines = compositeData.data_lines,
+            data_points = compositeData.data_points,
+            parameters = compositeData.parameters)
+
     def add_data_line(self, data_line, dict_type, color, replace=False,
                       axis=Axis.Hidden):
         super(CompositeDataWrapper, self).add_data_line(data_line,
@@ -169,6 +199,7 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
         self.lineChanged.emit()
 
     def delete_data_line(self, dict_type):
+        self.data_lines[dict_type].removeMplObject()
         super(CompositeDataWrapper, self).delete_data_line(dict_type)
         self.lineNumberChanged.emit()
 
@@ -199,6 +230,7 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
         self.pointChanged.emit()
 
     def delete_data_points(self, dict_type):
+        self.data_points[dict_type].removeMplObject()
         super(CompositeDataWrapper, self).delete_data_points(dict_type)
         self.pointNumberChanged.emit()
 
@@ -227,6 +259,7 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
         self.parameterChanged.emit()
 
     def delete_parameter(self, dict_type):
+        self.parameters[dict_type].removeMplObject()
         super(CompositeDataWrapper, self).delete_parameter(dict_type)
         self.parameterNumberChanged.emit()
 
@@ -251,36 +284,27 @@ class QtSigmanWindow(QW.QMainWindow):
         mainLayout.addWidget(self.mplPlotWidget)
         # Podłączamy wszystkie możliwe sygnały qt wpływające na wykres do
         # obiektu wykresu
-        self.compositeDataWrapper.lineNumberChanged.connect(
-            lambda:
-            self.mplPlotWidget.updateCompositeData(self.compositeDataWrapper))
-        self.compositeDataWrapper.pointNumberChanged.connect(
-            lambda:
-            self.mplPlotWidget.updateCompositeData(self.compositeDataWrapper))
-        self.compositeDataWrapper.parameterNumberChanged.connect(
-            lambda:
-            self.mplPlotWidget.updateCompositeData(self.compositeDataWrapper))
-        self.compositeDataWrapper.lineChanged.connect(
-            lambda:
-            self.mplPlotWidget.updateCompositeData(self.compositeDataWrapper))
-        self.compositeDataWrapper.pointChanged.connect(
-            lambda:
-            self.mplPlotWidget.updateCompositeData(self.compositeDataWrapper))
-        self.compositeDataWrapper.parameterChanged.connect(
-            lambda:
-            self.mplPlotWidget.updateCompositeData(self.compositeDataWrapper))
+        self.compositeDataWrapper.lineNumberChanged.connect(self._refreshPlot)
+        self.compositeDataWrapper.pointNumberChanged.connect(self._refreshPlot)
+        self.compositeDataWrapper.parameterNumberChanged.connect(self._refreshPlot)
+        self.compositeDataWrapper.lineChanged.connect(self._refreshPlot)
+        self.compositeDataWrapper.pointChanged.connect(self._refreshPlot)
+        self.compositeDataWrapper.parameterChanged.connect(self._refreshPlot)
 
         # Po prawej
         rightVBoxLayout = QW.QVBoxLayout()
         lineListLabel = QW.QLabel()
         lineListLabel.setText("Przebiegi")
         lineList = ListWidgets.DataListWidget()
-        lineList.itemClicked.connect(lambda x:
+        lineList.itemClicked.connect(lambda listItemWidget:
             DataActions.editLineSettings(self.compositeDataWrapper, 
-                                 lineList.itemWidget(x).typeLabel.text()))
+                lineList.itemWidget(listItemWidget).typeLabel.text()))
         self.compositeDataWrapper.lineNumberChanged.connect(
             lambda:
             lineList.updateData(self.compositeDataWrapper, 'line'))
+#        self.compositeDataReloaded.connect(
+#            lambda:
+#            lineList.updateData(self.compositeDataWrapper, 'line'))
         lineList.setSizePolicy(QW.QSizePolicy.Fixed,
                                QW.QSizePolicy.Expanding)
         rightVBoxLayout.addWidget(lineListLabel)
@@ -288,12 +312,15 @@ class QtSigmanWindow(QW.QMainWindow):
         pointListLabel = QW.QLabel()
         pointListLabel.setText("Punkty") 
         pointList = ListWidgets.DataListWidget()
-        pointList.itemClicked.connect(lambda x:
+        pointList.itemClicked.connect(lambda listItemWidget:
             DataActions.editPointSettings(self.compositeDataWrapper, 
-                                 pointList.itemWidget(x).typeLabel.text()))
+                pointList.itemWidget(listItemWidget).typeLabel.text()))
         self.compositeDataWrapper.pointNumberChanged.connect(
             lambda:
             pointList.updateData(self.compositeDataWrapper, 'point'))
+#        self.compositeDataReloaded.connect(
+#            lambda:
+#            pointList.updateData(self.compositeDataWrapper, 'point'))
         pointList.setSizePolicy(QW.QSizePolicy.Fixed,
                                 QW.QSizePolicy.Expanding) 
         rightVBoxLayout.addWidget(pointListLabel)
@@ -303,6 +330,9 @@ class QtSigmanWindow(QW.QMainWindow):
         self.compositeDataWrapper.parameterNumberChanged.connect(
             lambda:
             parameterList.updateData(self.compositeDataWrapper, 'parameter'))
+#        self.compositeDataReloaded.connect(
+#            lambda:
+#            parameterList.updateData(self.compositeDataWrapper, 'parameter'))
         parameterList = ListWidgets.DataListWidget()
         parameterList.setSizePolicy(QW.QSizePolicy.Fixed,
                                     QW.QSizePolicy.Expanding) 
@@ -313,9 +343,14 @@ class QtSigmanWindow(QW.QMainWindow):
         # Ustawienie paska menu
         self.file_menu = QW.QMenu('Plik', self)
         self.file_menu.addAction('Importuj przebieg', lambda:
-                                 DataActions.importLine(self.compositeDataWrapper))
+            DataActions.importLine(self.compositeDataWrapper))
         self.file_menu.addAction('Importuj punkty', lambda:
-                                 DataActions.importPoints(self.compositeDataWrapper))
+            DataActions.importPoints(self.compositeDataWrapper))
+        self.file_menu.addAction('Wczytaj projekt', lambda:
+            self._replaceCompositeDataWrapper(
+                DataActions.loadCompositeData()))
+        self.file_menu.addAction('Zapisz projekt', lambda:
+            DataActions.saveCompositeData(self.compositeDataWrapper))
         self.file_menu.addAction('Zamknij', self.fileQuit)
         self.menuBar().addMenu(self.file_menu)
 
@@ -323,6 +358,12 @@ class QtSigmanWindow(QW.QMainWindow):
         self.help_menu.addAction('O programie', self.about)
         self.menuBar().addSeparator()
         self.menuBar().addMenu(self.help_menu)
+
+    def _refreshPlot(self):
+        self.mplPlotWidget.updateCompositeData(self.compositeDataWrapper)
+
+    def _replaceCompositeDataWrapper(self, compositeDataWrapper):
+        self.compositeDataWrapper.replaceWithCompositeDataWrapper(compositeDataWrapper)
 
     def fileQuit(self):
         self.close()

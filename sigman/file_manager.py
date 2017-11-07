@@ -18,8 +18,8 @@ def save_composite_data(file_name, composite_data):
     with open(file_name, 'wb') as pickle_file:
         pickle.dump(composite_data, pickle_file)
 
-def open_composite_data(file_name):
-    """Otwiera zapisany w .pickle Composite_data."""
+def load_composite_data(file_name):
+    """Wczytuje zapisany w .pickle Composite_data."""
     with open(file_name, 'rb') as pickle_file:
         return pickle.load(pickle_file)
 

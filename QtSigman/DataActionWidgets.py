@@ -163,3 +163,5 @@ class DataSettingsDialog(QW.QDialog):
         values = list(dataSettingsWidget.getValues())
         values.append(dataSettingsWidget.dataActionStatus)
         return tuple(values)
+
+#TODO: Procedure list widget; Misc procedure window
