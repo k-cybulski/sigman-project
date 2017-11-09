@@ -1,5 +1,7 @@
-from sigman import analyzer 
 import numpy as np
+
+from sigman.analyzer import InvalidArgumentError
+
 procedure_type = 'points'
 description = """Procedura aplikująca prosty algorytm do odnalezienia 
 punktów R na wykresie EKG. Działa on w następujący sposób:
@@ -15,16 +17,44 @@ punktów R na wykresie EKG. Działa on w następujący sposób:
     nowego R.
 """
 author = 'kcybulski'
-required_lines = ['ecg']
+arguments = {
+    'threshold_fraction':("Wartość graniczna całki zakresowej, powyżej "
+                          "której rozpatrywana jest możliwość istnienia "
+                          "R."),
+    'threshold_period':("Czas, na przestrzeni którego sprawdzane są "
+                        "maksymalne wartości całki zakresowej."),
+    'safe_period':"Czas, w którym nie można odnaleźć dwóch R obok siebie."}
+default_arguments = {
+    'threshold_fraction':0.7,
+    'threshold_period':2,
+    'safe_period':0.25}
+required_waves = ['ecg']
 required_points = []
-default_settings = {'threshold_fraction':0.7,'threshold_period':2,'safe_period':0.25}
-required_arguments = []
+
+def validate_arguments(composite_data, arguments):
+    """Sprawdza, czy podane argumenty są poprawne."""
+    # Wszystkie powinny być zwykłymi floatami
+    for key, item in arguments.items():
+        try:
+            float(item)
+        except:
+            error_message = key + " niewłaściwy"
+            return False, error_message
+    return True, ""
+
+def interpret_arguments(arguments):
+    """Konwertuje argumenty tekstowe w liczby."""
+    output_arguments = {}
+    for key, item in arguments.items():
+        output_arguments[key] = float(item)
+    return output_arguments
+
 def procedure(comp_data, begin_time, end_time, settings):
-    data_line = comp_data.data_lines['ecg']
+    data_wave = comp_data.data_waves['ecg']
     
     # Obliczamy kwadrat pochodnej
-    sample_length = data_line.sample_length
-    data = data_line.data_slice(begin_time, end_time)
+    sample_length = data_wave.sample_length
+    data = data_wave.data_slice(begin_time, end_time)
     data = np.array(data)
     derivative = [0] * 2 # pierwsze dwie wartości są puste
     for i in range(2,len(data)-2):
@@ -73,10 +103,12 @@ def procedure(comp_data, begin_time, end_time, settings):
                 i = int((r_x[-1]+settings['safe_period'])/sample_length)
         i += 1
     r_x = np.array(r_x)
-#    from matplotlib import pyplot as plt
-#    plt.plot(data)
-#    plt.plot(derivative)
-#    plt.plot(integral)
-#    plt.plot(r_x/sample_length,r_y, marker='o', linestyle='None')
-#    plt.show()
     return r_x, r_y
+
+def execute(comp_data, begin_time, end_time, arguments):
+    """Sprawdza poprawność argumentów i wykonuje procedurę."""
+    valid, error_message = validate_arguments(comp_data, arguments)
+    if not valid:
+        raise InvalidArgumentError(error_message)
+    arguments = interpret_arguments(arguments)
+    return procedure(comp_data, begin_time, end_time, arguments)

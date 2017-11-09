@@ -1,27 +1,27 @@
 from sigman import analyzer 
 import numpy as np
 import pickle
+
+from sigman.analyzer import InvalidArgumentError
+
 procedure_type = 'points'
 description = """Procedura przeszukująca wykresy BP i EKG za pomocą 
 wytrenowanej sieci neuronowej w celu odnalezienia wcięć dykrotycznych. 
 Wykorzystuje punkty SBP do zawężenia poszukiwania.
-
-Opcjonalne argumenty:
-['net_file']:'procedures/default_dn_net.pickle': string; ścieżka i 
-             nazwa pliku sieci neuronowej
-['focus_range']:(0.01,0.05): tuple (float, float); zakres czasowy z 
-                którym po punktach SBP szukane będą DN
-['test_every']:0.005: float; co ile sekund ma być testowany każdy punkt
-                w focus_range
 """
 author = 'kcybulski'
-required_lines = ['bp','ecg']
+arguments = {
+    'net':"Scieżka i nazwa pliku sieci neuronowej",
+    'focus_range':("Zakres czasu od punktu SBP po którym szukany jest "
+                   "DN. Zapisany w formie dwóch wartości "
+                   "przedzielonych średnikiem."),
+    'test_every':"Odstęp między badanymi punktami w focus_range"}
+default_arguments = {'net':'procedures/default_dn_net.pickle', 'focus_range':(0.1,0.5), 'test_every':0.005}
+required_waves = ['bp','ecg']
 required_points = ['sbp']
-default_settings = {'net_file':'procedures/default_dn_net.pickle', 'focus_range':(0.1,0.5), 'test_every':0.005}
-required_arguments = []
 
 # Poniższa klasa zostanie usunięta w przyszłości
-# Na razie służy tylko do tego by umożliwic korzystanie z .pickle na pre-uczonych sieciach neuronowych
+# Na razie służy tylko do tego by umożliwic korzystanie z pickle na pre-uczonych sieciach neuronowych
 class Temp_Network():
     def __init__(self,network):
         self.input_point_count = network.shape[0]
@@ -36,6 +36,39 @@ class Temp_Network():
             z = a.dot(self.w[i])+self.b[i]
             a = self.activation(z)
         return a
+
+def validate_arguments(comp_data, arguments):
+    """Sprawdza, czy podane argumenty są poprawne."""
+    # net
+    try:
+        with open(arguments['net']) as net:
+            pickle.load(net)
+    except:
+        return False, "Niewłaściwy plik sieci neuronowej"
+    # focus_range
+    try:
+        vals = arguments['focus_range'].split(';')
+        if len(vals) != 2:
+            return False, "Niewłaściwy focus_range"
+    except:
+        return False, "Niewłaściwy focus_range"
+    # test_every 
+    try:
+        float(arguments['test_every'])
+    except:
+        return False, "Niewłaściwy test_every"
+    return True, ""
+
+def interpret_arguments(arguments):
+    net = pickle.load(open(arguments['net']).read())
+    focus_range = []
+    for string in arguments['focus_range'].split(';'):
+        focus_range.append(float(string))
+    test_every = float(arguments['test_every'])
+    return {
+        'net':net,
+        'focus_range':focus_range,
+        'test_every':test_everu}
 
 def _generate_input_data_sample(bp_line, ecg_line, test_point, sample_length, 
                                detection_point_offset, input_point_count):
@@ -61,15 +94,15 @@ def _generate_input_data_sample(bp_line, ecg_line, test_point, sample_length,
     input_data = np.concatenate((bp_data,ecg_data))
     return input_data
 
-def procedure(comp_data, begin_time, end_time, settings):
-    ecg_line = comp_data.data_lines['ecg']
-    bp_line = comp_data.data_lines['bp']
+def procedure(comp_data, begin_time, end_time, arguments):
+    ecg_line = comp_data.data_waves['ecg']
+    bp_line = comp_data.data_waves['bp']
     sbp_points = comp_data.data_points['sbp']
-    focus_range = settings['focus_range']
-    test_every = settings['test_every']
+    focus_range = arguments['focus_range']
+    test_every = arguments['test_every']
 
     # Importujemy sieć neuronową
-    net = pickle.load(open(settings['net_file'],'rb'))
+    net = pickle.load(open(arguments['net'],'rb'))
     sample_length = net.sample_length
     detection_point_offset = net.detection_point_offset
     input_point_count = net.input_point_count
@@ -100,3 +133,11 @@ def procedure(comp_data, begin_time, end_time, settings):
     dn_x = np.array(dn_x)
     dn_y = np.array(dn_y)
     return dn_x, dn_y
+
+def execute(data_wave, begin_time, end_time, arguments):
+    """Sprawdza poprawność argumentów i wykonuje procedurę."""
+    valid, error_message = validate_arguments(data_wave, arguments)
+    if not valid:
+        raise InvalidArgumentError(error_message)
+    arguments = interpret_arguments(arguments)
+    return procedure(data_wave, begin_time, end_time, arguments)
