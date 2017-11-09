@@ -1,47 +1,57 @@
-# TODO: Documentation should be PEP-257 compliant
 """
 sigman
 ======
-Biblioteka do manipulacji oraz analizy danych w formie ciągu punktów
-o równym odstępie czasowym (np. sygnał EKG) oraz punktów oznaczających
-wydarzenia w czasie (np. punkty R na sygnale EKG).
+Biblioteka do manipulacji oraz analizy danych w formie przebiegu 
+sygnału oraz punktów oznaczających wydarzenia w czasie (np. punkty R 
+na sygnale EKG).
 
 W tym pliku definiowane są klasy symbolizujące dane:
-Data_line -- podstawowy ciąg danych (np. sygnał EKG)
+Data_wave -- podstawowy przebieg sygnału (np. sygnał EKG)
 Data_points -- zestaw punktów (np. punkty R)
-Composite_data -- klasa łącząca kilka Data_line oraz Data_points
+Composite_data -- klasa łącząca kilka Data_wave oraz Data_points,
+                  pozwalająca na wspólną analizę kilku przebiegów/
+                  rodzajów punktów
 """
+# TODO: Documentation should be PEP-257 compliant
 from math import isclose
 
 import numpy as np
 
-class Data_line():
-    """Klasa symbolizujaca ciąg danych liczbowych o stałej 
-    częstotliwości w czasie, np sygnał ekg czy ciśnienia krwi z palca.
+class Data_wave():
+    """Klasa symbolizująca przebieg sygnału. Może być on przesunięty w 
+    czasie i nie zaczynać się od 0. W takim wypadku wszystkie odwołania 
+    do jego wartości w danym czasie uwzględnią to przesunięcie.
+
+    Wszystkie operacje zewnętrzne analizujące Data_wave powinny opierać
+    się na metodach value_at i data_slice.
     """
 
     def __init__(self, data, complete_length, line_type='default', offset=0):
-        """Inicjalizuje Data_line. Przyjmuje tablicę danych wartości
+        """Inicjalizuje Data_wave. Przyjmuje tablicę danych wartości
         sygnału oraz jego długość.
+
+        Argumenty:
+        data - tablica wartości y punktów przebiegu
+        complete_length - długość przebiegu w czasie
+        line_type - typ danych przebiegu, np. 'ecg' czy 'bp'
+        offset - przesunięcie w czasie względem pozostałych Data_wave 
+                 w Composite_data
         """
         # Okres nagranych danych; odległość w czasie między
-        # punktami wykresu.
+        # punktami przebiegu.
         self.sample_length = complete_length/len(data)
         # Częstotliwość danych.
         self.sample_rate = 1/self.sample_length        
-        # Całkowita długość w czasie ciągu danych.
         self.complete_length = complete_length 
-        # Typ wykresu, np. "ecg"
         self.type = line_type 
-        # Wartości y danych.
         self.data = np.array(data) 
-        # Przesunięcie w czasie względem pozostałych Data_line
         self.offset = offset
 
     @classmethod
-    def copy(cls, data_line):
-        return cls(data_line.data, data_line.complete_length,
-                   line_type=data_line.type, offset=data_line.offset)
+    def copy(cls, data_wave):
+        """Zwraca kopię danego Data_wave."""
+        return cls(data_wave.data, data_wave.complete_length,
+                   line_type=data_wave.type, offset=data_wave.offset)
 
     def __len__(self):
         """Zwraca liczbę punktów zawartych w całym ciągu danych."""
@@ -62,7 +72,7 @@ class Data_line():
         return int(index)
     
     def value_at(self, time):
-        """Zwraca wartość wykresu w danym punkcie obliczoną za 
+        """Zwraca wartość przebiegu w danym punkcie obliczoną za 
         pomocą interpolacji liniowej sąsiednich dwóch punktów.  Jeśli
         żądany punkt wystaje poza ramy czasowe posiadanych danych to 
         metoda wywołuje ValueError.
@@ -79,19 +89,21 @@ class Data_line():
     
     def data_slice(self, begin_time, end_time, 
                    value_every=0, value_count=None):
-        """Zwraca ciąg wartości danych odpowiadający żądanemu zakresowi
-        czasu.  Jeśli żądana częstotliwość jest inna niż bazowa, to 
-        zwrócony ciąg jest wynikiem interpolacji liniowej posiadanych 
-        już danych.
+        """Zwraca tablicę wartości danych odpowiadający żądanemu 
+        zakresowi czasu.  Jeśli żądana częstotliwość jest inna niż 
+        bazowa, to  zwrócony ciąg jest wynikiem interpolacji liniowej 
+        posiadanych już danych.
 
         Argumenty:
+        begin_time - początek zakresu
+        end_time - koniec zakresu
         value_every - żądana częstotliwość punktów (odstęp czasowy 
                       między punktami) wytworzonej tablicy. Jeśli
-                      wynosi 0, to zwraca punkty o bazowej
-                      częstotliwości tego Data_line.
-        value_count - ile ma być punktów w zwróconym ciągu. Jeśli i to
-                      i value_every są ustawione, priorytetem jest
-                      value_count
+                      wynosi 0, to zwraca punkty o takiej samej
+                      częstotliwości jak bazowy Data_wave.
+        value_count - ile ma być punktów w zwróconym ciągu. Jeśli 
+                      i value_count i value_every są ustawione, 
+                      priorytetem jest value_count.
         """
         begin_i = self.sample_at(begin_time)
         end_i = self.sample_at(end_time)
@@ -111,33 +123,33 @@ class Data_line():
         interpolated_table = np.interp(wanted_values, coord_x, coord_y)
         return interpolated_table
 
-    def replace_slice(self, begin_time, end_time, data_line):
-        """Zastępuje wybrany zakres bazowego data wartościami innego 
-        Data_line, np przefiltrowanego.  Podany wykres musi mieć taką 
-        samą częstotliwość danych jak bazowy.
+    def replace_slice(self, begin_time, end_time, data_wave):
+        """Zastępuje wybrany zakres wartości przebiegu wartościami 
+        innego Data_wave, np przefiltrowanego.  Podany Data_wave 
+        musi mieć taką samą częstotliwość danych jak bazowy.
 
         Argumenty:
         begin_time - początek zakresu czasowego punktów do zastąpienia
         end_time - koniec zakresu czasowego punktów do zastąpienia
-        data_line - Data_line, którego danymi mamy zastąpić dany fragment
+        data_wave - Data_wave, którego danymi mamy zastąpić dany fragment
         """
         # TODO: Dodać możliwość przyjmowania danych o innej częstotliwości
         # zmieniając je tak by pasowały?
         if not isclose(self.sample_length,
-                       data_line.sample_length, rel_tol=0.0001):
+                       data_wave.sample_length, rel_tol=0.0001):
             raise ValueError('Fragment do wklejenia ma częstotliwość danych '
                              'niezgodną z częstotliwością danych całości')
-        if end_time - begin_time > data_line.complete_length:
-            raise ValueError('Dany Data_line krótszy niż zakres czasu danych '
+        if end_time - begin_time > data_wave.complete_length:
+            raise ValueError('Dany Data_wave krótszy niż zakres czasu danych '
                              'do zastąpienia')
         begin_i = self.sample_at(begin_time)
         end_i = self.sample_at(end_time)
         for j in range(end_i-begin_i):
-            self.data[begin_i+j]=data_line.data[j]
+            self.data[begin_i+j]=data_wave.data[j]
     
     def generate_coordinate_tables(self, begin_time=0, end_time=None,
                                    begin_x=0):
-        """Zwraca wszystkie punkty linii w formie dwóch tablic - 
+        """Zwraca wszystkie punkty przebiegu w formie dwóch tablic - 
         wartości x oraz wartości y. Przydatne do wizualizacji.
 
         Argumenty:
@@ -158,14 +170,24 @@ class Data_line():
         return output_x, output_y
 
 class Data_points():
+    """Klasa symbolizująca zestaw punktów jednego typu (np. R).
+    Przechowuje je w dwóch tablicach - wartości x i y wszystkich
+    punktów, posortowanych według x.
+    """
+
     def __init__(self, data_x, data_y, point_type='default'):
+        """Inicjalizuje Data_points. Przyjmuje dwie tablice x i y
+        punktów.
+
+        Argumenty:
+        data_x - tablica wartości x punktów
+        data_y - tablica wartości y punktów
+        point_type - typ punktów, np. 'r' czy 'sbp' 
+        """
         # sortowanie by punkty były po kolei
         temp_data_x, temp_data_y = zip(*sorted(zip(data_x,data_y)))
-        # Wartości x punktów
         self.data_x = np.array(temp_data_x) 
-        # Wartości y punktów
         self.data_y = np.array(temp_data_y) 
-        # Typ punktów, np. "R"
         self.type = point_type 
     
     @classmethod
@@ -183,7 +205,7 @@ class Data_points():
 #       return points
 
     def slice_range(self, begin_time, end_time):
-        """Zwraca range indexów punktów, które znajdują się w danym 
+        """Zwraca range indeksów punktów, które znajdują się w danym
         zakresie czasowym. 
         """
         begin_i = np.searchsorted(self.data_x, begin_time)
@@ -223,6 +245,8 @@ class Data_points():
 
     def replace_slice(self, begin_time, end_time, data_points):
         begin_i = self.delete_slice(begin_time, end_time)
+        """Zastępuje punkty na danym zakresie czasu innym Data_points.
+        """
         # Teraz wszystkie punkty z data_points które nie wychodzą poza 
         # ramy czasowe podane w argumentach funkcji wkładamy do wlasnych
         # tablic współrzędnych
@@ -233,6 +257,7 @@ class Data_points():
             np.insert(self.data_y, begin_i+j, data_points.data_y[j])
     
     def add_point(self, x, y):
+        """Dodaje punkt."""
         i = np.searchsorted(self.data_x, x)
         self.data_x=np.insert(self.data_x, i, x)
         self.data_y=np.insert(self.data_y, i, y)
@@ -252,9 +277,10 @@ class Data_points():
             self.add_point(x+begin_time, y)
 
     def delete_point(self, x, y=None):
-        """Usuwa punkt najbliższy do danych współrzędnych."""
-        # Współrzędna y nie jest potrzebna, gdyż punkty w sygnałach biomedycznych
-        # są przeważnie oznaczone tylko czasem
+        """Usuwa punkt najbliższy do danych współrzędnych. Argument
+        y jest opcjonalny, ponieważ wiekszosść punktów na przebiegach
+        symbolizują wydarzenia w czasie i ich y są mniej ważne.
+        """
         if y is not None:
             points = np.vstack((self.data_x, self.data_y))
             point = np.array([[x],[y]])
@@ -265,11 +291,10 @@ class Data_points():
         self.data_x = np.delete(self.data_x, closest_id)
         self.data_y = np.delete(self.data_y, closest_id)
 
-    def align_to_line(self, data_line):
-        """Wyrównuje współrzędne y punktów do danych danego Data_line.
-        """
+    def align_to_line(self, data_wave):
+        """Wyrównuje współrzędne y punktów do y danego Data_wave."""
         for i in range(len(self)):
-            self.data_y[i] = data_line.value_at(self.data_x[i])
+            self.data_y[i] = data_wave.value_at(self.data_x[i])
 
     def move_in_time(self, time):
         """Przesuwa punkty w czasie."""
@@ -277,14 +302,18 @@ class Data_points():
             self.data_x[i] += time
 
 class Parameter():
-    """Parameter jest klasą odpowiadającą za przechowywanie kilku obliczonych
-    wartości parametru tego zamego typu, wraz z ich wartością oraz informacjami
-    czasowymi. Parametry powstają jako wynik działania procedur.
+    """Parameter jest klasą odpowiadającą za przechowywanie kilku 
+    obliczonych wartości parametru tego zamego typu, wraz z informacjami
+    czasowymi w formie list początkowych i końcowych czasów. Parametry 
+    powstają jako wynik działania procedur.
     
-    Parametry przechowywane są w dwóch listach, w kolejności czasu początkowego:
+    Parametry przechowywane są za pomocą trzech list, w kolejności czasu
+    początkowego:
         self.parmaeter_begin_times - zawiera czasy początkowe parametrów
         self.parameter_end_times - zawiera czasy końcowe parametrów
-        self.parameter_values - zawiera wartość parametru"""
+        self.parameter_values - zawiera wartość parametru
+    """
+
     def __init__(self, parameter_type):
         self.type = parameter_type
         self.begin_times = np.array([])
@@ -294,16 +323,16 @@ class Parameter():
     @classmethod
     def copy(cls, parameter):
         out = cls(parameter.type)
-        out.begin_times = parameter.begin_times
-        out.end_times = parameter.end_times
-        out.values = parameter.values
+        out.begin_times = np.copy(parameter.begin_times)
+        out.end_times = np.copy(parameter.end_times)
+        out.values = np.copy(parameter.values)
         return out
 
     def __len__(self):
         return len(self.begin_times)
 
     def add_value(self, begin_time, end_time, value):
-        """Dodaje wartość parametru odpowiadającą danemu czasowi"""
+        """Dodaje wartość parametru obliczoną w danym czasie"""
         if len(self)==0: 
             self.begin_times = np.append(self.begin_times, begin_time)
             self.end_times = np.append(self.end_times, end_time)
@@ -315,8 +344,9 @@ class Parameter():
             self.values = np.insert(self.values, i, value)
 
     def contained_in(self, time):
-        """Zwraca indeksy wartości parametru, które zawierają dany punkt czasu
-        w sobie."""
+        """Zwraca indeksy wartości parametru, które zawierają dany punkt
+        czasu w sobie.
+        """
         contained_indices = []
         for index, begin_time, end_time in zip(range(len(self)),self.begin_times,
                                         self.end_times):
@@ -327,6 +357,7 @@ class Parameter():
         return contained_indices
 
     def value_at(self, time):
+        """Zwraca wartość parametru w danym czasie."""
         parameter_indices = self.contained_in(time)
         if len(parameter_indices) == 0:
             return None
@@ -334,6 +365,9 @@ class Parameter():
             return np.average(self.values[parameter_indices])
 
     def generate_parameter_line_tuples(self, begin_time=None, end_time=None):
+        """Zwraca tuple wartości x i y w układzie współrzędnych, by
+        później mogły one zostać wizualizowane.
+        """
         line_tuples = []
         for param_begin_time, param_end_time, value in zip(self.begin_times,
                                                            self.end_times,
@@ -348,12 +382,23 @@ class Parameter():
         return line_tuples
 
 class Composite_data:
-    def __init__(self, data_lines=None, data_points=None, parameters=None):
-        self.data_lines = {}
+    """Obiekt przchowujący komplet Data_wave, Data_points oraz Parameter
+    który pozwala na przeprowadzanie operacji na nich wszystkich
+    jednocześnie. Procedury analizy przyjmują Composite_data jako
+    argument.
+
+    Wszystkie dane przechowywane są w Composite_data w trzech dict:
+        self.data_waves
+        self.data_points
+        self.parameters
+    """
+
+    def __init__(self, data_waves=None, data_points=None, parameters=None):
+        self.data_waves = {}
         self.data_points = {}
         self.parameters = {}
-        if data_lines is not None: 
-            self.data_lines = data_lines
+        if data_waves is not None: 
+            self.data_waves = data_waves
         if data_points is not None: 
             self.data_points = data_points
         if parameters is not None:
@@ -361,19 +406,19 @@ class Composite_data:
 
     def calculate_complete_time_span(self):
         """Zwraca początek oraz koniec zakresu czasowego w sekundach,
-        na długości którego dostępne są dane jakiekogolwiek sygnału.
+        na długości którego dostępne są dane jakiekogolwiek przebiegu.
         """
         begin_time = None
         end_time = None
-        for key, data_line in self.data_lines.items():
+        for key, data_wave in self.data_waves.items():
             if begin_time is None:
-                begin_time = data_line.offset
+                begin_time = data_wave.offset
             else:
-                begin_time = min(data_line.offset, begin_time)
+                begin_time = min(data_wave.offset, begin_time)
             if end_time is None:
-                end_time = data_line.offset + data_line.complete_length
+                end_time = data_wave.offset + data_wave.complete_length
             else:
-                end_time = max(data_line.offset + data_line.complete_length,
+                end_time = max(data_wave.offset + data_wave.complete_length,
                                end_time)
         for key, data_points in self.data_points.items():
             if begin_time is None:
@@ -389,40 +434,44 @@ class Composite_data:
             begin_time = 0
         return begin_time, end_time
 
-    def calculate_time_range(self, required_lines):
+    def calculate_time_range(self, required_waves):
         """Zwraca początek oraz koniec zakresu czasowego w sekundach,
-        na długości którego dostępne są dane wszystkich wymaganych sygnałów.
+        na długości którego dostępne są dane wszystkich wymaganych 
+        przebiegów.
         """
         begin_time = None
         end_time = None
-        for required_line in required_lines:
-            data_line = self.data_lines[required_line]
+        for required_wave in required_waves:
+            data_wave = self.data_waves[required_wave]
             if begin_time is None:
-                begin_time = data_line.offset
+                begin_time = data_wave.offset
             else:
-                begin_time = max(data_line.offset, begin_time)
+                begin_time = max(data_wave.offset, begin_time)
             if end_time is None:
-                end_time = data_line.offset + data_line.complete_length
+                end_time = data_wave.offset + data_wave.complete_length
             else:
-                end_time = min(data_line.offset + data_line.complete_length,
+                end_time = min(data_wave.offset + data_wave.complete_length,
                                end_time)
         return begin_time, end_time
 
-    def add_data_line(self, data_line, dict_type, replace=False):
+    def add_data_wave(self, data_wave, dict_type, replace=False):
+        """Dodaje przebieg."""
         if dict_type is None:
-            dict_type = data_line.type
+            dict_type = data_wave.type
             if dict_type is None:
                 raise ValueError('Etykieta (dictionary key; tutaj dict_type) '
                                  'linii danych nie może być pusta')
-        if dict_type in self.data_lines and not replace:
-            raise ValueError('Etykieta %s w data_lines jest już zajęta.' 
+        if dict_type in self.data_waves and not replace:
+            raise ValueError('Etykieta %s w data_waves jest już zajęta.' 
                              % dict_type)
-        self.data_lines[dict_type] = data_line
+        self.data_waves[dict_type] = data_wave
 
-    def delete_data_line(self, dict_type):
-        self.data_lines.pop(dict_type)
+    def delete_data_wave(self, dict_type):
+        """Usuwa przebieg."""
+        self.data_waves.pop(dict_type)
 
     def add_data_points(self, data_points, dict_type, join=False):
+        """Dodaje zestaw punktów."""
         # TODO: czy defaultowo join powinno być False?
         if dict_type is None:
             dict_type = data_points.type
@@ -436,9 +485,11 @@ class Composite_data:
             self.data_points[dict_type] = data_points
 
     def delete_data_points(self, dict_type):
+        """Usuwa zestaw punktów."""
         self.data_points.pop(dict_type)
 
     def add_parameter(self, parameter, dict_type, replace=False):
+        """Dodaje parametr."""
         if dict_type is None:
             dict_type = parameter.type
             if dict_type is None:
@@ -450,4 +501,5 @@ class Composite_data:
         self.parameters[dict_type] = parameter
 
     def delete_parameter(self, dict_type):
+        """Usuwa parametr."""
         self.parameters.pop(dict_type)

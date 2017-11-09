@@ -31,7 +31,7 @@ default_arguments = {
     'threshold_fraction':0.4,
     'threshold_period':2,
     'safe_period':0.25}
-required_lines = ['bp']
+required_waves = ['bp']
 required_points = []
 
 def validate_arguments(composite_data, arguments):
@@ -53,12 +53,12 @@ def interpret_arguments(arguments):
     return output_arguments
 
 def procedure(comp_data, begin_time, end_time, arguments):
-    data_line = comp_data.data_lines['bp']
+    data_wave = comp_data.data_waves['bp']
     
     # Obliczamy pochodną za pomocą pięciu punktów (po 2 z każdej strony
     # punktu środkowego)
-    sample_length = data_line.sample_length
-    data = data_line.data_slice(begin_time, end_time)
+    sample_length = data_wave.sample_length
+    data = data_wave.data_slice(begin_time, end_time)
     data = np.array(data)
     derivative = [0] * 2 # pierwsze dwie wartości są puste
     for i in range(2,len(data)-2):
@@ -114,10 +114,10 @@ def procedure(comp_data, begin_time, end_time, arguments):
     dbp_x = np.array(dbp_x)
     return dbp_x, dbp_y
 
-def execute(data_line, begin_time, end_time, arguments):
+def execute(comp_data, begin_time, end_time, arguments):
     """Sprawdza poprawność argumentów i wykonuje procedurę."""
-    valid, error_message = validate_arguments(data_line, arguments)
+    valid, error_message = validate_arguments(comp_data, arguments)
     if not valid:
         raise InvalidArgumentError(error_message)
     arguments = interpret_arguments(arguments)
-    return procedure(data_line, begin_time, end_time, arguments)
+    return procedure(comp_data, begin_time, end_time, arguments)

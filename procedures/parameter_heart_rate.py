@@ -10,7 +10,7 @@ minutę w oparciu o punkty R.
 author = 'kcybulski'
 arguments = {}
 default_arguments = {}
-required_lines = []
+required_waves = []
 required_points = ['r']
 
 def validate_arguments(composite_data, arguments):

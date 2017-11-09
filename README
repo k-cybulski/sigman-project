@@ -1,7 +1,13 @@
-Celem tego projektu jest utworzenie biblioteki (sigman) pozwalającej na dowolną analizę danych biomedycznych za pomocą prostych do utworzenia zewnętrznych procedur, a także programu (qtsigman) który pozwoli na korzystanie z tej biblioteki przez interfejs graficzny.
+Celem tego projektu jest utworzenie biblioteki (sigman) pozwalającej na dowolną
+analizę danych biomedycznych za pomocą prostych do utworzenia zewnętrznych 
+procedur, a także programu (QtSigman) który pozwoli na korzystanie z tej 
+biblioteki przez interfejs graficzny.
 
-Kod projektu powinien być utrzymywany jak najbliżej norm PEP-8 (zawarte w pliku PEP-8-style-guide.pdf).
-W pliku ./struktura_sigman opisana jest struktura fundamentalnych klas oraz ich metod a także funkcji zawartych w plikach biblioteki sigman.
+Kod projektu powinien być utrzymywany jak najbliżej norm PEP-8 (zawarte są 
+w pliku PEP-8-style-guide.pdf). W bibliotece sigman utrzymywane jest
+nazewnictwo lowercase_with_underscores, natomiast w kodzie programu QtSigman w
+ramach konsystencji z biblioteką PyQt5 wykorzystywane jest nazewnictwo
+CamelCase.
 
 Dokładniejsze cele projektu:
 1)Wczytywanie i zapisywanie danych                  [ ]

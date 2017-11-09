@@ -41,12 +41,12 @@ def _import_dat(file_name):
 
 
 def _import_line_dat(file_name, line_type='default', offset=0):
-    """Importuje ciąg danych o stałej częstotliwości z pliku .dat i
-    zwraca odpowiadający mu sm.Data_line.
+    """Importuje przebieg o stałej częstotliwości z pliku .dat i
+    zwraca odpowiadający mu sm.Data_wave.
     """
     x, y = _import_dat(file_name)
     complete_len = x[-1]
-    return sm.Data_line(y, complete_len, 
+    return sm.Data_wave(y, complete_len, 
                         line_type = line_type, 
                         offset = offset)
     
@@ -59,8 +59,8 @@ def _import_point_dat(file_name, point_type='default'):
                           point_type = point_type)
 
 def import_line(file_name, line_type='default', offset=0):
-    """Importuje dane liniowe z danego pliku, przy czym wybiera
-    odpowiednią funkcję do formatu danego pliku.
+    """Importuje przebieg z danego pliku, przy czym wybiera odpowiednią
+    funkcję do formatu danego pliku.
     """
     extension = os.path.splitext(file_name)[1][1:]
     if extension == 'dat':
@@ -73,8 +73,8 @@ def import_line(file_name, line_type='default', offset=0):
         offset = offset)
 
 def import_points(file_name, point_type='default'):
-    """Importuje punkty z danego pliku, przy czym wybiera odpowiednia
-    funkcję formatu danego pliku.
+    """Importuje punkty z danego pliku, przy czym wybiera odpowiednią
+    funkcję do formatu danego pliku.
     """
     extension = os.path.splitext(file_name)[1][1:]
     if extension == 'dat':
@@ -92,17 +92,17 @@ def _export_dat(data_x,data_y,filename):
         for x, y in zip(data_x, data_y):
             writer.writerow([x,y])
 
-def _export_line_dat(file_name, data_line):
-    """Eksportuje Data_line do pliku o formacie .dat."""
-    data_x, data_y = data_line.generate_coordinate_tables()
+def _export_line_dat(file_name, data_wave):
+    """Eksportuje Data_wave do pliku o formacie .dat."""
+    data_x, data_y = data_wave.generate_coordinate_tables()
     _export_dat(data_x,data_y,file_name)
 
 def _export_point_dat(file_name, data_points):
     """Eksportuje Data_points do pliku o formacie .dat."""
     _export_dat(file_name, data_points.data_x, data_points.data_y)
 
-def export_line(file_name, data_line):
-    """Eksportuje Data_line do pliku, wykorzystując przy tym funkcję
+def export_line(file_name, data_wave):
+    """Eksportuje Data_wave do pliku, wykorzystując przy tym funkcję
     odpowiednią dla pożądanego formatu.
     """
     extension = os.path.splitext(file_name)[1][1:]
@@ -110,7 +110,7 @@ def export_line(file_name, data_line):
         export_func = _export_line_dat
     else:
         raise ValueError("Nieodpowiedni format plików")
-    export_func(file_name, data_line)
+    export_func(file_name, data_wave)
 
 def export_points(file_name, data_points):
     """Eksportuje Data_points do pliku, wykorzystując przy tym funkcję

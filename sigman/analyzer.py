@@ -2,57 +2,67 @@
 W tym pliku znajdują się funkcje pozwalające importować oraz stosować
 zewnętrzne procedury na danych. 
 
-Procedury znajdują się w plikach w folderze 'procedures'. 
+Procedury znajdują się w plikach w folderze 'procedures'. Są trzy
+typy procedur:
+    filter - procedura filtrująca przebieg sygnału. Dane przyjmuje w
+             formie Data_wave.
+             (przykład 'parameters/filter_butterworth.py')
+    points - procedura odnajdująca punkty na przebiegu sygnału.
+             Dane przyjmuje w formie Composite_data.
+             (przykład 'parameters/points_dbp_simple.py')
+    parameter - procedura obliczająca parametry w oparciu o punkty
+                oraz przebiegi.
+                (przykład 'procedures/parameter_heart_rate.py')
+
+Procedury poza danymi przyjmują także dodatkowe argumenty w formie
+dict nazw argumentów i ich wartości. Procedura powinna być w stanie
+interpretować argumenty wpisane jako string.
 
 Każdy plik procedury jest pojedynczym pythonowym modułem który powinien 
 zawierać atrybuty:
     <string> procedure_type - typ procedury; mogą być "filter","points" 
-                              lub "misc"
-        "filter" oznacza procedurę filtrowania, która przyjmuje tylko linię 
-            danych do przefiltrowania oraz zakres czasu działania i 
-            dodatkowe argumenty
-        "points" oznacza procedurę odnajdującą punkty, która przyjmuje
-            zestaw linii danych oraz odkrytych już punktów i dodatkowe
-            argumenty
-        "misc" oznacza procedurę o bliżej nieokreślonym zastosowaniu,
-            np. obliczającą tętno w danym zakresie czasu
+                              lub "parameter"
     <string> description - opis celu i działania procedury
     <string> author - autor procedury
+    <dict> arguments - dict nazw argumentów oraz objaśnień, co oznaczają
     <dict> default_arguments - dict z domyślnymi argumentami procedury
-    <lista string> required_arguments - wymagane argumenty procedury
-    <function> procedure - procedura; opisana niżej
+    <funkcja> validate_arguments - funkcja, która sprawdza poprawność
+                                   danego dict z argumentami
+    <funkcja> procedure - procedura; opisana niżej
+    <funkcja> execute - funkcja wywoływana z zewnątrz, która sprawdza
+                        poprawność argumentów, interpretuje je oraz
+                        przeprowadza samą procedurę
 
-Procedury poza procedurą filtracji powinny zawierać jeszcze atrybuty:
-    <lista string> required_lines - wymagane rodzaje danych dla procedury
+Ponadto procedury poza procedurami filtracji powinny zawierać jeszcze:
+    <lista string> required_waves - wymagane rodzaje przebiegów dla procedury
     <lista string> required_points - wymagane punkty dla procedury
 
 Zależnie od rodzaju procedury funkcja procedure powinna mieć inną
 strukturę. Poniżej opisane dla każdego rodzaju procedury:
     'filter'
-        procedure(<Data_line> data_line, 
+        procedure(<Data_wave> data_wave, 
                   <float> begin_time, <float> end_time,
                   <dict> arguments)
         procedura powinna zwracać przefiltrowaną tablicę wartości
-        sygnału
+        sygnału o długości danego odcinka czasowego
     'points'
         procedure(<Composite_data> comp_data,
                   <float> begin_time, <float> end_time,
                   <dict> arguments)
         procedura zwraca dwie tablice - współrzędnych x i y punktów
-    'misc'
+    'parameter'
         procedure(<Composite_data> comp_data,
                   <float> begin_time, <float> end_time,
                   <dict> arguments)
-        procedura nie ma wymagań do tego, co zwraca
+        procedura powinna zwracać wartość parametru na danym czasie
 
 Przykład zastosowania:
     butterworth = analyzer.import_procedure("filter_butterworth")
     arguments = butterworth.default_arguments
     arguments['N'] = 3
     arguments['Wn'] = 30
-    filtered_data_line = analyzer.filter_line(complete_data.data_lines['bp'], 60, 70, butterworth, arguments)
-    complete_data.data_lines['bp'].replace_slice(60, 70, filtered_data_line)
-
+    filtered_data_wave = analyzer.filter_line(composite_data.data_waves['bp'], 60, 70, butterworth, arguments)
+    complete_data.data_waves['bp'].replace_slice(60, 70, filtered_data_wave)
 """
 
 import importlib
@@ -93,7 +103,7 @@ def validate_procedure_compatibility(procedure_module):
         "execute"]
     if procedure_type in ['points', 'parameter']:
         required_attributes.extend([
-            "required_lines",
+            "required_waves",
             "required_points"])
     
     for attribute in required_attributes:
@@ -112,14 +122,14 @@ def import_procedure(name):
         raise InvalidProcedureError(error_message)
     return procedure
 
-def filter_line(data_line, begin_time, end_time, 
+def filter_line(data_wave, begin_time, end_time, 
                 procedure, arguments, 
                 line_type = None):
-    """Filtruje Data_line podaną procedurą filtracji."""
+    """Filtruje Data_wave podaną procedurą filtracji."""
     if line_type is None:
-        line_type = data_line.type
-    filtered_data = procedure.procedure(data_line, begin_time, end_time, arguments)
-    return sm.Data_line(filtered_data, end_time-begin_time, 
+        line_type = data_wave.type
+    filtered_data = procedure.procedure(data_wave, begin_time, end_time, arguments)
+    return sm.Data_wave(filtered_data, end_time-begin_time, 
                         line_type = line_type)
     
 def find_points(composite_data, begin_time, end_time, 
@@ -128,9 +138,9 @@ def find_points(composite_data, begin_time, end_time,
     """Odnajduje punkty na danym zakresie czasu za pomocą podanej 
     procedury.
     """
-    if not all(line in composite_data.data_lines for line in procedure.required_lines):
+    if not all(line in composite_data.data_waves for line in procedure.required_waves):
         raise ValueError('Composite_data nie zawiera wymaganych linii z %s'
-                         % procedure.required_lines)
+                         % procedure.required_waves)
     if not all(points in composite_data.data_points for points in procedure.required_points): 
         raise ValueError('Composite_data nie zawiera wymaganych punktów z %s'
                          % procedure.required_points)
@@ -147,9 +157,9 @@ def calculate_parameter(composite_data, time_tuples,
     Composite_data w danych zakresach czasowych i zwraca utworzony 
     Parameter.
     """
-    if not all(line in composite_data.data_lines for line in procedure.required_lines):
+    if not all(line in composite_data.data_waves for line in procedure.required_waves):
         raise ValueError('Composite_data nie zawiera wymaganych linii z %s'
-                         % procedure.required_lines)
+                         % procedure.required_waves)
     if not all(points in composite_data.data_points for points in procedure.required_points): 
         raise ValueError('Composite_data nie zawiera wymaganych punktów z %s'
                          % procedure.required_points)

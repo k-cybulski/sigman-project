@@ -34,10 +34,10 @@ class VisualDataObject():
         if self.mplObject is not None:
             self.mplObject.set_color(color)
 
-class VisualDataLine(VisualDataObject, sm.Data_line):
+class VisualDataWave(VisualDataObject, sm.Data_wave):
     def __init__(self, data, color, axis):
         VisualDataObject.__init__(self, data, color, axis)
-        sm.Data_line.__init__(self,
+        sm.Data_wave.__init__(self,
                               data.data,
                               data.complete_length,
                               line_type = data.type,
@@ -125,8 +125,8 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
         sm.Composite_data.__init__(self, **kwargs)
         QC.QObject.__init__(self)
 
-        for key, item in self.data_lines.items():
-            self.data_lines[key] = VisualDataLine(
+        for key, item in self.data_waves.items():
+            self.data_waves[key] = VisualDataWave(
                 item, 
                 colors.to_hex(defaultColors[key]),
                 Axis.Hidden)
@@ -140,11 +140,11 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
                 item, 
                 colors.to_hex(defaultColors[key]),
                 Axis.Hidden)
-        self.dataDicts = [self.data_lines, self.data_points, self.parameters]
+        self.dataDicts = [self.data_waves, self.data_points, self.parameters]
 
     def replaceWithCompositeDataWrapper(self, compositeDataWrapper):
         newDataDicts = [
-            compositeDataWrapper.data_lines,
+            compositeDataWrapper.data_waves,
             compositeDataWrapper.data_points,
             compositeDataWrapper.parameters]
         for dataDict, newDataDict in zip(self.dataDicts, newDataDicts):
@@ -153,11 +153,11 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
             # Oczyszczanie zapisanych danych graficznych
             for key, item in newDataDict.items():
                 item.mplObject = None
-        self.data_lines = compositeDataWrapper.data_lines
+        self.data_waves = compositeDataWrapper.data_waves
         self.data_points = compositeDataWrapper.data_points
         self.parameters = compositeDataWrapper.parameters
         self.dataDicts = [
-            self.data_lines,
+            self.data_waves,
             self.data_points,
             self.parameters]
 
@@ -171,39 +171,39 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
     @classmethod
     def fromSigmanCompositeData(cls, compositeData):
         return cls(
-            data_lines = compositeData.data_lines,
+            data_waves = compositeData.data_waves,
             data_points = compositeData.data_points,
             parameters = compositeData.parameters)
 
-    def add_data_line(self, data_line, dict_type, color, replace=False,
+    def add_data_wave(self, data_wave, dict_type, color, replace=False,
                       axis=Axis.Hidden):
-        super(CompositeDataWrapper, self).add_data_line(data_line,
+        super(CompositeDataWrapper, self).add_data_wave(data_wave,
                                                         dict_type,
                                                         replace = replace)
-        self.data_lines[dict_type] = VisualDataLine(
-            self.data_lines[dict_type],
+        self.data_waves[dict_type] = VisualDataWave(
+            self.data_waves[dict_type],
             color,
             axis)
         self.lineNumberChanged.emit()
 
-    def editDataLineSettings(self, dictType, newDictType, 
+    def editDataWaveSettings(self, dictType, newDictType, 
                                 color, axis, offset):
-        data_line = self.data_lines[dictType]
-        if data_line.color != color:
-            data_line.setMplColor(color)
-        if data_line.axis != axis:
-            data_line.axis = axis
-            data_line.removeMplObject()
-        data_line.offset = offset 
+        data_wave = self.data_waves[dictType]
+        if data_wave.color != color:
+            data_wave.setMplColor(color)
+        if data_wave.axis != axis:
+            data_wave.axis = axis
+            data_wave.removeMplObject()
+        data_wave.offset = offset 
         if dictType != newDictType:
-            self.data_lines[newDictType] = data_line
-            self.data_lines.pop(dictType)
+            self.data_waves[newDictType] = data_wave
+            self.data_waves.pop(dictType)
             self.lineNumberChanged.emit()
         self.lineChanged.emit()
 
-    def delete_data_line(self, dict_type):
-        self.data_lines[dict_type].removeMplObject()
-        super(CompositeDataWrapper, self).delete_data_line(dict_type)
+    def delete_data_wave(self, dict_type):
+        self.data_waves[dict_type].removeMplObject()
+        super(CompositeDataWrapper, self).delete_data_wave(dict_type)
         self.lineNumberChanged.emit()
 
     def add_data_points(self, data_points, dict_type, color, join=False,

@@ -8,7 +8,6 @@ from matplotlib import pyplot as plt
 
 import sigman
 
-
 # Kolory różnych rodzajów danych
 type_colors={'ecg':'C0', 'bp':'C1', 
              'r':'r', 
@@ -16,51 +15,52 @@ type_colors={'ecg':'C0', 'bp':'C1',
              'hr':'C2'}
 
 def visualize_composite_data(comp_data, begin_time=None, end_time=None, 
-    title="", wanted_lines=None, wanted_points=None, wanted_parameters=None):
+    title="", wanted_waves=None, wanted_points=None, wanted_parameters=None):
     """Szybka i nieestetyczna funkcja do wizualizacji danych zawartych
-    w Composite_data.
+    w Composite_data. Pokazuje okno matplotlib uwzględniające wszystkie
+    wymagane przebiegi i punkty.
     """
     # Ustalamy zakres czasu, który chcemy pokazać
-    # jeśli wanted_lines są ustawione, to ograniczymy zakres tylko do nich
+    # jeśli wanted_waves są ustawione, to ograniczymy zakres tylko do nich
     # jeśli nie są, to pokażemy wszystkie dane które mamy
     if end_time is None or begin_time is None:
-        if wanted_lines is not None:
+        if wanted_waves is not None:
             temp_begin_time, temp_end_time = comp_data.calculate_time_range(
-                required_lines = wanted_lines)
+                required_waves = wanted_waves)
         else:
             temp_begin_time, temp_end_time = comp_data.calculate_complete_time_span()
         if begin_time is None:
             begin_time = temp_begin_time
         if end_time is None:
             end_time = temp_end_time
-    if wanted_lines is None:
-        for key, data_line in comp_data.data_lines.items():
-            temp_begin_time = max(begin_time, data_line.offset)
-            temp_end_time = min(end_time, data_line.offset 
-                                + data_line.complete_length)
-            x, y = data_line.generate_coordinate_tables(
+    if wanted_waves is None:
+        for key, data_wave in comp_data.data_waves.items():
+            temp_begin_time = max(begin_time, data_wave.offset)
+            temp_end_time = min(end_time, data_wave.offset 
+                                + data_wave.complete_length)
+            x, y = data_wave.generate_coordinate_tables(
                 begin_time = temp_begin_time, 
                 end_time = temp_end_time, 
                 begin_x = temp_begin_time)
-            if data_line.type in type_colors:
-                color = type_colors[data_line.type]
+            if data_wave.type in type_colors:
+                color = type_colors[data_wave.type]
             else:
                 color = None
             plt.plot(x, y, color = color, 
-                label = data_line.type)
+                label = data_wave.type)
     else:
-        for dict_type in wanted_lines:
-            data_line = comp_data.data_lines[dict_type]
-            x, y = data_line.generate_coordinate_tables(
+        for dict_type in wanted_waves:
+            data_wave = comp_data.data_waves[dict_type]
+            x, y = data_wave.generate_coordinate_tables(
                 begin_time = begin_time, 
                 end_time = end_time, 
                 begin_x = begin_time)
-            if data_line.type in type_colors:
-                color = type_colors[data_line.type]
+            if data_wave.type in type_colors:
+                color = type_colors[data_wave.type]
             else:
                 color = None
             plt.plot(x, y, color = color, 
-                label = data_line.type)
+                label = data_wave.type)
     if wanted_points is None:
         for key, data_points in comp_data.data_points.items():
             x, y = data_points.data_slice(begin_time, end_time)

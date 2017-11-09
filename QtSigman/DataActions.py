@@ -16,13 +16,13 @@ def importLine(compositeDataWrapper):
     try:
         path = fileDialog.getOpenFileName(filter = fileFilter)
         assert path[0] != ""
-        dataLine = fm.import_line(path[0])
+        dataWave = fm.import_line(path[0])
         dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-            forbiddenNames = compositeDataWrapper.data_lines.keys(),
+            forbiddenNames = compositeDataWrapper.data_waves.keys(),
             title = path[0])
         if status is DataActionStatus.Ok: 
-            dataLine.offset = offset
-            compositeDataWrapper.add_data_line(dataLine, dictType, 
+            dataWave.offset = offset
+            compositeDataWrapper.add_data_wave(dataWave, dictType, 
                                                color, axis = axis)
     # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się
     # nie stało i nic nie zmieniamy
@@ -49,21 +49,21 @@ def importPoints(compositeDataWrapper):
         pass
 
 def editLineSettings(compositeDataWrapper, dictType):
-    forbiddenNames = list(compositeDataWrapper.data_lines.keys())
+    forbiddenNames = list(compositeDataWrapper.data_waves.keys())
     forbiddenNames.remove(dictType)
     newDictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
         forbiddenNames = forbiddenNames,
         dictType = dictType,
         title = dictType,
-        axis = compositeDataWrapper.data_lines[dictType].axis,
-        offset = str(compositeDataWrapper.data_lines[dictType].offset),
+        axis = compositeDataWrapper.data_waves[dictType].axis,
+        offset = str(compositeDataWrapper.data_waves[dictType].offset),
         askDelete = True,
-        color = compositeDataWrapper.data_lines[dictType].color)
+        color = compositeDataWrapper.data_waves[dictType].color)
     if status is DataActionStatus.Ok:
-        compositeDataWrapper.editDataLineSettings(
+        compositeDataWrapper.editDataWaveSettings(
             dictType, newDictType, color, axis, offset)
     if status is DataActionStatus.Delete:
-        compositeDataWrapper.delete_data_line(dictType)
+        compositeDataWrapper.delete_data_wave(dictType)
 
 def editPointSettings(compositeDataWrapper, dictType):
     forbiddenNames = list(compositeDataWrapper.data_points.keys())
@@ -104,7 +104,7 @@ class _PickledCompositeDataWrapper:
     graficznych które uniemożliwiają użycie na nim pickle."""
     def __init__(self, compositeDataWrapper):
         data = [
-            compositeDataWrapper.data_lines,
+            compositeDataWrapper.data_waves,
             compositeDataWrapper.data_points,
             compositeDataWrapper.parameters]
 #       mplObject każdego obiektu danych powinien być usunięty, by nie
@@ -114,7 +114,7 @@ class _PickledCompositeDataWrapper:
 #        for dataItem in data:
 #            for key, item in dataItem.items():
 #                item.removeMplObject()
-        self.data_lines = compositeDataWrapper.data_lines
+        self.data_waves = compositeDataWrapper.data_waves
         self.data_points = compositeDataWrapper.data_points
         self.parameters = compositeDataWrapper.parameters
 
