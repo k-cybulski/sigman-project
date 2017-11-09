@@ -40,14 +40,14 @@ def _import_dat(file_name):
     return x, y
 
 
-def _import_line_dat(file_name, line_type='default', offset=0):
+def _import_line_dat(file_name, wave_type='default', offset=0):
     """Importuje przebieg o stałej częstotliwości z pliku .dat i
     zwraca odpowiadający mu sm.Data_wave.
     """
     x, y = _import_dat(file_name)
     complete_len = x[-1]
     return sm.Data_wave(y, complete_len, 
-                        line_type = line_type, 
+                        wave_type = wave_type, 
                         offset = offset)
     
 def _import_point_dat(file_name, point_type='default'):
@@ -58,7 +58,7 @@ def _import_point_dat(file_name, point_type='default'):
     return sm.Data_points(x, y, 
                           point_type = point_type)
 
-def import_line(file_name, line_type='default', offset=0):
+def import_line(file_name, wave_type='default', offset=0):
     """Importuje przebieg z danego pliku, przy czym wybiera odpowiednią
     funkcję do formatu danego pliku.
     """
@@ -69,7 +69,7 @@ def import_line(file_name, line_type='default', offset=0):
         raise ValueError("Nieodpowiedni format plików")
     return import_func(
         file_name, 
-        line_type = line_type, 
+        wave_type = wave_type, 
         offset = offset)
 
 def import_points(file_name, point_type='default'):

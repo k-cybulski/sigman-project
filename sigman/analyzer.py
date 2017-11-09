@@ -124,13 +124,13 @@ def import_procedure(name):
 
 def filter_line(data_wave, begin_time, end_time, 
                 procedure, arguments, 
-                line_type = None):
+                wave_type = None):
     """Filtruje Data_wave podaną procedurą filtracji."""
-    if line_type is None:
-        line_type = data_wave.type
+    if wave_type is None:
+        wave_type = data_wave.type
     filtered_data = procedure.procedure(data_wave, begin_time, end_time, arguments)
     return sm.Data_wave(filtered_data, end_time-begin_time, 
-                        line_type = line_type)
+                        wave_type = wave_type)
     
 def find_points(composite_data, begin_time, end_time, 
                 procedure, arguments, 

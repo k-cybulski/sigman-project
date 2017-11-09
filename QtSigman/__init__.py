@@ -40,7 +40,7 @@ class VisualDataWave(VisualDataObject, sm.Data_wave):
         sm.Data_wave.__init__(self,
                               data.data,
                               data.complete_length,
-                              line_type = data.type,
+                              wave_type = data.type,
                               offset = data.offset)
 
     def plot(self, axis, beginTime, endTime):

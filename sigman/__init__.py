@@ -27,14 +27,14 @@ class Data_wave():
     się na metodach value_at i data_slice.
     """
 
-    def __init__(self, data, complete_length, line_type='default', offset=0):
+    def __init__(self, data, complete_length, wave_type='default', offset=0):
         """Inicjalizuje Data_wave. Przyjmuje tablicę danych wartości
         sygnału oraz jego długość.
 
         Argumenty:
         data - tablica wartości y punktów przebiegu
         complete_length - długość przebiegu w czasie
-        line_type - typ danych przebiegu, np. 'ecg' czy 'bp'
+        wave_type - typ danych przebiegu, np. 'ecg' czy 'bp'
         offset - przesunięcie w czasie względem pozostałych Data_wave 
                  w Composite_data
         """
@@ -44,7 +44,7 @@ class Data_wave():
         # Częstotliwość danych.
         self.sample_rate = 1/self.sample_length        
         self.complete_length = complete_length 
-        self.type = line_type 
+        self.type = wave_type 
         self.data = np.array(data) 
         self.offset = offset
 
@@ -52,7 +52,7 @@ class Data_wave():
     def copy(cls, data_wave):
         """Zwraca kopię danego Data_wave."""
         return cls(data_wave.data, data_wave.complete_length,
-                   line_type=data_wave.type, offset=data_wave.offset)
+                   wave_type=data_wave.type, offset=data_wave.offset)
 
     def __len__(self):
         """Zwraca liczbę punktów zawartych w całym ciągu danych."""

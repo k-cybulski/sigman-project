@@ -8,8 +8,8 @@ from sigman import visualizer as vis
 import os
 
 print(">Próba importu próbych .dat")
-bp_line = fm.import_line('example_data/BP.dat', line_type = 'bp')
-ecg_line = fm.import_line('example_data/EKG.dat', line_type = 'ecg')
+bp_line = fm.import_line('example_data/BP.dat', wave_type = 'bp')
+ecg_line = fm.import_line('example_data/EKG.dat', wave_type = 'ecg')
 r_points = fm.import_points('example_data/R.dat', point_type = 'r') 
 
 print(">Próba połączenia danych w Composite_data")
@@ -52,7 +52,7 @@ print(">Próba zapisania composite_data")
 fm.save_composite_data("example_data/example_composite_data.pickle",complete_data)
 
 print(">Proba wczytania innego, bardzo chaotycznego sygnału EKG i przefiltrowania go a następnie pokazania tuż obok nieprzefiltrowanego")
-ecg_line = fm.import_line('example_data/EKG_messy.dat', line_type = 'ecg_messy')
+ecg_line = fm.import_line('example_data/EKG_messy.dat', wave_type = 'ecg_messy')
 arguments['N'] = 3
 arguments['Wn'] = 20
 filtered_ecg = analyzer.filter_line(ecg_line, 0, ecg_line.complete_length, butterworth, arguments)
