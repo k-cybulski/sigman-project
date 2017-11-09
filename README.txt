@@ -4,6 +4,13 @@ analizę danych biomedycznych za pomocą prostych do utworzenia zewnętrznych
 procedur, a także programu (QtSigman) który pozwoli na korzystanie z tej 
 biblioteki przez interfejs graficzny.
 
+## Obsługa
+Dokładna dokumentacja wkrótce.
+
+run_qtsigman.py uruchamia QtSigman
+test_sigman.py to skrypt wykorzystujący większość głównych funkcji biblioteki
+sigman.
+
 ## Cele
 1. sigman
 1) Wczytywanie i zapisywanie danych                 [ ]
@@ -71,12 +78,12 @@ CamelCase.
 
 ## Technologie i biblioteki
 * Python 3 - Całość
-* csv - Zapisywanie i otwieranie plików .dat
-* pickle - Zapisywanie i otwieranie projektów
-* PyQt5 - GUI
-* matplotlib - Wizualizacja wykresów 
+    * csv - Zapisywanie i otwieranie plików .dat
+    * pickle - Zapisywanie i otwieranie projektów
 * NumPy - Obsługa danych
+* matplotlib - Wizualizacja wykresów 
 * SciPy - Filtracja/dodatkowe funkcje
+* PyQt5 - GUI
 * XlsxWriter - Zapisywanie plików .xlsx
 
 ## Autorzy
