@@ -347,8 +347,17 @@ class QtSigmanWindow(QW.QMainWindow):
         self.file_menu = QW.QMenu('Plik', self)
         self.file_menu.addAction('Importuj przebieg', lambda:
             DataActions.importLine(self.compositeDataWrapper))
+        self.file_menu.addAction('Eksportuj przebieg // TODO', lambda:
+            QW.QMessageBox.information(self, "Informacja",
+                                      "Nie zaimplementowano"))
         self.file_menu.addAction('Importuj punkty', lambda:
             DataActions.importPoints(self.compositeDataWrapper))
+        self.file_menu.addAction('Eksportuj punkty // TODO', lambda:
+            QW.QMessageBox.information(self, "Informacja",
+                                      "Nie zaimplementowano"))
+        self.file_menu.addAction('Eksportuj parametr // TODO', lambda:
+            QW.QMessageBox.information(self, "Informacja",
+                                      "Nie zaimplementowano"))
         self.file_menu.addAction('Wczytaj projekt', lambda:
             self._replaceCompositeDataWrapper(
                 DataActions.loadCompositeData()))
@@ -356,6 +365,18 @@ class QtSigmanWindow(QW.QMainWindow):
             DataActions.saveCompositeData(self.compositeDataWrapper))
         self.file_menu.addAction('Zamknij', self.fileQuit)
         self.menuBar().addMenu(self.file_menu)
+
+        self.procedure_menu = QW.QMenu('Procedury', self)
+        self.procedure_menu.addAction('Filtruj przebieg // TODO', lambda:
+            QW.QMessageBox.information(self, "Informacja",
+                                      "Nie zaimplementowano"))
+        self.procedure_menu.addAction('Znajdź punkty // TODO', lambda:
+            QW.QMessageBox.information(self, "Informacja",
+                                      "Nie zaimplementowano"))
+        self.procedure_menu.addAction('Oblicz parametr // TODO', lambda:
+            QW.QMessageBox.information(self, "Informacja",
+                                      "Nie zaimplementowano"))
+        self.menuBar().addMenu(self.procedure_menu)
 
         self.help_menu = QW.QMenu('Pomoc', self)
         self.help_menu.addAction('O programie', self.about)
