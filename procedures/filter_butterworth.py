@@ -5,67 +5,68 @@ from sigman.analyzer import InvalidArgumentError
 
 procedure_type = 'filter'
 description = """Procedura aplikująca filtr Butterwortha z biblioteki SciPy.
-Dokładna dokumentacja na https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.butter.html"""
+Dokładna dokumentacja na
+https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.butter.html"""
 author = 'kcybulski'
 arguments = {
-    'N':"""Rząd filtru; liczba naturalna""",
-    'Wn':"""Częstotliwość graniczna w Hz. Żadna wartość Wn nie może przekroczyć
-    częstotliwości Nyquista (połowy częstotliwości samplowania przebiegu);
-    liczba rzeczywista lub, jeśli btype wynosi bandpass lub bandstop, dwie
-    liczby rzeczywiste przedzielone średnikiem""",
-    'btype':"""Typ filtru. 
+    'N':"Rząd filtru; liczba naturalna",
+    'Wn':("Częstotliwość graniczna w Hz. Żadna wartość Wn nie może przekroczyć "
+    "częstotliwości Nyquista (połowy częstotliwości samplowania przebiegu); "
+    "liczba rzeczywista lub, jeśli btype wynosi bandpass lub bandstop, dwie "
+    "liczby rzeczywiste przedzielone przecinkiem"),
+    'btype':"Typ filtru. 
     lowpass - dolnoprzepustowy
     highpass - górnoprzepustowy
     bandpass - środkowoprzepustowy
-    bandstop - środkowozaporowy"""
+    bandstop - środkowozaporowy"
 }
 default_arguments = {'N':'','Wn':'','btype':'lowpass'}
 
 def validate_arguments(data_wave, arguments):
-    """Sprawdza, czy podane argumenty są poprawne."""
+    "Sprawdza, czy podane argumenty są poprawne."
     # btype
     if (arguments['btype'] not in [
             'lowpass', 'highpass', 'bandpass', 'bandstop']):
-        return False, """Niewłaściwy typ filtru."""
+        return False, "Niewłaściwy typ filtru."
     # N
     try:
         value = int(arguments['N'])
         if value < 0:
-            return False, """Za mały rząd filtru."""
+            return False, "Za mały rząd filtru."
     except:
-        return False, """Niewłaściwy rząd filtru."""
+        return False, "Niewłaściwy rząd filtru."
     # Wn
     if arguments['btype'] in ['bandpass', 'bandstop']:
         try:
-            vals = arguments['Wn'].split(';')
+            vals = arguments['Wn'].split(',')
             if len(vals) != 2:
-                return False, """Niewłaściwa liczba częstotliwości
-                    granicznych."""
+                return False, ("Niewłaściwa liczba częstotliwości "
+                               "granicznych.")
             for val in vals:
                 value = float(val)
                 if value > data_wave.sample_rate/2:
-                    return False, """Zbyt duża częśtotliwość graniczna.
-                        Maksymalnie może wynosić połowę częstotliwości
-                        przebiegu."""
+                    return False, ("Zbyt duża częśtotliwość graniczna. "
+                        "Maksymalnie może wynosić połowę częstotliwości "
+                        "przebiegu.")
                 if value < 0:
-                    return False, """Zbyt mała częstotliwość graniczna."""
+                    return False, "Zbyt mała częstotliwość graniczna."
         except:
-            return False, """Niewłaściwe częstotliwości graniczne."""
+            return False, "Niewłaściwe częstotliwości graniczne."
     else:
         try:
             value = float(arguments['Wn'])
             if value > data_wave.sample_rate/2:
-                return False, """Zbyt duża częśtotliwość graniczna.
-                     Maksymalnie może wynosić połowę częstotliwości
-                     przebiegu.""" 
+                return False, ("Zbyt duża częśtotliwość graniczna. "
+                     "Maksymalnie może wynosić połowę częstotliwości "
+                     "przebiegu.")
             if value < 0:
-                return False, """Zbyt mała częstotliwość graniczna."""
+                return False, "Zbyt mała częstotliwość graniczna."
         except:
-            return False, """Niewłaściwa częstotliwość graniczna."""
+            return False, "Niewłaściwa częstotliwość graniczna."
     return True, ""
 
 def interpret_arguments(arguments):
-    """Konwertuje argumenty tekstowe w liczby/inne wymagane typy."""
+    "Konwertuje argumenty tekstowe w liczby/inne wymagane typy."
     N = int(arguments['N'])
     btype = arguments['btype']
     Wn = []
@@ -88,7 +89,7 @@ def procedure(data_wave, begin_time, end_time, arguments):
     return filtfilt(b, a, data)
 
 def execute(data_wave, begin_time, end_time, arguments):
-    """Sprawdza poprawność argumentów i wykonuje procedurę."""
+    "Sprawdza poprawność argumentów i wykonuje procedurę."
     valid, error_message = validate_arguments(data_wave, arguments)
     if not valid:
         raise InvalidArgumentError(error_message)
