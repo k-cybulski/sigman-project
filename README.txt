@@ -22,7 +22,7 @@ sigman.
         - całych projektów / niedokończonej pracy   [x]
         - parametrów w .xlsx / .csv                 [ ]
 2) Operowanie na danych                             [ ]
-    = obróbkę danych na odcinkach czasowych         [x]
+    = obróbkę danych na odcinkach czasowych         [ ]
         - filtracja                                 [x]
         - wykrycie punktów                          [x]
         - obliczanie parametrów                     [x]
