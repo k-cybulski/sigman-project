@@ -21,7 +21,7 @@ sigman.
         - przefiltrowanych danych liniowych / punktowych w plikach .dat [x]
         - całych projektów / niedokończonej pracy   [x]
         - parametrów w .xlsx / .csv                 [ ]
-2) Operowanie na danych                             [x]
+2) Operowanie na danych                             [ ]
     = obróbkę danych na odcinkach czasowych         [x]
         - filtracja                                 [x]
         - wykrycie punktów                          [x]
