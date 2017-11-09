@@ -14,11 +14,11 @@ arguments = {
     "częstotliwości Nyquista (połowy częstotliwości samplowania przebiegu); "
     "liczba rzeczywista lub, jeśli btype wynosi bandpass lub bandstop, dwie "
     "liczby rzeczywiste przedzielone przecinkiem"),
-    'btype':"Typ filtru. 
+    'btype':"""Typ filtru.
     lowpass - dolnoprzepustowy
     highpass - górnoprzepustowy
     bandpass - środkowoprzepustowy
-    bandstop - środkowozaporowy"
+    bandstop - środkowozaporowy"""
 }
 default_arguments = {'N':'','Wn':'','btype':'lowpass'}
 
