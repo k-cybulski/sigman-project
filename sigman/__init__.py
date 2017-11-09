@@ -8,6 +8,7 @@ na sygnale EKG).
 W tym pliku definiowane są klasy symbolizujące dane:
 Data_wave -- podstawowy przebieg sygnału (np. sygnał EKG)
 Data_points -- zestaw punktów (np. punkty R)
+Parameter -- parametr obliczony w kilku odcinkach czasowych
 Composite_data -- klasa łącząca kilka Data_wave oraz Data_points,
                   pozwalająca na wspólną analizę kilku przebiegów/
                   rodzajów punktów
