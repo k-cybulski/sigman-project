@@ -50,3 +50,4 @@ Technologie i biblioteki:
 > Obsługa danych - NumPy
 > Filtracja/dodatkowe funkcje - SciPy
 > Zapisywanie i otwieranie plików .dat - csv
+?> Zapisywanie plików .xlsx - XlsxWriter # jeszcze nie wypróbowane
