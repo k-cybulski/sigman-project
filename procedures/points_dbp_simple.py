@@ -1,5 +1,8 @@
 from sigman import analyzer 
 import numpy as np
+
+from sigman.analyzer import InvalidArgumentError
+
 procedure_type = 'points'
 description = """Procedura aplikujący prosty algorytm do odnalezienia
 punktów DBP na wykresie BP. Działa on w następujący sposób:
@@ -17,11 +20,39 @@ punktów DBP na wykresie BP. Działa on w następujący sposób:
     ostatniego DBP.
 """
 author = 'kcybulski'
-default_settings = {'threshold_fraction':0.4,'threshold_period':2,'safe_period':0.25}
+arguments = {
+    'threshold_fraction':("Wartość graniczna całki zakresowej, powyżej "
+                          "której rozpatrywana jest możliwość istnienia "
+                          "DBP."),
+    'threshold_period':("Czas, na przestrzeni którego sprawdzane są "
+                        "maksymalne wartości całki zakresowej."),
+    'safe_period':"Czas, w którym nie można odnaleźć dwóch DBP obok siebie."}
+default_arguments = {
+    'threshold_fraction':0.4,
+    'threshold_period':2,
+    'safe_period':0.25}
 required_lines = ['bp']
 required_points = []
-required_arguments = []
-def procedure(comp_data, begin_time, end_time, settings):
+
+def validate_arguments(composite_data, arguments):
+    """Sprawdza, czy podane argumenty są poprawne."""
+    # Wszystkie powinny być zwykłymi floatami
+    for key, item in arguments.items():
+        try:
+            float(item)
+        except:
+            error_message = key + " niewłaściwy"
+            return False, error_message
+    return True, ""
+
+def interpret_arguments(arguments):
+    """Konwertuje argumenty tekstowe w liczby."""
+    output_arguments = {}
+    for key, item in arguments.items():
+        output_arguments[key] = float(item)
+    return output_arguments
+
+def procedure(comp_data, begin_time, end_time, arguments):
     data_line = comp_data.data_lines['bp']
     
     # Obliczamy pochodną za pomocą pięciu punktów (po 2 z każdej strony
@@ -31,26 +62,29 @@ def procedure(comp_data, begin_time, end_time, settings):
     data = np.array(data)
     derivative = [0] * 2 # pierwsze dwie wartości są puste
     for i in range(2,len(data)-2):
-        derivative.append( (1/8) * (-data[i-2]-2*data[i-1]+2*data[i+1]+data[i+2]) )
+        derivative.append(
+            (1/8) * (-data[i-2]-2*data[i-1]+2*data[i+1]+data[i+2]))
     derivative = derivative + [0] * 2 # dwie ostatnie wartości są puste
     derivative = np.array(derivative)
 
-    # Przeprowadzamy całkowanie zakresowe (tłum. window integration) kwadratu pochodnej
+    # Przeprowadzamy całkowanie zakresowe (tłum. window integration) 
+    # kwadratu pochodnej
     window_width = 0.15/sample_length # 150 ms
     half_window = int(window_width/2) 
-    integral = [0]  * half_window 
+    integral = [0]  * half_window  # pierwsze kilka wartości jest pustych
     for i in range(half_window, len(derivative)-half_window):
         integral.append(np.sum(derivative[i-half_window:i+half_window]))
-    integral = integral + [0] * half_window
+    integral = integral + [0] * half_window # ostatnie także sa puste
     integral = np.array(integral)
     
     # Przejeżdżamy przez cały wykres i patrzymy gdzie całka pochodnej powyżej 
     # wartości granicznej. Tam, gdzie jest ona wyższa, odnajdujemy najniższą
     # wartość wykresu BP i stawiamy DBP.
-    threshold = np.max(integral[0:int(settings['threshold_period']/sample_length)]) * settings['threshold_fraction']
+    threshold = (
+        np.max(integral[0:int(arguments['threshold_period']/sample_length)])
+        * arguments['threshold_fraction'])
     dbp_x = []
     dbp_y = []
-    thres = []
     begin_i = 0
     average_period = 0 # Tempo obliczamy po 3 biciach
     i = 0
@@ -60,13 +94,13 @@ def procedure(comp_data, begin_time, end_time, settings):
                 begin_i = i
         else:
             if begin_i != 0: 
-                if len(dbp_x)==0 or i*sample_length > dbp_x[-1] + settings['safe_period'] - begin_time:
+                if len(dbp_x)==0 or i*sample_length > dbp_x[-1] + arguments['safe_period'] - begin_time:
                     hopeful_slice = data[begin_i:i]
                     maximum_i = np.argmin(hopeful_slice)
                     fin_i = begin_i + maximum_i
                     dbp_x.append(begin_time+sample_length*(fin_i-1))
                     dbp_y.append(data[fin_i])
-                    threshold = np.max(integral[fin_i:fin_i+int(settings['threshold_period']/sample_length)]) * settings['threshold_fraction']
+                    threshold = np.max(integral[fin_i:fin_i+int(arguments['threshold_period']/sample_length)]) * arguments['threshold_fraction']
                     begin_i = 0
                     if len(dbp_x) > 3:
                         average_period = ( (dbp_x[-1]-dbp_x[-2]) + (dbp_x[-2]-dbp_x[-3]) + (dbp_x[-3]-dbp_x[-4]) ) / 3
@@ -75,13 +109,15 @@ def procedure(comp_data, begin_time, end_time, settings):
                     begin_i = 0
             if average_period!=0 and i*sample_length > dbp_x[-1] + average_period*1.7:
                 threshold *= 0.6
-                i = int((dbp_x[-1]+settings['safe_period'])/sample_length)
+                i = int((dbp_x[-1]+arguments['safe_period'])/sample_length)
         i += 1
     dbp_x = np.array(dbp_x)
-#    from matplotlib import pyplot as plt
-#    plt.plot(data)
-#    plt.plot(derivative)
-#    plt.plot(integral)
-#    plt.plot(dbp_x/sample_length,dbp_y, marker='o', linestyle='None')
-#    plt.show()
     return dbp_x, dbp_y
+
+def execute(data_line, begin_time, end_time, arguments):
+    """Sprawdza poprawność argumentów i wykonuje procedurę."""
+    valid, error_message = validate_arguments(data_line, arguments)
+    if not valid:
+        raise InvalidArgumentError(error_message)
+    arguments = interpret_arguments(arguments)
+    return procedure(data_line, begin_time, end_time, arguments)
