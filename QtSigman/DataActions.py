@@ -16,10 +16,11 @@ def importLine(compositeDataWrapper):
     try:
         path = fileDialog.getOpenFileName(filter = fileFilter)
         assert path[0] != ""
+        title = path[0].split("/")[-1]
         dataWave = fm.import_line(path[0])
         dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
             forbiddenNames = compositeDataWrapper.data_waves.keys(),
-            title = path[0])
+            title = title)
         if status is DataActionStatus.Ok: 
             dataWave.offset = offset
             compositeDataWrapper.add_data_wave(dataWave, dictType, 
