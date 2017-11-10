@@ -47,7 +47,7 @@ class PlotCanvas(FigureCanvas):
 
 class NavigationToolbar(NavigationToolbar2QT):
     toolitems = [t for t in NavigationToolbar2QT.toolitems if
-                 t[0] in ('Home', 'Pan', 'Zoom', 'Save')]
+                 t[0] in ('Pan', 'Zoom', 'Save')] # 'Home' do skorygowania
 
 class PlotWidget(QW.QWidget):
     def __init__(self, parent=None):     
