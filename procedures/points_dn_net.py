@@ -5,10 +5,12 @@ import pickle
 from sigman.analyzer import InvalidArgumentError
 
 procedure_type = 'points'
-description = """Procedura przeszukująca wykresy BP i EKG za pomocą 
-wytrenowanej sieci neuronowej w celu odnalezienia wcięć dykrotycznych. 
+description = (
+"""Procedura przeszukująca wykresy BP i EKG za pomocą wytrenowanej sieci
+neuronowej w celu odnalezienia wcięć dykrotycznych. 
+
 Wykorzystuje punkty SBP do zawężenia poszukiwania.
-"""
+""")
 author = 'kcybulski'
 arguments = {
     'net':"Scieżka i nazwa pliku sieci neuronowej",
