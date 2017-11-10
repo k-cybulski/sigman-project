@@ -85,6 +85,3 @@ CamelCase.
 * SciPy - Filtracja/dodatkowe funkcje
 * PyQt5 - GUI
 * XlsxWriter - Zapisywanie plików .xlsx
-
-## Autorzy
-* Krzysztof Cybulski - k.cybulski.dev@gmail.com
