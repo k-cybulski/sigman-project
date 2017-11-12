@@ -16,9 +16,10 @@ arguments = {
     'net':"Scieżka i nazwa pliku sieci neuronowej",
     'focus_range':("Zakres czasu od punktu SBP po którym szukany jest "
                    "DN. Zapisany w formie dwóch wartości "
-                   "przedzielonych średnikiem."),
+                   "przedzielonych przecinkiem."),
     'test_every':"Odstęp między badanymi punktami w focus_range"}
-default_arguments = {'net':'procedures/default_dn_net.pickle', 'focus_range':(0.1,0.5), 'test_every':0.005}
+default_arguments = {'net':'procedures/default_dn_net.pickle',
+                     'focus_range':'0.1,0.5', 'test_every':0.005}
 required_waves = ['bp','ecg']
 required_points = ['sbp']
 
@@ -64,7 +65,7 @@ def validate_arguments(comp_data, arguments):
 def interpret_arguments(arguments):
     net = pickle.load(open(arguments['net']).read())
     focus_range = []
-    for string in arguments['focus_range'].split(';'):
+    for string in arguments['focus_range'].split(','):
         focus_range.append(float(string))
     test_every = float(arguments['test_every'])
     return {
