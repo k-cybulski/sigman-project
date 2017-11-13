@@ -63,11 +63,12 @@ sigman.
     = Zapisywanie projektu                          [x]
     = Wczytywanie projektu                          [x]
 3) Obsługa procedur                                 [ ]
-    = Bazowe okno procedury                         [ ]
+    = Bazowe okno procedury                         [x]
     = Filtrowanie przebiegów                        [ ]
-    = Odnajdywanie punktów                          [ ]
+    = Odnajdywanie punktów                          [x]
     = Obliczanie parametrów                         [ ]
     = Przeprowadzanie całościowej analizy           [ ]
+    = Wizualizacja wyniku działania procedury przed potwierdzeniem  [ ]
 
 ## Standardy kodu
 Kod projektu powinien być utrzymywany jak najbliżej norm PEP-8 (zawarte są 
