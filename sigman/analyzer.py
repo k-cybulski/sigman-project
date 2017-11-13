@@ -128,7 +128,7 @@ def filter_line(data_wave, begin_time, end_time,
     """Filtruje Data_wave podaną procedurą filtracji."""
     if wave_type is None:
         wave_type = data_wave.type
-    filtered_data = procedure.procedure(data_wave, begin_time, end_time, arguments)
+    filtered_data = procedure.execute(data_wave, begin_time, end_time, arguments)
     return sm.Data_wave(filtered_data, end_time-begin_time, 
                         wave_type = wave_type)
     
@@ -144,7 +144,7 @@ def find_points(composite_data, begin_time, end_time,
     if not all(points in composite_data.data_points for points in procedure.required_points): 
         raise ValueError('Composite_data nie zawiera wymaganych punktów z %s'
                          % procedure.required_points)
-    found_points_x, found_points_y = procedure.procedure(
+    found_points_x, found_points_y = procedure.execute(
         composite_data, 
         begin_time, end_time, 
         arguments)
@@ -165,7 +165,7 @@ def calculate_parameter(composite_data, time_tuples,
                          % procedure.required_points)
     parameter = sm.Parameter(parameter_type)
     for begin_time, end_time in time_tuples:
-        value = procedure.procedure(composite_data, begin_time, end_time,
+        value = procedure.execute(composite_data, begin_time, end_time,
                                     arguments)
         parameter.add_value(begin_time, end_time, value)
     return parameter
