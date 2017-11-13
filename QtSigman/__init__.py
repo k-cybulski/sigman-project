@@ -22,9 +22,20 @@ class VisualDataObject():
         self.axis = axis
         self.mplObject = None
 
-    def plot(self, axis, beginTime, endTime):
-        pass
-
+    def plot(self, axis, beginTime, endTime,
+             keepMplObject=True, color=None):
+        """Metoda rysująca dane na wykresie matplotlib. Jeśli już są
+        narysowane to tylko je zmienia / odświeża.
+        
+        Argumenty:
+        keepMplObject - czy zachować narysowane figury geometryczne do
+                        późniejszego odświeżenia. Powinno być True
+                        jeśli rysujemy na wykresie głównego okna, oraz
+                        False w innych wypadkach.
+        color - kolor wykresu. Jeśli None, wykorzystany zostanie
+                self.color
+        """
+    
     def removeMplObject(self):
         if self.mplObject is not None:
             self.mplObject.remove()
@@ -43,7 +54,10 @@ class VisualDataWave(VisualDataObject, sm.Data_wave):
                               wave_type = data.type,
                               offset = data.offset)
 
-    def plot(self, axis, beginTime, endTime):
+    def plot(self, axis, beginTime, endTime,
+             keepMplObject=True, color=None):
+        if color is None:
+            color = self.color
         tempBeginTime = max(beginTime, self.offset)
         tempEndTime = min(endTime, self.offset 
                           + self.complete_length)
@@ -51,11 +65,14 @@ class VisualDataWave(VisualDataObject, sm.Data_wave):
             begin_time = tempBeginTime,
             end_time = tempEndTime,
             begin_x = tempBeginTime)
-        if self.mplObject is None:
-            self.mplObject, = axis.plot(x, y, color = self.color)
+        if keepMplObject:
+            if self.mplObject is None:
+                self.mplObject, = axis.plot(x, y, color = color)
+            else:
+                self.mplObject.set_xdata(x)
+                self.mplObject.set_ydata(y)
         else:
-            self.mplObject.set_xdata(x)
-            self.mplObject.set_ydata(y)
+            axis.plot(x, y, color = color)
 
 class VisualDataPoints(VisualDataObject, sm.Data_points):
     def __init__(self, data, color, axis):
@@ -65,13 +82,19 @@ class VisualDataPoints(VisualDataObject, sm.Data_points):
                                 data.data_y,
                                 point_type = data.type)
 
-    def plot(self, axis, beginTime, endTime):
+    def plot(self, axis, beginTime, endTime,
+             keepMplObject=True, color=None):
+        if color is None:
+            color = self.color
         x, y = self.data_slice(beginTime, endTime)
-        if self.mplObject is None:
-            self.mplObject, = axis.plot(x, y, color = self.color, marker = 'o', linestyle = 'None')
+        if keepMplObject:
+            if self.mplObject is None:
+                self.mplObject, = axis.plot(x, y, color = color, marker = 'o', linestyle = 'None')
+            else:
+                self.mplObject.set_xdata(x)
+                self.mplObject.set_ydata(y)
         else:
-            self.mplObject.set_xdata(x)
-            self.mplObject.set_ydata(y)
+            axis.plot(x, y, color = color, marker = 'o', linestyle = 'None')
 
 class VisualParameter(VisualDataObject, sm.Parameter):
     def __init__(self, data, color, axis):
@@ -83,19 +106,27 @@ class VisualParameter(VisualDataObject, sm.Parameter):
         self.values = data.values
         self.mplObjects = []
 
-    def plot(self, axis, beginTime, endTime):
+    def plot(self, axis, beginTime, endTime,
+             keepMplObject=True, color=None):
+        if color is None:
+            color = self.color
         lineTuples = self.generate_parameter_line_tuples(
             begin_time = beginTime, end_time = endTime)
-        if len(self.mplObjects) != len(lineTuples):
-            self.removeMplObject()
-        if self.mplObjects == []:
-            for tup in lineTuples:
-                mplLine, = axis.plot(tup[0], tup[1], color = self.color)
-                self.mplObject.append(mplLine)
+        if keepMplObject:
+            if len(self.mplObjects) != len(lineTuples):
+                self.removeMplObject()
+            if self.mplObjects == []:
+                for tup in lineTuples:
+                    mplLine, = axis.plot(tup[0], tup[1], color = color)
+                    self.mplObject.append(mplLine)
+            else:
+                for mplLine, tup in zip(self.mplObject, lineTuples):
+                    mplLine.set_xdata(tup[0])
+                    mplLine.set_ydata(tup[1])
         else:
-            for mplLine, tup in zip(self.mplObject, lineTuples):
-                mplLine.set_xdata(tup[0])
-                mplLine.set_ydata(tup[1])
+            for tup in lineTuples:
+                axis.plot(tup[0], tup[1], color = color)
+
 
     def removeMplObject(self):
         for mplLine in mplObject:
@@ -370,9 +401,8 @@ class QtSigmanWindow(QW.QMainWindow):
         self.procedure_menu.addAction('Filtruj przebieg // TODO', lambda:
             QW.QMessageBox.information(self, "Informacja",
                                       "Nie zaimplementowano"))
-        self.procedure_menu.addAction('Znajdź punkty // TODO', lambda:
-            QW.QMessageBox.information(self, "Informacja",
-                                      "Nie zaimplementowano"))
+        self.procedure_menu.addAction('Znajdź punkty', lambda:
+            DataActions.findPoints(self.compositeDataWrapper))
         self.procedure_menu.addAction('Oblicz parametr // TODO', lambda:
             QW.QMessageBox.information(self, "Informacja",
                                       "Nie zaimplementowano"))

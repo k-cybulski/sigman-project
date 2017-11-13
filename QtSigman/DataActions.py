@@ -3,11 +3,13 @@ import pickle
 
 from PyQt5 import QtWidgets as QW
 from sigman import file_manager as fm
+from sigman import analyzer
 import sigman as sm
 
 import QtSigman
 from QtSigman import DataActionWidgets
 from QtSigman.DataActionWidgets import DataActionStatus
+from QtSigman.MplWidgets import Axis
 
 def importLine(compositeDataWrapper):
     fileFilter = "dat (*.dat)"
@@ -155,3 +157,22 @@ def saveCompositeData(compositeData):
             pickle.dump(pickledData, pickleFile)
     except AssertionError:
         pass
+
+def findPoints(compositeDataWrapper):
+    proc = DataActionWidgets.ProcedureDialog.getProcedure(
+        'points', compositeDataWrapper)
+    begin_time, end_time, procedure, arguments, status = proc
+    if status is DataActionStatus.Ok:
+        newPoints = analyzer.find_points(compositeDataWrapper, begin_time, end_time, 
+                                         procedure, arguments)
+        #TODO: Wybór koloru i axis
+        nameBase = 'found_points'
+        nameNum = 0
+        name = nameBase + str(nameNum)
+        while name in compositeDataWrapper.data_points:
+            nameNum += 1
+            name = nameBase + str(nameNum)
+        dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
+            forbiddenNames = compositeDataWrapper.data_points.keys(),
+            title=procedure.__name__)
+        compositeDataWrapper.add_data_points(newPoints, dictType, color, axis=axis)
