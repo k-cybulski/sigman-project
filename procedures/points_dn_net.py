@@ -44,7 +44,7 @@ def validate_arguments(comp_data, arguments):
     """Sprawdza, czy podane argumenty są poprawne."""
     # net
     try:
-        with open(arguments['net']) as net:
+        with open(arguments['net'], 'rb') as net:
             pickle.load(net)
     except:
         return False, "Niewłaściwy plik sieci neuronowej"
@@ -63,7 +63,7 @@ def validate_arguments(comp_data, arguments):
     return True, ""
 
 def interpret_arguments(arguments):
-    net = pickle.load(open(arguments['net']).read())
+    net = pickle.load(open(arguments['net'], 'rb'))
     focus_range = []
     for string in arguments['focus_range'].split(','):
         focus_range.append(float(string))
@@ -71,7 +71,7 @@ def interpret_arguments(arguments):
     return {
         'net':net,
         'focus_range':focus_range,
-        'test_every':test_everu}
+        'test_every':test_every}
 
 def _generate_input_data_sample(bp_line, ecg_line, test_point, sample_length, 
                                detection_point_offset, input_point_count):
@@ -103,9 +103,8 @@ def procedure(comp_data, begin_time, end_time, arguments):
     sbp_points = comp_data.data_points['sbp']
     focus_range = arguments['focus_range']
     test_every = arguments['test_every']
+    net = arguments['net']
 
-    # Importujemy sieć neuronową
-    net = pickle.load(open(arguments['net'],'rb'))
     sample_length = net.sample_length
     detection_point_offset = net.detection_point_offset
     input_point_count = net.input_point_count
