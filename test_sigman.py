@@ -40,7 +40,7 @@ butterworth = analyzer.import_procedure("filter_butterworth")
 arguments = butterworth.default_arguments
 arguments['N'] = 3
 arguments['Wn'] = 30
-filtered_data_wave = analyzer.filter_line(complete_data.data_waves['bp'], 60, 70, butterworth, arguments)
+filtered_data_wave = analyzer.filter_wave(complete_data.data_waves['bp'], 60, 70, butterworth, arguments)
 complete_data.data_waves['bp'].replace_slice(60, 70, filtered_data_wave)
 vis.visualize_composite_data(complete_data, begin_time=60, end_time=80, title="Wycinek dwudziestosekundowy po filtracji 30 Hz na zakresie <60s;70s>")
 
@@ -55,7 +55,7 @@ print(">Proba wczytania innego, bardzo chaotycznego sygnału EKG i przefiltrowan
 ecg_line = fm.import_line('example_data/EKG_messy.dat', wave_type = 'ecg_messy')
 arguments['N'] = 3
 arguments['Wn'] = 20
-filtered_ecg = analyzer.filter_line(ecg_line, 0, ecg_line.complete_length, butterworth, arguments)
+filtered_ecg = analyzer.filter_wave(ecg_line, 0, ecg_line.complete_length, butterworth, arguments)
 complete_data = sm.Composite_data(data_waves={'ecg_messy':ecg_line,'ecg':filtered_ecg})
 vis.visualize_composite_data(complete_data, begin_time=10,end_time=15,title="EKG wejściowe (mocno zaburzone) oraz przefiltrowane filtrem 20 Hz")
 

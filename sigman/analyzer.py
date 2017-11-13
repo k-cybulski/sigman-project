@@ -61,7 +61,7 @@ Przykład zastosowania:
     arguments = butterworth.default_arguments
     arguments['N'] = 3
     arguments['Wn'] = 30
-    filtered_data_wave = analyzer.filter_line(composite_data.data_waves['bp'], 60, 70, butterworth, arguments)
+    filtered_data_wave = analyzer.filter_wave(composite_data.data_waves['bp'], 60, 70, butterworth, arguments)
     complete_data.data_waves['bp'].replace_slice(60, 70, filtered_data_wave)
 """
 
@@ -122,7 +122,7 @@ def import_procedure(name):
         raise InvalidProcedureError(error_message)
     return procedure
 
-def filter_line(data_wave, begin_time, end_time, 
+def filter_wave(data_wave, begin_time, end_time, 
                 procedure, arguments, 
                 wave_type = None):
     """Filtruje Data_wave podaną procedurą filtracji."""
@@ -138,7 +138,7 @@ def find_points(composite_data, begin_time, end_time,
     """Odnajduje punkty na danym zakresie czasu za pomocą podanej 
     procedury.
     """
-    if not all(line in composite_data.data_waves for line in procedure.required_waves):
+    if not all(wave in composite_data.data_waves for wave in procedure.required_waves):
         raise ValueError('Composite_data nie zawiera wymaganych linii z %s'
                          % procedure.required_waves)
     if not all(points in composite_data.data_points for points in procedure.required_points): 
@@ -157,7 +157,7 @@ def calculate_parameter(composite_data, time_tuples,
     Composite_data w danych zakresach czasowych i zwraca utworzony 
     Parameter.
     """
-    if not all(line in composite_data.data_waves for line in procedure.required_waves):
+    if not all(wave in composite_data.data_waves for wave in procedure.required_waves):
         raise ValueError('Composite_data nie zawiera wymaganych linii z %s'
                          % procedure.required_waves)
     if not all(points in composite_data.data_points for points in procedure.required_points): 
