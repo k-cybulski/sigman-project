@@ -50,7 +50,7 @@ def validate_arguments(comp_data, arguments):
         return False, "Niewłaściwy plik sieci neuronowej"
     # focus_range
     try:
-        vals = arguments['focus_range'].split(';')
+        vals = arguments['focus_range'].split(',')
         if len(vals) != 2:
             return False, "Niewłaściwy focus_range"
     except:
