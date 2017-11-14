@@ -175,4 +175,6 @@ def findPoints(compositeDataWrapper):
         dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
             forbiddenNames = compositeDataWrapper.data_points.keys(),
             title=procedure.__name__)
+        if status is DataActionStatus.Cancel:
+            return
         compositeDataWrapper.add_data_points(newPoints, dictType, color, axis=axis)
