@@ -99,12 +99,12 @@ class VisualDataPoints(VisualDataObject, sm.Data_points):
 class VisualParameter(VisualDataObject, sm.Parameter):
     def __init__(self, data, color, axis):
         VisualDataObject.__init__(self, data, color, axis)
-        sm.Data_points.__init__(self,
-                                data.type)
+        sm.Parameter.__init__(self,
+                              data.type)
         self.begin_times = data.begin_times
         self.end_times = data.end_times
         self.values = data.values
-        self.mplObjects = []
+        self.mplObject = []
 
     def plot(self, axis, beginTime, endTime,
              keepMplObject=True, color=None):
@@ -113,9 +113,11 @@ class VisualParameter(VisualDataObject, sm.Parameter):
         lineTuples = self.generate_parameter_line_tuples(
             begin_time = beginTime, end_time = endTime)
         if keepMplObject:
-            if len(self.mplObjects) != len(lineTuples):
+            if self.mplObject is None: #TODO: Ten if powinien być niepotrzebny
+                self.mplObject = []
+            if len(self.mplObject) != len(lineTuples):
                 self.removeMplObject()
-            if self.mplObjects == []:
+            if self.mplObject == []:
                 for tup in lineTuples:
                     mplLine, = axis.plot(tup[0], tup[1], color = color)
                     self.mplObject.append(mplLine)
@@ -129,7 +131,7 @@ class VisualParameter(VisualDataObject, sm.Parameter):
 
 
     def removeMplObject(self):
-        for mplLine in mplObject:
+        for mplLine in self.mplObject:
             mplLine.remove()
         self.mplObject = []
 
