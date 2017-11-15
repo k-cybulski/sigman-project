@@ -71,7 +71,7 @@ def interpret_arguments(arguments):
     btype = arguments['btype']
     Wn = []
     if btype in ['bandpass', 'bandstop']:
-        Wn_strings = arguments['Wn'].split(';')
+        Wn_strings = arguments['Wn'].split(',')
         for string in Wn_strings:
             Wn.append(float(string))
         Wn = np.array(Wn)
