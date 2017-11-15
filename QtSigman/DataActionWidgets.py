@@ -237,7 +237,7 @@ class ProcedureWidget(QW.QWidget):
         self.vBoxLayout.addWidget(self.descriptionWidget)
 
         if procedure.procedure_type == 'filter':
-            pass
+            self.addWaveSelection()
         else:
             self.addRequiredDataWidgets()
         
@@ -273,18 +273,27 @@ class ProcedureWidget(QW.QWidget):
         self.vBoxLayout.addLayout(bottomHBoxLayout)
 
     def _setMaximumTimeRange(self, initial=False):
-        if not all(wave in self.compositeDataWrapper.data_waves for wave 
-                   in self.procedure.required_waves):
-            if initial:
-                self.timeRangeLineEdit.setText('0,1')
+        if self.procedure.procedure_type == 'filter':
+            selectedWave = self.getSelectedWave()
+            if selectedWave is not None:
+                beginTime = self.getSelectedWave().offset
+                endTime = (self.getSelectedWave().offset +
+                    selectedWave.complete_length)
+                timeRangeString = str(beginTime)+","+str(endTime)
+                self.timeRangeLineEdit.setText(timeRangeString)
+        else:
+            if not all(wave in self.compositeDataWrapper.data_waves for wave 
+                       in self.procedure.required_waves):
+                if initial:
+                    self.timeRangeLineEdit.setText('0,1')
+                    return
+                QW.QMessageBox.warning(self, "Błąd ogólny",
+                                       "Nie ma wszystkich wymaganych przebiegów")
                 return
-            QW.QMessageBox.warning(self, "Błąd ogólny",
-                                   "Nie ma wszystkich wymaganych przebiegów")
-            return
-        beginTime, endTime = self.compositeDataWrapper.calculate_time_range(
-            self.procedure.required_waves)
-        timeRangeString = str(beginTime)+","+str(endTime)
-        self.timeRangeLineEdit.setText(timeRangeString)
+            beginTime, endTime = self.compositeDataWrapper.calculate_time_range(
+                self.procedure.required_waves)
+            timeRangeString = str(beginTime)+","+str(endTime)
+            self.timeRangeLineEdit.setText(timeRangeString)
 
     def getTimeRange(self):
         vals = self.timeRangeLineEdit.text().strip().split(',')
@@ -309,25 +318,39 @@ class ProcedureWidget(QW.QWidget):
             QW.QMessageBox.warning(self, "Błąd ogólny",
                                    "Niewłaściwy zakres czasowy")
             return False
-        #TODO: Sprawdzanie odpowiednie dane są dostępne na tym zakresie
-        if not all(wave in self.compositeDataWrapper.data_waves for wave 
-                   in self.procedure.required_waves):
-            QW.QMessageBox.warning(self, "Błąd ogólny",
-                                   "Nie ma wszystkich wymaganych przebiegów")
-            return False
-        if not all(points in self.compositeDataWrapper.data_points for points 
-                   in self.procedure.required_points): 
-            QW.QMessageBox.warning(self, "Błąd ogólny",
-                                   "Nie ma wszystkich wymaganych punktów")
-            return False
+        if self.procedure.procedure_type == "filter":
+            if self.getSelectedWave() is None:
+                QW.QMessageBox.warning(self, "Błąd ogólny",
+                                   "Wybierz przebieg")
+                return False
+        else:
+            #TODO: Sprawdzanie odpowiednie dane są dostępne na tym zakresie
+            if not all(wave in self.compositeDataWrapper.data_waves for wave 
+                       in self.procedure.required_waves):
+                QW.QMessageBox.warning(self, "Błąd ogólny",
+                                       "Nie ma wszystkich wymaganych przebiegów")
+                return False
+            if not all(points in self.compositeDataWrapper.data_points for points 
+                       in self.procedure.required_points): 
+                QW.QMessageBox.warning(self, "Błąd ogólny",
+                                       "Nie ma wszystkich wymaganych punktów")
+                return False
         arguments = self.procedureArgumentsWidget.getArguments()
+        if self.procedure.procedure_type == 'filter':
+            dataInput = self.getSelectedWave()
+        else:
+            dataInput = self.compositeDataWrapper
         valid, message = self.procedure.validate_arguments(
-            self.compositeDataWrapper, arguments)
+            dataInput, arguments)
         if not valid:
             QW.QMessageBox.warning(self, "Błąd argumentów",
                                    message)
             return False
         return True
+
+    #
+    # Do procedur wymagających poszczególnych danych
+    #
 
     def addRequiredDataWidgets(self):
         requiredWavesText = "Wymagane przebiegi: "
@@ -341,6 +364,34 @@ class ProcedureWidget(QW.QWidget):
             requiredPointsText+=requiredPoints+" "
         requiredPointsLabel = QW.QLabel(requiredPointsText)
         self.vBoxLayout.addWidget(requiredPointsLabel)
+
+    #
+    # Do procedur modyfikacji przebiegu
+    #
+
+    def addWaveSelection(self):
+        hBoxLayout = QW.QHBoxLayout()
+        selectedWaveLabel = QW.QLabel("Wybrany przebieg:")
+        hBoxLayout.addWidget(selectedWaveLabel)
+
+        self.selectedWaveComboBox = QW.QComboBox()
+        items = [""]
+        for key, item in self.compositeDataWrapper.data_waves.items():
+            items.append(key)
+        self.selectedWaveComboBox.addItems(items)
+        hBoxLayout.addWidget(self.selectedWaveComboBox)
+
+        self.vBoxLayout.addLayout(hBoxLayout)
+
+    def getSelectedWaveType(self):
+        return self.selectedWaveComboBox.currentText()
+
+    def getSelectedWave(self):
+        key = self.getSelectedWaveType()
+        if key == "":
+            return None
+        return self.compositeDataWrapper.data_waves[key]
+
 
 class ProcedureDialog(QW.QDialog):
     """Okno dialogowe wyświetlające listę dostępnych procedur danego
@@ -365,6 +416,10 @@ class ProcedureDialog(QW.QDialog):
         for proc in self.procedureNames:
             self.procedures.append(
                 analyzer.import_procedure(self.getModuleName(proc)))
+        if len(self.procedures) == 0:
+            QW.QMessageBox.warning(self, "Błąd",
+                                   "Nie wykryto procedur")
+            return
 
         # Ustawiamy layout
         mainHBoxLayout =  QW.QHBoxLayout()
@@ -417,14 +472,25 @@ class ProcedureDialog(QW.QDialog):
 
 
     def getValues(self):
-        if self.dataActionStatus is DataActionStatus.Ok:
-            selectedProcedureWidget = self.procedureWidgetDict[self.selectedProcedureName]
-            beginTime, endTime = selectedProcedureWidget.getTimeRange()
-            procedure = selectedProcedureWidget.procedure
-            arguments = selectedProcedureWidget.getArguments()
-            return beginTime, endTime, procedure, arguments
+        if self.procedureType == 'filter':
+            if self.dataActionStatus is DataActionStatus.Ok:
+                selectedProcedureWidget = self.procedureWidgetDict[self.selectedProcedureName]
+                dictType = selectedProcedureWidget.getSelectedWaveType()
+                beginTime, endTime = selectedProcedureWidget.getTimeRange()
+                procedure = selectedProcedureWidget.procedure
+                arguments = selectedProcedureWidget.getArguments()
+                return dictType, beginTime, endTime, procedure, arguments
+            else:
+                return None, None, None, None, None
         else:
-            return None, None, None, None
+            if self.dataActionStatus is DataActionStatus.Ok:
+                selectedProcedureWidget = self.procedureWidgetDict[self.selectedProcedureName]
+                beginTime, endTime = selectedProcedureWidget.getTimeRange()
+                procedure = selectedProcedureWidget.procedure
+                arguments = selectedProcedureWidget.getArguments()
+                return beginTime, endTime, procedure, arguments
+            else:
+                return None, None, None, None
 
     @classmethod
     def getProcedure(cls, procedureType, compositeDataWrapper):

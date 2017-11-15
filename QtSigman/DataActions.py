@@ -158,14 +158,29 @@ def saveCompositeData(compositeData):
     except AssertionError:
         pass
 
+def modifyWave(compositeDataWrapper):
+    proc = DataActionWidgets.ProcedureDialog.getProcedure(
+        'filter', compositeDataWrapper)
+    dictType, beginTime, endTime, procedure, arguments, status = proc
+    if status is DataActionStatus.Ok:
+        originalWave = compositeDataWrapper.data_waves[dictType]
+        modifiedWave = analyzer.filter_wave(originalWave, 
+                                            beginTime, endTime, 
+                                            procedure, arguments)
+        if status is DataActionStatus.Cancel:
+            return
+        compositeDataWrapper.data_waves[dictType].replace_slice(
+            beginTime, endTime, modifiedWave)
+        compositeDataWrapper.lineChanged.emit()
+
 def findPoints(compositeDataWrapper):
     proc = DataActionWidgets.ProcedureDialog.getProcedure(
         'points', compositeDataWrapper)
-    begin_time, end_time, procedure, arguments, status = proc
+    beginTime, endTime, procedure, arguments, status = proc
     if status is DataActionStatus.Ok:
-        newPoints = analyzer.find_points(compositeDataWrapper, begin_time, end_time, 
+        newPoints = analyzer.find_points(compositeDataWrapper, 
+                                         beginTime, endTime, 
                                          procedure, arguments)
-        #TODO: Wybór koloru i axis
         nameBase = 'found_points'
         nameNum = 0
         name = nameBase + str(nameNum)

@@ -400,9 +400,8 @@ class QtSigmanWindow(QW.QMainWindow):
         self.menuBar().addMenu(self.file_menu)
 
         self.procedure_menu = QW.QMenu('Procedury', self)
-        self.procedure_menu.addAction('Filtruj przebieg // TODO', lambda:
-            QW.QMessageBox.information(self, "Informacja",
-                                      "Nie zaimplementowano"))
+        self.procedure_menu.addAction('Modyfikuj przebieg', lambda:
+            DataActions.modifyWave(self.compositeDataWrapper))
         self.procedure_menu.addAction('Znajdź punkty', lambda:
             DataActions.findPoints(self.compositeDataWrapper))
         self.procedure_menu.addAction('Oblicz parametr // TODO', lambda:
