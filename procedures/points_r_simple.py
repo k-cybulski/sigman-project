@@ -51,11 +51,11 @@ def interpret_arguments(arguments):
     return output_arguments
 
 def procedure(comp_data, begin_time, end_time, settings):
-    data_wave = comp_data.data_waves['ecg']
+    wave = comp_data.waves['ecg']
     
     # Obliczamy kwadrat pochodnej
-    sample_length = data_wave.sample_length
-    data = data_wave.data_slice(begin_time, end_time)
+    sample_length = wave.sample_length
+    data = wave.data_slice(begin_time, end_time)
     data = np.array(data)
     # pierwsze dwie wartości puste dla konsystencji czasowej z data
     derivative = [0] * 2

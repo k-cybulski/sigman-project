@@ -21,9 +21,9 @@ class DataListItemWidget(QW.QWidget):
 class DataListWidget(QW.QListWidget):
     def updateData(self, compositeDataWrapper, dataType):
         if dataType == 'line':
-            items = compositeDataWrapper.data_waves.items()
+            items = compositeDataWrapper.waves.items()
         elif dataType == 'point':
-            items = compositeDataWrapper.data_points.items()
+            items = compositeDataWrapper.points.items()
         elif dataType == 'parameter':
             items = compositeDataWrapper.parameters.items()
 

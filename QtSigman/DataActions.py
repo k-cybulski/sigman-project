@@ -19,13 +19,13 @@ def importLine(compositeDataWrapper):
         path = fileDialog.getOpenFileName(filter = fileFilter)
         assert path[0] != ""
         title = path[0].split("/")[-1]
-        dataWave = fm.import_line(path[0])
+        wave = fm.import_line(path[0])
         dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-            forbiddenNames = compositeDataWrapper.data_waves.keys(),
+            forbiddenNames = compositeDataWrapper.waves.keys(),
             title = title)
         if status is DataActionStatus.Ok: 
-            dataWave.offset = offset
-            compositeDataWrapper.add_data_wave(dataWave, dictType, 
+            wave.offset = offset
+            compositeDataWrapper.add_wave(wave, dictType, 
                                                color, axis = axis)
     # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się
     # nie stało i nic nie zmieniamy
@@ -39,50 +39,50 @@ def importPoints(compositeDataWrapper):
     try:
         path = fileDialog.getOpenFileName(filter = fileFilter)
         assert path[0] != ""
-        dataPoints = fm.import_points(path[0])
+        points = fm.import_points(path[0])
         dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-            forbiddenNames = compositeDataWrapper.data_points.keys(),
+            forbiddenNames = compositeDataWrapper.points.keys(),
             title = path[0])
         if status is DataActionStatus.Ok:
-            dataPoints.move_in_time(offset)
-            compositeDataWrapper.add_data_points(dataPoints, dictType, color, axis = axis)
+            points.move_in_time(offset)
+            compositeDataWrapper.add_points(points, dictType, color, axis = axis)
     # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się
     # nie stało i nic nie zmieniamy
     except AssertionError:
         pass
 
 def editLineSettings(compositeDataWrapper, dictType):
-    forbiddenNames = list(compositeDataWrapper.data_waves.keys())
+    forbiddenNames = list(compositeDataWrapper.waves.keys())
     forbiddenNames.remove(dictType)
     newDictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
         forbiddenNames = forbiddenNames,
         dictType = dictType,
         title = dictType,
-        axis = compositeDataWrapper.data_waves[dictType].axis,
-        offset = str(compositeDataWrapper.data_waves[dictType].offset),
+        axis = compositeDataWrapper.waves[dictType].axis,
+        offset = str(compositeDataWrapper.waves[dictType].offset),
         askDelete = True,
-        color = compositeDataWrapper.data_waves[dictType].color)
+        color = compositeDataWrapper.waves[dictType].color)
     if status is DataActionStatus.Ok:
         compositeDataWrapper.editDataWaveSettings(
             dictType, newDictType, color, axis, offset)
     if status is DataActionStatus.Delete:
-        compositeDataWrapper.delete_data_wave(dictType)
+        compositeDataWrapper.delete_wave(dictType)
 
 def editPointSettings(compositeDataWrapper, dictType):
-    forbiddenNames = list(compositeDataWrapper.data_points.keys())
+    forbiddenNames = list(compositeDataWrapper.points.keys())
     forbiddenNames.remove(dictType)
     newDictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
         forbiddenNames = forbiddenNames,
         dictType = dictType,
         title = dictType,
-        axis = compositeDataWrapper.data_points[dictType].axis,
+        axis = compositeDataWrapper.points[dictType].axis,
         askDelete = True,
-        color = compositeDataWrapper.data_points[dictType].color)
+        color = compositeDataWrapper.points[dictType].color)
     if status is DataActionStatus.Ok:
         compositeDataWrapper.editDataPointsSettings(
             dictType, newDictType, color, axis, offset)
     if status is DataActionStatus.Delete:
-        compositeDataWrapper.delete_data_points(dictType)
+        compositeDataWrapper.delete_points(dictType)
 
 def editParameterSettings(compositeDataWrapper, dictType):
     forbiddenNames = list(compositeDataWrapper.parameters.keys())
@@ -107,8 +107,8 @@ class _PickledCompositeDataWrapper:
     graficznych które uniemożliwiają użycie na nim pickle."""
     def __init__(self, compositeDataWrapper):
         data = [
-            compositeDataWrapper.data_waves,
-            compositeDataWrapper.data_points,
+            compositeDataWrapper.waves,
+            compositeDataWrapper.points,
             compositeDataWrapper.parameters]
 #       mplObject każdego obiektu danych powinien być usunięty, by nie
 #       przeszkadzać przy wczytywaniu, lecz jeśli zostanie to zrobione przy
@@ -117,8 +117,8 @@ class _PickledCompositeDataWrapper:
 #        for dataItem in data:
 #            for key, item in dataItem.items():
 #                item.removeMplObject()
-        self.data_waves = compositeDataWrapper.data_waves
-        self.data_points = compositeDataWrapper.data_points
+        self.waves = compositeDataWrapper.waves
+        self.points = compositeDataWrapper.points
         self.parameters = compositeDataWrapper.parameters
 
 def loadCompositeData():
@@ -163,13 +163,13 @@ def modifyWave(compositeDataWrapper):
         'filter', compositeDataWrapper)
     dictType, beginTime, endTime, procedure, arguments, status = proc
     if status is DataActionStatus.Ok:
-        originalWave = compositeDataWrapper.data_waves[dictType]
+        originalWave = compositeDataWrapper.waves[dictType]
         modifiedWave = analyzer.filter_wave(originalWave, 
                                             beginTime, endTime, 
                                             procedure, arguments)
         if status is DataActionStatus.Cancel:
             return
-        compositeDataWrapper.data_waves[dictType].replace_slice(
+        compositeDataWrapper.waves[dictType].replace_slice(
             beginTime, endTime, modifiedWave)
         compositeDataWrapper.lineChanged.emit()
 
@@ -184,12 +184,12 @@ def findPoints(compositeDataWrapper):
         nameBase = 'found_points'
         nameNum = 0
         name = nameBase + str(nameNum)
-        while name in compositeDataWrapper.data_points:
+        while name in compositeDataWrapper.points:
             nameNum += 1
             name = nameBase + str(nameNum)
         dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-            forbiddenNames = compositeDataWrapper.data_points.keys(),
+            forbiddenNames = compositeDataWrapper.points.keys(),
             title=procedure.__name__)
         if status is DataActionStatus.Cancel:
             return
-        compositeDataWrapper.add_data_points(newPoints, dictType, color, axis=axis)
+        compositeDataWrapper.add_points(newPoints, dictType, color, axis=axis)

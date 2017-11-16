@@ -5,7 +5,7 @@ zewnętrzne procedury na danych.
 Procedury znajdują się w plikach w folderze 'procedures'. Są trzy
 typy procedur:
     filter - procedura filtrująca przebieg sygnału. Dane przyjmuje w
-             formie Data_wave.
+             formie Wave.
              (przykład 'parameters/filter_butterworth.py')
     points - procedura odnajdująca punkty na przebiegu sygnału.
              Dane przyjmuje w formie Composite_data.
@@ -40,7 +40,7 @@ Ponadto procedury poza procedurami filtracji powinny zawierać jeszcze:
 Zależnie od rodzaju procedury funkcja procedure powinna mieć inną
 strukturę. Poniżej opisane dla każdego rodzaju procedury:
     'filter'
-        procedure(<Data_wave> data_wave, 
+        procedure(<Wave> wave, 
                   <float> begin_time, <float> end_time,
                   <dict> arguments)
         procedura powinna zwracać przefiltrowaną tablicę wartości
@@ -61,8 +61,8 @@ Przykład zastosowania:
     arguments = butterworth.default_arguments
     arguments['N'] = 3
     arguments['Wn'] = 30
-    filtered_data_wave = analyzer.filter_wave(composite_data.data_waves['bp'], 60, 70, butterworth, arguments)
-    complete_data.data_waves['bp'].replace_slice(60, 70, filtered_data_wave)
+    filtered_wave = analyzer.filter_wave(composite_data.waves['bp'], 60, 70, butterworth, arguments)
+    complete_data.waves['bp'].replace_slice(60, 70, filtered_wave)
 """
 
 import importlib
@@ -122,14 +122,14 @@ def import_procedure(name):
         raise InvalidProcedureError(error_message)
     return procedure
 
-def filter_wave(data_wave, begin_time, end_time, 
+def filter_wave(wave, begin_time, end_time, 
                 procedure, arguments, 
                 wave_type = None):
-    """Filtruje Data_wave podaną procedurą filtracji."""
+    """Filtruje Wave podaną procedurą filtracji."""
     if wave_type is None:
-        wave_type = data_wave.type
-    filtered_data = procedure.execute(data_wave, begin_time, end_time, arguments)
-    return sm.Data_wave(filtered_data, end_time-begin_time, 
+        wave_type = wave.type
+    filtered_data = procedure.execute(wave, begin_time, end_time, arguments)
+    return sm.Wave(filtered_data, end_time-begin_time, 
                         wave_type = wave_type)
     
 def find_points(composite_data, begin_time, end_time, 
@@ -138,17 +138,17 @@ def find_points(composite_data, begin_time, end_time,
     """Odnajduje punkty na danym zakresie czasu za pomocą podanej 
     procedury.
     """
-    if not all(wave in composite_data.data_waves for wave in procedure.required_waves):
+    if not all(wave in composite_data.waves for wave in procedure.required_waves):
         raise ValueError('Composite_data nie zawiera wymaganych linii z %s'
                          % procedure.required_waves)
-    if not all(points in composite_data.data_points for points in procedure.required_points): 
+    if not all(points in composite_data.points for points in procedure.required_points): 
         raise ValueError('Composite_data nie zawiera wymaganych punktów z %s'
                          % procedure.required_points)
     found_points_x, found_points_y = procedure.execute(
         composite_data, 
         begin_time, end_time, 
         arguments)
-    return sm.Data_points(found_points_x, found_points_y, 
+    return sm.Points(found_points_x, found_points_y, 
                           point_type = point_type)
 
 def calculate_parameter(composite_data, time_tuples,
@@ -157,10 +157,10 @@ def calculate_parameter(composite_data, time_tuples,
     Composite_data w danych zakresach czasowych i zwraca utworzony 
     Parameter.
     """
-    if not all(wave in composite_data.data_waves for wave in procedure.required_waves):
+    if not all(wave in composite_data.waves for wave in procedure.required_waves):
         raise ValueError('Composite_data nie zawiera wymaganych linii z %s'
                          % procedure.required_waves)
-    if not all(points in composite_data.data_points for points in procedure.required_points): 
+    if not all(points in composite_data.points for points in procedure.required_points): 
         raise ValueError('Composite_data nie zawiera wymaganych punktów z %s'
                          % procedure.required_points)
     parameter = sm.Parameter(parameter_type)

@@ -34,53 +34,53 @@ def visualize_composite_data(comp_data, begin_time=None, end_time=None,
         if end_time is None:
             end_time = temp_end_time
     if wanted_waves is None:
-        for key, data_wave in comp_data.data_waves.items():
-            temp_begin_time = max(begin_time, data_wave.offset)
-            temp_end_time = min(end_time, data_wave.offset 
-                                + data_wave.complete_length)
-            x, y = data_wave.generate_coordinate_tables(
+        for key, wave in comp_data.waves.items():
+            temp_begin_time = max(begin_time, wave.offset)
+            temp_end_time = min(end_time, wave.offset 
+                                + wave.complete_length)
+            x, y = wave.generate_coordinate_tables(
                 begin_time = temp_begin_time, 
                 end_time = temp_end_time, 
                 begin_x = temp_begin_time)
-            if data_wave.type in type_colors:
-                color = type_colors[data_wave.type]
+            if wave.type in type_colors:
+                color = type_colors[wave.type]
             else:
                 color = None
             plt.plot(x, y, color = color, 
-                label = data_wave.type)
+                label = wave.type)
     else:
         for dict_type in wanted_waves:
-            data_wave = comp_data.data_waves[dict_type]
-            x, y = data_wave.generate_coordinate_tables(
+            wave = comp_data.waves[dict_type]
+            x, y = wave.generate_coordinate_tables(
                 begin_time = begin_time, 
                 end_time = end_time, 
                 begin_x = begin_time)
-            if data_wave.type in type_colors:
-                color = type_colors[data_wave.type]
+            if wave.type in type_colors:
+                color = type_colors[wave.type]
             else:
                 color = None
             plt.plot(x, y, color = color, 
-                label = data_wave.type)
+                label = wave.type)
     if wanted_points is None:
-        for key, data_points in comp_data.data_points.items():
-            x, y = data_points.data_slice(begin_time, end_time)
-            if data_points.type in type_colors:
-                color = type_colors[data_points.type]
+        for key, points in comp_data.points.items():
+            x, y = points.data_slice(begin_time, end_time)
+            if points.type in type_colors:
+                color = type_colors[points.type]
             else:
                 color = None
             plt.plot(x, y, color = color, 
-                label = data_points.type, 
+                label = points.type, 
                 marker='o', linestyle='None')
     else:
         for dict_type in wanted_points:
-            data_points = comp_data.data_points[dict_type]
-            x, y = data_points.data_slice(begin_time, end_time)
-            if data_points.type in type_colors:
-                color = type_colors[data_points.type]
+            points = comp_data.points[dict_type]
+            x, y = points.data_slice(begin_time, end_time)
+            if points.type in type_colors:
+                color = type_colors[points.type]
             else:
                 color = None
             plt.plot(x, y, color = color, 
-            label = data_points.type, 
+            label = points.type, 
             marker='o', linestyle='None')
     if wanted_parameters is None:
         for key, parameter in comp_data.parameters.items():

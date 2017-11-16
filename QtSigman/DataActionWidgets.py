@@ -282,7 +282,7 @@ class ProcedureWidget(QW.QWidget):
                 timeRangeString = str(beginTime)+","+str(endTime)
                 self.timeRangeLineEdit.setText(timeRangeString)
         else:
-            if not all(wave in self.compositeDataWrapper.data_waves for wave 
+            if not all(wave in self.compositeDataWrapper.waves for wave 
                        in self.procedure.required_waves):
                 if initial:
                     self.timeRangeLineEdit.setText('0,1')
@@ -325,12 +325,12 @@ class ProcedureWidget(QW.QWidget):
                 return False
         else:
             #TODO: Sprawdzanie odpowiednie dane są dostępne na tym zakresie
-            if not all(wave in self.compositeDataWrapper.data_waves for wave 
+            if not all(wave in self.compositeDataWrapper.waves for wave 
                        in self.procedure.required_waves):
                 QW.QMessageBox.warning(self, "Błąd ogólny",
                                        "Nie ma wszystkich wymaganych przebiegów")
                 return False
-            if not all(points in self.compositeDataWrapper.data_points for points 
+            if not all(points in self.compositeDataWrapper.points for points 
                        in self.procedure.required_points): 
                 QW.QMessageBox.warning(self, "Błąd ogólny",
                                        "Nie ma wszystkich wymaganych punktów")
@@ -376,7 +376,7 @@ class ProcedureWidget(QW.QWidget):
 
         self.selectedWaveComboBox = QW.QComboBox()
         items = [""]
-        for key, item in self.compositeDataWrapper.data_waves.items():
+        for key, item in self.compositeDataWrapper.waves.items():
             items.append(key)
         self.selectedWaveComboBox.addItems(items)
         hBoxLayout.addWidget(self.selectedWaveComboBox)
@@ -390,7 +390,7 @@ class ProcedureWidget(QW.QWidget):
         key = self.getSelectedWaveType()
         if key == "":
             return None
-        return self.compositeDataWrapper.data_waves[key]
+        return self.compositeDataWrapper.waves[key]
 
 
 class ProcedureDialog(QW.QDialog):

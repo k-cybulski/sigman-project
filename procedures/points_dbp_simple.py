@@ -54,12 +54,12 @@ def interpret_arguments(arguments):
     return output_arguments
 
 def procedure(comp_data, begin_time, end_time, arguments):
-    data_wave = comp_data.data_waves['bp']
+    wave = comp_data.waves['bp']
     
     # Obliczamy pochodną za pomocą pięciu punktów (po 2 z każdej strony
     # punktu środkowego)
-    sample_length = data_wave.sample_length
-    data = data_wave.data_slice(begin_time, end_time)
+    sample_length = wave.sample_length
+    data = wave.data_slice(begin_time, end_time)
     data = np.array(data)
     # pierwsze dwie wartości puste dla konsystencji czasowej z data
     derivative = [0] * 2 # 

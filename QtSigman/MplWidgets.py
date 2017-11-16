@@ -53,7 +53,7 @@ class PlotCanvas(FigureCanvas):
                 plot_axis.autoscale(axis='y')
         self.draw()
 
-    def plotDataWaveComparison(self, dataWaveDict, beginTime, endTime):
+    def plotDataWaveComparison(self, waveDict, beginTime, endTime):
         """Rysuje VisualDataWave z dict oraz podpisuje je zgodnie z ich
         kluczem w dict.
         """
@@ -61,7 +61,7 @@ class PlotCanvas(FigureCanvas):
         prop_cycle = matplotlib.rcParams['axes.prop_cycle']
         colors = prop_cycle.by_key()['color']
         handles = []
-        for key, item in dataWaveDict.items():
+        for key, item in waveDict.items():
             color = colors.pop(0)
             colors.append(color)
             handles.append(
