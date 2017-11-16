@@ -4,9 +4,9 @@ zewnętrzne procedury na danych.
 
 Procedury znajdują się w plikach w folderze 'procedures'. Są trzy
 typy procedur:
-    filter - procedura filtrująca przebieg sygnału. Dane przyjmuje w
+    modify - procedura filtrująca przebieg sygnału. Dane przyjmuje w
              formie Wave.
-             (przykład 'parameters/filter_butterworth.py')
+             (przykład 'parameters/modify_butterworth.py')
     points - procedura odnajdująca punkty na przebiegu sygnału.
              Dane przyjmuje w formie Composite_data.
              (przykład 'parameters/points_dbp_simple.py')
@@ -20,7 +20,7 @@ interpretować argumenty wpisane jako string.
 
 Każdy plik procedury jest pojedynczym pythonowym modułem który powinien 
 zawierać atrybuty:
-    <string> procedure_type - typ procedury; mogą być "filter","points" 
+    <string> procedure_type - typ procedury; mogą być "modify","points" 
                               lub "parameter"
     <string> description - opis celu i działania procedury
     <string> author - autor procedury
@@ -39,7 +39,7 @@ Ponadto procedury poza procedurami filtracji powinny zawierać jeszcze:
 
 Zależnie od rodzaju procedury funkcja procedure powinna mieć inną
 strukturę. Poniżej opisane dla każdego rodzaju procedury:
-    'filter'
+    'modify'
         procedure(<Wave> wave, 
                   <float> begin_time, <float> end_time,
                   <dict> arguments)
@@ -57,12 +57,12 @@ strukturę. Poniżej opisane dla każdego rodzaju procedury:
         procedura powinna zwracać wartość parametru na danym czasie
 
 Przykład zastosowania:
-    butterworth = analyzer.import_procedure("filter_butterworth")
+    butterworth = analyzer.import_procedure("modify_butterworth")
     arguments = butterworth.default_arguments
     arguments['N'] = 3
     arguments['Wn'] = 30
-    filtered_wave = analyzer.filter_wave(composite_data.waves['bp'], 60, 70, butterworth, arguments)
-    complete_data.waves['bp'].replace_slice(60, 70, filtered_wave)
+    modifyed_wave = analyzer.modify_wave(composite_data.waves['bp'], 60, 70, butterworth, arguments)
+    complete_data.waves['bp'].replace_slice(60, 70, modifyed_wave)
 """
 
 import importlib
@@ -89,7 +89,7 @@ def validate_procedure_compatibility(procedure_module):
         return False, ('procedure_type nie został zadeklarowany w module '
                        'procedury')
     procedure_type = procedure_module.procedure_type
-    if procedure_type not in ['filter', 'points', 'parameter']:
+    if procedure_type not in ['modify', 'points', 'parameter']:
         error_message = "procedure_type "+procedure_type+" jest niewłaściwy"
         return False, error_message
 
@@ -122,14 +122,14 @@ def import_procedure(name):
         raise InvalidProcedureError(error_message)
     return procedure
 
-def filter_wave(wave, begin_time, end_time, 
+def modify_wave(wave, begin_time, end_time, 
                 procedure, arguments, 
                 wave_type = None):
     """Filtruje Wave podaną procedurą filtracji."""
     if wave_type is None:
         wave_type = wave.type
-    filtered_data = procedure.execute(wave, begin_time, end_time, arguments)
-    return sm.Wave(filtered_data, end_time-begin_time, 
+    modifyed_data = procedure.execute(wave, begin_time, end_time, arguments)
+    return sm.Wave(modifyed_data, end_time-begin_time, 
                         wave_type = wave_type)
     
 def find_points(composite_data, begin_time, end_time, 

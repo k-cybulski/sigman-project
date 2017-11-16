@@ -160,11 +160,11 @@ def saveCompositeData(compositeData):
 
 def modifyWave(compositeDataWrapper):
     proc = DataActionWidgets.ProcedureDialog.getProcedure(
-        'filter', compositeDataWrapper)
+        'modify', compositeDataWrapper)
     dictType, beginTime, endTime, procedure, arguments, status = proc
     if status is DataActionStatus.Ok:
         originalWave = compositeDataWrapper.waves[dictType]
-        modifiedWave = analyzer.filter_wave(originalWave, 
+        modifiedWave = analyzer.modify_wave(originalWave, 
                                             beginTime, endTime, 
                                             procedure, arguments)
         if status is DataActionStatus.Cancel:

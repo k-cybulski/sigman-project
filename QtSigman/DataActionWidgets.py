@@ -236,7 +236,7 @@ class ProcedureWidget(QW.QWidget):
         self.descriptionWidget.setMinimumWidth(480)
         self.vBoxLayout.addWidget(self.descriptionWidget)
 
-        if procedure.procedure_type == 'filter':
+        if procedure.procedure_type == 'modify':
             self.addWaveSelection()
         else:
             self.addRequiredDataWidgets()
@@ -273,7 +273,7 @@ class ProcedureWidget(QW.QWidget):
         self.vBoxLayout.addLayout(bottomHBoxLayout)
 
     def _setMaximumTimeRange(self, initial=False):
-        if self.procedure.procedure_type == 'filter':
+        if self.procedure.procedure_type == 'modify':
             selectedWave = self.getSelectedWave()
             if selectedWave is not None:
                 beginTime = self.getSelectedWave().offset
@@ -318,7 +318,7 @@ class ProcedureWidget(QW.QWidget):
             QW.QMessageBox.warning(self, "Błąd ogólny",
                                    "Niewłaściwy zakres czasowy")
             return False
-        if self.procedure.procedure_type == "filter":
+        if self.procedure.procedure_type == "modify":
             if self.getSelectedWave() is None:
                 QW.QMessageBox.warning(self, "Błąd ogólny",
                                    "Wybierz przebieg")
@@ -336,7 +336,7 @@ class ProcedureWidget(QW.QWidget):
                                        "Nie ma wszystkich wymaganych punktów")
                 return False
         arguments = self.procedureArgumentsWidget.getArguments()
-        if self.procedure.procedure_type == 'filter':
+        if self.procedure.procedure_type == 'modify':
             dataInput = self.getSelectedWave()
         else:
             dataInput = self.compositeDataWrapper
@@ -472,7 +472,7 @@ class ProcedureDialog(QW.QDialog):
 
 
     def getValues(self):
-        if self.procedureType == 'filter':
+        if self.procedureType == 'modify':
             if self.dataActionStatus is DataActionStatus.Ok:
                 selectedProcedureWidget = self.procedureWidgetDict[self.selectedProcedureName]
                 dictType = selectedProcedureWidget.getSelectedWaveType()

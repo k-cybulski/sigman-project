@@ -32,18 +32,18 @@ complete_data.waves['bp'].offset = 0
 
 
 print(">Próba importu procedury filtrowania")
-module = analyzer.import_procedure("filter_butterworth")
+module = analyzer.import_procedure("modify_filter_butterworth")
 print("Procedure type:",module.procedure_type)
 print("Description:",module.description)
 print("Author:",module.author)
 
 print(">Próba przefiltrowania danych zewnętrzną procedurą filtrowania")
-butterworth = analyzer.import_procedure("filter_butterworth")
+butterworth = analyzer.import_procedure("modify_filter_butterworth")
 arguments = butterworth.default_arguments
 arguments['N'] = 3
 arguments['Wn'] = 30
-filtered_wave = analyzer.filter_wave(complete_data.waves['bp'], 60, 70, butterworth, arguments)
-complete_data.waves['bp'].replace_slice(60, 70, filtered_wave)
+modifyed_wave = analyzer.modify_wave(complete_data.waves['bp'], 60, 70, butterworth, arguments)
+complete_data.waves['bp'].replace_slice(60, 70, modifyed_wave)
 vis.visualize_composite_data(complete_data, begin_time=60, end_time=80, title="Wycinek dwudziestosekundowy po filtracji 30 Hz na zakresie <60s;70s>")
 
 print(">Próba usunięcia zakresu punktów")
@@ -57,8 +57,8 @@ print(">Proba wczytania innego, bardzo chaotycznego sygnału EKG i przefiltrowan
 ecg_wave = fm.import_wave('example_data/EKG_messy.dat', wave_type = 'ecg_messy')
 arguments['N'] = 3
 arguments['Wn'] = 20
-filtered_ecg = analyzer.filter_wave(ecg_wave, 0, ecg_wave.complete_length, butterworth, arguments)
-complete_data = sm.Composite_data(waves={'ecg_messy':ecg_wave,'ecg':filtered_ecg})
+modifyed_ecg = analyzer.modify_wave(ecg_wave, 0, ecg_wave.complete_length, butterworth, arguments)
+complete_data = sm.Composite_data(waves={'ecg_messy':ecg_wave,'ecg':modifyed_ecg})
 vis.visualize_composite_data(complete_data, begin_time=10,end_time=15,title="EKG wejściowe (mocno zaburzone) oraz przefiltrowane filtrem 20 Hz")
 
 print(">Próba ponownego wczytania wcześniej zapisanego composite_data")
