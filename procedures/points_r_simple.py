@@ -3,8 +3,9 @@ import numpy as np
 from sigman.analyzer import InvalidArgumentError
 
 procedure_type = 'points'
-description = """Procedura aplikująca prosty algorytm do odnalezienia 
-punktów R na wykresie EKG. Działa on w następujący sposób:
+description = (
+"""Procedura aplikująca prosty algorytm do odnalezienia punktów R
+na wykresie EKG. Działa on w następujący sposób:
 1) Oblicza kwadrat pochodnej wykresu EKG
 2) Przeprowadza całkowanie zakresowe (window integration) na kwadracie
     pochodnej
@@ -15,7 +16,7 @@ punktów R na wykresie EKG. Działa on w następujący sposób:
     granicznej znajduje najwyższą wartość wykresu EKG i oznacza go
     jako R. Czeka <safe_period> nim znowu możliwe będzie odnalezienie
     nowego R.
-"""
+""")
 author = 'kcybulski'
 arguments = {
     'threshold_fraction':("Wartość graniczna całki zakresowej, powyżej "
@@ -56,10 +57,11 @@ def procedure(comp_data, begin_time, end_time, settings):
     sample_length = data_wave.sample_length
     data = data_wave.data_slice(begin_time, end_time)
     data = np.array(data)
-    derivative = [0] * 2 # pierwsze dwie wartości są puste
+    # pierwsze dwie wartości puste dla konsystencji czasowej z data
+    derivative = [0] * 2
     for i in range(2,len(data)-2):
         derivative.append(( (1/8) * (-data[i-2]-2*data[i-1]+2*data[i+1]+data[i+2]) )**2) # wzór z oryginału
-    derivative = derivative + [0] * 2 # dwie ostatnie wartości są puste
+    derivative = derivative + [0] * 2 # dla konsystencji
     derivative = np.array(derivative)
 
     # Przeprowadzamy całkowanie zakresowe (tłum. window integration) kwadratu pochodnej

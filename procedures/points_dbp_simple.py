@@ -4,8 +4,9 @@ import numpy as np
 from sigman.analyzer import InvalidArgumentError
 
 procedure_type = 'points'
-description = """Procedura aplikujący prosty algorytm do odnalezienia
-punktów DBP na wykresie BP. Działa on w następujący sposób:
+description = (
+"""Procedura aplikujący prosty algorytm do odnalezienia punktów DBP
+na wykresie BP. Działa on w następujący sposób:
 1) Oblicza pochodną wykresu BP
 2) Przeprowadza całkowanie zakresowe (window integration) na pochodnej
 3) Oblicza graniczną wartość (threshold) całki w oparciu o ułamek
@@ -18,7 +19,7 @@ punktów DBP na wykresie BP. Działa on w następujący sposób:
 5) Jeśli przez ponad dwukrotnie dłuższy czas niż przewidywany nie 
     znalazł DBP, obniża wartość graniczną i cofa poszukiwanie do 
     ostatniego DBP.
-"""
+""")
 author = 'kcybulski'
 arguments = {
     'threshold_fraction':("Wartość graniczna całki zakresowej, powyżej "
@@ -60,21 +61,22 @@ def procedure(comp_data, begin_time, end_time, arguments):
     sample_length = data_wave.sample_length
     data = data_wave.data_slice(begin_time, end_time)
     data = np.array(data)
-    derivative = [0] * 2 # pierwsze dwie wartości są puste
+    # pierwsze dwie wartości puste dla konsystencji czasowej z data
+    derivative = [0] * 2 # 
     for i in range(2,len(data)-2):
         derivative.append(
             (1/8) * (-data[i-2]-2*data[i-1]+2*data[i+1]+data[i+2]))
-    derivative = derivative + [0] * 2 # dwie ostatnie wartości są puste
+    derivative = derivative + [0] * 2 # dla konsystencji z data
     derivative = np.array(derivative)
 
     # Przeprowadzamy całkowanie zakresowe (tłum. window integration) 
     # kwadratu pochodnej
     window_width = 0.15/sample_length # 150 ms
     half_window = int(window_width/2) 
-    integral = [0]  * half_window  # pierwsze kilka wartości jest pustych
+    integral = [0]  * half_window  # dla konsystencji czasowej z data
     for i in range(half_window, len(derivative)-half_window):
         integral.append(np.sum(derivative[i-half_window:i+half_window]))
-    integral = integral + [0] * half_window # ostatnie także sa puste
+    integral = integral + [0] * half_window # konsystencja
     integral = np.array(integral)
     
     # Przejeżdżamy przez cały wykres i patrzymy gdzie całka pochodnej powyżej 
@@ -107,6 +109,8 @@ def procedure(comp_data, begin_time, end_time, arguments):
                     continue
                 else:
                     begin_i = 0
+            # Jeśli przez zbyt długi czas nie wykryto DBP cofamy i obniżamy
+            # threshold
             if average_period!=0 and i*sample_length > dbp_x[-1] + average_period*1.7:
                 threshold *= 0.6
                 i = int((dbp_x[-1]+arguments['safe_period'])/sample_length)

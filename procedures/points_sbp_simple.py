@@ -4,8 +4,9 @@ import numpy as np
 from sigman.analyzer import InvalidArgumentError
 
 procedure_type = 'points'
-description = """Procedura aplikująca prosty algorytm do odnalezienia 
-punktów SBP na wykresie BP. Działa on w następujący sposób:
+description = (
+"""Procedura aplikująca prosty algorytm do odnalezienia punktów SBP 
+na wykresie BP. Działa on w następujący sposób:
 1) Normalizuje dane BP do zakresu <0;1>
 2) Oblicza graniczną wartość (threshold) znormalizowanego BP w oparciu
     o ułamek <threshold_fraction> najwyższej wartości BP w czasie
@@ -14,7 +15,7 @@ punktów SBP na wykresie BP. Działa on w następujący sposób:
     wartości granicznej znajduje najwyższą wartość wykresu BP i oznacza
     go jako SBP. Czeka <safe_period> nim znowu możliwe będzie 
     odnalezienie nowego SBP.
-"""
+""")
 author = 'kcybulski'
 arguments = {
     'threshold_fraction':("Wartość graniczna całki zakresowej, powyżej "
