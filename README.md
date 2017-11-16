@@ -35,13 +35,13 @@ ecg = fm.import_wave('example_data/EKG.dat')
 
 W wypadku rozsynchronizowania przebiegu względem innych w czasie ważna jest też zmienna `Wave.offset` pozwalająca korygować takie błędy przez przesuwanie przebiegu.
 
-Podstawową metodą pobierania informacji z `sm.Wave` jest `Wave.data_slice`, która zwraca tablicę danych. Dokładniejsza dokumentacja w `sigman/__init__.py`. Kilka przykładów:
+Podstawową metodą pobierania informacji z `sm.Wave` jest `Wave.data_slice`, która zwraca tablicę wartości danych na danym zakresie czasowywm. Dokładniejsza dokumentacja w `sigman/__init__.py`. Kilka przykładów:
 ```python
->>> ecg.data_slice(5,5.025)
+>>> ecg.data_slice(5, 5.025) # 25 milisekundowy wycinek przebiegu
 array([ 0.10659864,  0.10404629,  0.1673287 ,  0.1688633 ,  0.04704312])
->>> ecg.data_slice(5,10, value_every=1)
-array([ 0.10659864, -0.52108215,  0.95624742, -3.08766401,  0.35472794])
->>> ecg.data_slice(5,25, value_count=5)
+>>> ecg.data_slice(5, 8, value_every=1) # wycinek wartości przebiegu na przestrzeni 3 sekund oddalonych o 1 sekundę od siebie
+array([ 0.10659864, -0.52108215,  0.95624742])
+>>> ecg.data_slice(5, 25, value_count=5) # wycinek 5 wartości na przestrzeni 20 sekund
 array([ 0.10659864,  0.35472794, -0.61547362, -0.75704451, -0.59674523])
 ```
 
