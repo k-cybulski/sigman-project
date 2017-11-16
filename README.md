@@ -14,6 +14,8 @@ Celem tego projektu jest utworzenie biblioteki **sigman** pozwalającej na dowol
 ### Linux
 #### Ubuntu
 ```
+git clone "https://github.com/k-cybulski/sigman-project.git"
+cd sigman-project
 sudo apt install python3-pip
 pip3 install PyQt5 numpy scipy matplotlib XlsxWriter
 ```
@@ -78,6 +80,6 @@ Aplikacja wymaga pracy nim będzie w stanie użytkowym.
   - [ ] wizualizacja wyniku działania procedury przed potwierdzeniem
 
 ## Standardy kodu
-Kod projektu powinien być utrzymywany jak najbliżej norm PEP-8 (zawarte są w pliku `PEP-8-style-guide.pdf`). W bibliotece sigman utrzymywane jest nazewnictwo `lowercase_with_underscores`, natomiast w kodzie aplikacji QtSigman w ramach konsystencji z biblioteką PtQt5 wykrozystywane jest nazewnictwo `CamelCase`.
+Kod projektu powinien być utrzymywany jak najbliżej norm [PEP-8](https://www.python.org/dev/peps/pep-0008/). W bibliotece sigman utrzymywane jest nazewnictwo `lowercase_with_underscores`, natomiast w kodzie aplikacji QtSigman w ramach konsystencji z biblioteką PtQt5 wykrozystywane jest nazewnictwo `CamelCase`.
 
 Obecnie dokumentacja jest po polsku, natomiast zostanie ona przetłumaczona na angielski dla szerszego odbioru.
