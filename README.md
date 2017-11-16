@@ -80,6 +80,6 @@ Aplikacja wymaga pracy nim będzie w stanie użytkowym.
   - [ ] wizualizacja wyniku działania procedury przed potwierdzeniem
 
 ## Standardy kodu
-Kod projektu powinien być utrzymywany jak najbliżej norm [PEP-8](https://www.python.org/dev/peps/pep-0008/). W bibliotece sigman utrzymywane jest nazewnictwo `lowercase_with_underscores`, natomiast w kodzie aplikacji QtSigman w ramach konsystencji z biblioteką PtQt5 wykrozystywane jest nazewnictwo `CamelCase`.
+Kod projektu powinien być utrzymywany jak najbliżej norm [PEP-8](https://www.python.org/dev/peps/pep-0008/). W bibliotece sigman utrzymywane jest nazewnictwo `lowercase_with_underscores`, natomiast w kodzie aplikacji QtSigman w ramach konsystencji z biblioteką PyQt5 wykrozystywane jest nazewnictwo `CamelCase`.
 
 Obecnie dokumentacja jest po polsku, natomiast zostanie ona przetłumaczona na angielski dla szerszego odbioru.
