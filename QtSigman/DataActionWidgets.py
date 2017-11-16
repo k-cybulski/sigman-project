@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import Enum
 import glob
 
 from PyQt5 import QtWidgets as QW
@@ -17,9 +17,9 @@ def _getColorString(inputColor):
     return out
 
 class DataActionStatus(Enum):
-    Ok = auto()
-    Cancel = auto()
-    Delete = auto()
+    Ok = 1
+    Cancel = 2
+    Delete = 3
 
 class DataSettingsDialog(QW.QDialog):
     def __init__(self, title="", dictType="default", color="#1f77b4", 
