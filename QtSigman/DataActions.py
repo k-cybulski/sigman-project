@@ -19,7 +19,7 @@ def importLine(compositeDataWrapper):
         path = fileDialog.getOpenFileName(filter = fileFilter)
         assert path[0] != ""
         title = path[0].split("/")[-1]
-        wave = fm.import_line(path[0])
+        wave = fm.import_wave(path[0])
         dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
             forbiddenNames = compositeDataWrapper.waves.keys(),
             title = title)

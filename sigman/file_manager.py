@@ -40,7 +40,7 @@ def _import_dat(file_name):
     return x, y
 
 
-def _import_line_dat(file_name, wave_type='default', offset=0):
+def _import_wave_dat(file_name, wave_type='default', offset=0):
     """Importuje przebieg o stałej częstotliwości z pliku .dat i
     zwraca odpowiadający mu sm.Wave.
     """
@@ -58,13 +58,13 @@ def _import_point_dat(file_name, point_type='default'):
     return sm.Points(x, y, 
                           point_type = point_type)
 
-def import_line(file_name, wave_type='default', offset=0):
+def import_wave(file_name, wave_type='default', offset=0):
     """Importuje przebieg z danego pliku, przy czym wybiera odpowiednią
     funkcję do formatu danego pliku.
     """
     extension = os.path.splitext(file_name)[1][1:]
     if extension == 'dat':
-        import_func = _import_line_dat
+        import_func = _import_wave_dat
     else:
         raise ValueError("Nieodpowiedni format plików")
     return import_func(

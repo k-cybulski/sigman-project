@@ -10,12 +10,12 @@ import os
 os.path.dirname(os.path.abspath(__file__))
 
 print(">Próba importu próbych .dat")
-bp_line = fm.import_line('example_data/BP.dat', wave_type = 'bp')
-ecg_line = fm.import_line('example_data/EKG.dat', wave_type = 'ecg')
+bp_wave = fm.import_wave('example_data/BP.dat', wave_type = 'bp')
+ecg_wave = fm.import_wave('example_data/EKG.dat', wave_type = 'ecg')
 r_points = fm.import_points('example_data/R.dat', point_type = 'r') 
 
 print(">Próba połączenia danych w Composite_data")
-waves={'bp':bp_line, 'ecg':ecg_line}
+waves={'bp':bp_wave, 'ecg':ecg_wave}
 points={'r':r_points}
 complete_data = sm.Composite_data(waves = waves, points = points)
 
@@ -25,7 +25,7 @@ vis.visualize_composite_data(complete_data, title="Całość")
 print(">Próba wizualizacji wycinka danych")
 vis.visualize_composite_data(complete_data, begin_time=60, end_time=80, title="Wycinek dwudziestosekundowy")
 
-print(">Próba wizualizacji wycinka z jedną linią offsetowaną")
+print(">Próba wizualizacji wycinka z jednym przebiegiem offsetowanym")
 complete_data.waves['bp'].offset = -0.2
 vis.visualize_composite_data(complete_data, begin_time=60, end_time=80, title="Wycinek dwudziestosekundowy z offsetem -0.2s na BP")
 complete_data.waves['bp'].offset = 0
@@ -54,11 +54,11 @@ print(">Próba zapisania composite_data")
 fm.save_composite_data("example_data/example_composite_data.pickle",complete_data)
 
 print(">Proba wczytania innego, bardzo chaotycznego sygnału EKG i przefiltrowania go a następnie pokazania tuż obok nieprzefiltrowanego")
-ecg_line = fm.import_line('example_data/EKG_messy.dat', wave_type = 'ecg_messy')
+ecg_wave = fm.import_wave('example_data/EKG_messy.dat', wave_type = 'ecg_messy')
 arguments['N'] = 3
 arguments['Wn'] = 20
-filtered_ecg = analyzer.filter_wave(ecg_line, 0, ecg_line.complete_length, butterworth, arguments)
-complete_data = sm.Composite_data(waves={'ecg_messy':ecg_line,'ecg':filtered_ecg})
+filtered_ecg = analyzer.filter_wave(ecg_wave, 0, ecg_wave.complete_length, butterworth, arguments)
+complete_data = sm.Composite_data(waves={'ecg_messy':ecg_wave,'ecg':filtered_ecg})
 vis.visualize_composite_data(complete_data, begin_time=10,end_time=15,title="EKG wejściowe (mocno zaburzone) oraz przefiltrowane filtrem 20 Hz")
 
 print(">Próba ponownego wczytania wcześniej zapisanego composite_data")
