@@ -3,7 +3,7 @@ import numpy as np
 
 from sigman.analyzer import InvalidArgumentError
 
-procedure_type = 'filter'
+procedure_type = 'modify'
 description = """Procedura aplikująca filtr Butterwortha z biblioteki SciPy.
 Dokładna dokumentacja na
 https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.butter.html"""
