@@ -7,6 +7,8 @@ from sigman import analyzer
 from sigman import visualizer as vis
 import os
 
+os.path.dirname(os.path.abspath(__file__))
+
 print(">Próba importu próbych .dat")
 bp_line = fm.import_line('example_data/BP.dat', wave_type = 'bp')
 ecg_line = fm.import_line('example_data/EKG.dat', wave_type = 'ecg')
