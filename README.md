@@ -33,6 +33,16 @@ from sigman import file_manager as fm
 ecg = fm.import_wave('example_data/EKG.dat')
 ```
 
+Podstawową metodą pobierania informacji z `sm.Wave` jest `Wave.data_slice`, która zwraca tablicę danych. Dokładniejsza dokumentacja w `sigman/__init__.py`. Kilka przykładów:
+```python
+>>> ecg.data_slice(5,5.025)
+array([ 0.10659864,  0.10404629,  0.1673287 ,  0.1688633 ,  0.04704312])
+>>> ecg.data_slice(5,10, value_every=1)
+array([ 0.10659864, -0.52108215,  0.95624742, -3.08766401,  0.35472794])
+>>> ecg.data_slice(5,25, value_count=5)
+array([ 0.10659864,  0.35472794, -0.61547362, -0.75704451, -0.59674523])
+```
+
 #### sm.Points
 Punkty oznaczające wydarzenia w czasie o danej wartości, np. R na przebiegu EKG, symbolizowane są klasą `sm.Points`. Zawiera on dwie tablice `Points.data_x` oraz `Points.data_y` posortowane w kolejności `data_x`, a także typ punktów jak `r`.
 
@@ -49,7 +59,7 @@ Klasa zawierająca kilka obliczonych wartości `Parameter.values` parametru, np.
 #### sm.Composite_data
 Klasa łącząca kilka powyższych danych w jedną spójną całość. Może zawierać nieokreśloną liczbę `sm.Wave`, `sm.Points` oraz `sm.Parameter`. Pozwala stosować procedury korzystające z kilku różnych danych, np. procedurę odnajdującą wcięcia dykrotyczne w oparciu o SBP i przebiegi BP oraz EKG.
 
-Dane przechowuje w trzech `dict`:
+Dane przechowuje w trzech `dict` do których później odwołują się procedury, wobec czego bardzo ważne by dane były odpisane odpowiednio dla swych procedur. Te `dict` to:
 * `Composite_data.waves`
 * `Composite_data.points`
 * `Composite_data.parameters`
