@@ -4,9 +4,9 @@ zewnętrzne procedury na danych.
 
 Procedury znajdują się w plikach w folderze 'procedures'. Są trzy
 typy procedur:
-    modify - procedura filtrująca przebieg sygnału. Dane przyjmuje w
+    modify - procedura modyfikująca przebieg sygnału. Dane przyjmuje w
              formie Wave.
-             (przykład 'parameters/modify_butterworth.py')
+             (przykład 'parameters/modify_filter_butterworth.py')
     points - procedura odnajdująca punkty na przebiegu sygnału.
              Dane przyjmuje w formie Composite_data.
              (przykład 'parameters/points_dbp_simple.py')
@@ -33,7 +33,7 @@ zawierać atrybuty:
                         poprawność argumentów, interpretuje je oraz
                         przeprowadza samą procedurę
 
-Ponadto procedury poza procedurami filtracji powinny zawierać jeszcze:
+Ponadto procedury poza procedurami modyfikacji powinny zawierać jeszcze:
     <lista string> required_waves - wymagane rodzaje przebiegów dla procedury
     <lista string> required_points - wymagane punkty dla procedury
 
@@ -43,7 +43,7 @@ strukturę. Poniżej opisane dla każdego rodzaju procedury:
         procedure(<Wave> wave, 
                   <float> begin_time, <float> end_time,
                   <dict> arguments)
-        procedura powinna zwracać przefiltrowaną tablicę wartości
+        procedura powinna zwracać zmodyfikowaną tablicę wartości
         sygnału o długości danego odcinka czasowego
     'points'
         procedure(<Composite_data> comp_data,
@@ -57,12 +57,12 @@ strukturę. Poniżej opisane dla każdego rodzaju procedury:
         procedura powinna zwracać wartość parametru na danym czasie
 
 Przykład zastosowania:
-    butterworth = analyzer.import_procedure("modify_butterworth")
+    butterworth = analyzer.import_procedure("modify_filter_butterworth")
     arguments = butterworth.default_arguments
     arguments['N'] = 3
     arguments['Wn'] = 30
-    modifyed_wave = analyzer.modify_wave(composite_data.waves['bp'], 60, 70, butterworth, arguments)
-    complete_data.waves['bp'].replace_slice(60, 70, modifyed_wave)
+    filtered_wave = analyzer.modify_wave(composite_data.waves['bp'], 60, 70, butterworth, arguments)
+    complete_data.waves['bp'].replace_slice(60, 70, filtered_wave)
 """
 
 import importlib
