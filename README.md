@@ -26,7 +26,7 @@ Poniższe przykłady zakładają importowanie `sigman` jako `sm`, a `sigman.file
 #### sm.Wave
 Podstawowym rodzajem danych w bibliotece sigman jest przebieg `sm.Wave` (*z ang. waveform*) . Określony jest on przede wszystkim tablicą danych `Wave.data` oraz całkowitym czasem trwania `Wave.complete_length`. Z liczby danych oraz ich długości w czasie obliczana jest częstotliwość samplingowania `Wave.sample_rate`, oraz długość sampla `Wave.sample_length`. Do późniejszej analizy ważny będzie także typ przebiegu `Wave.type` określający rodzaj danych, np. `ecg` czy `bp`.
 
-Obiekty `sm.Wave` można importować za pomocą funkcji `fm.import_line`.
+Obiekty `sm.Wave` można importować za pomocą funkcji `fm.import_wave`.
 
 ```python
 from sigman import file_manager as fm
