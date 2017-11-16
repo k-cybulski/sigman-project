@@ -24,7 +24,7 @@ pip3 install PyQt5 numpy scipy matplotlib XlsxWriter
 Poniższe przykłady zakładają importowanie `sigman` jako `sm`, a `sigman.file_manager` jako `fm`.
 
 #### sm.Wave
-Podstawowym rodzajem danych w bibliotece sigman jest przebieg `sm.Wave` (*z ang. waveform*) . Określony jest on przede wszystkim tablicą danych `Wave.data` oraz całkowitym czasem trwania `Wave.complete_length`. Do późniejszej analizy ważny będzie także typ przebiegu `Wave.type` określający rodzaj danych, np. `ecg` czy `bp`.
+Podstawowym rodzajem danych w bibliotece sigman jest przebieg `sm.Wave` (*z ang. waveform*) . Określony jest on przede wszystkim tablicą danych `Wave.data` oraz całkowitym czasem trwania `Wave.complete_length`. Z liczby danych oraz ich długości w czasie obliczana jest częstotliwość samplingowania `Wave.sample_rate`, oraz długość sampla `Wave.sample_length`. Do późniejszej analizy ważny będzie także typ przebiegu `Wave.type` określający rodzaj danych, np. `ecg` czy `bp`.
 
 Obiekty `sm.Wave` można importować za pomocą funkcji `fm.import_line`.
 
@@ -32,6 +32,8 @@ Obiekty `sm.Wave` można importować za pomocą funkcji `fm.import_line`.
 from sigman import file_manager as fm
 ecg = fm.import_wave('example_data/EKG.dat')
 ```
+
+W wypadku rozsynchronizowania przebiegu względem innych w czasie ważna jest też zmienna `Wave.offset` pozwalająca korygować takie błędy przez przesuwanie przebiegu.
 
 Podstawową metodą pobierania informacji z `sm.Wave` jest `Wave.data_slice`, która zwraca tablicę danych. Dokładniejsza dokumentacja w `sigman/__init__.py`. Kilka przykładów:
 ```python
