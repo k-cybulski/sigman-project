@@ -20,6 +20,9 @@ pip3 install PyQt5 numpy scipy matplotlib XlsxWriter
 ```
 
 ## Obsługa
+### QtSigman
+Należy uruchomić skrypt `run_qtsigman.py`.
+
 ### sigman
 Poniższe przykłady zakładają importowanie `sigman` jako `sm`, a `sigman.file_manager` jako `fm`.
 
@@ -56,7 +59,7 @@ r = fm.import_points('example_data/R.dat')
 lub odnajdywać za pomocą procedur, co zostanie wytłumaczone dogłębniej potem.
 
 #### sm.Parameter
-Klasa zawierająca kilka obliczonych wartości `Parameter.values` parametru, np. heart rate, a także informacje o tym od jakiego czasu `Parameter.begin_times`  do jakiego `Parameter.end_times` są one obliczone. Tworzy się je tylko wykorzystując procedury.
+Klasa zawierająca tablice obliczonych wartości `Parameter.values` parametru, np. częstotliwości bicia serca, a także informacje o tym od jakiego czasu `Parameter.begin_times`  do jakiego `Parameter.end_times` są one obliczone. Tworzy się je tylko wykorzystując procedury.
 
 #### sm.Composite_data
 Klasa łącząca kilka powyższych danych w jedną spójną całość. Może zawierać nieokreśloną liczbę `sm.Wave`, `sm.Points` oraz `sm.Parameter`. Pozwala stosować procedury korzystające z kilku różnych danych, np. procedurę odnajdującą wcięcia dykrotyczne w oparciu o SBP i przebiegi BP oraz EKG.
@@ -125,9 +128,6 @@ composite_data.waves['ecg'].replace_slice(20,60, filtered_wave)
 ```
 
 Przykłady użycia różnych funkcji biblioteki w pliku `test_sigman.py`. Dokładniejszy opis wkrótce.
-
-### QtSigman
-Należy uruchomić skrypt `run_qtsigman.py`.
 
 ## Stan obecny
 ### sigman
