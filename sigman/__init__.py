@@ -23,20 +23,18 @@ class Wave():
     czasie i nie zaczynać się od 0. W takim wypadku wszystkie odwołania 
     do jego wartości w danym czasie uwzględnią to przesunięcie.
 
-    Wszystkie operacje zewnętrzne analizujące Wave powinny opierać
-    się na metodach value_at i data_slice.
+    Atrybuty:
+        Wave.data - tablica wartości y punktów przebiegu
+        Wave.complete_length - długość przebiegu w czasie
+        Wave.sample_length - długość jednego sampla
+        Wave.sample_rate - częstotliwość samplowania
+        Wave.wave_type - typ danych przebiegu, np. 'ecg' czy 'bp'
+        Wave.offset - przesunięcie w czasie w Composite_data
     """
 
     def __init__(self, data, complete_length, wave_type='default', offset=0):
         """Inicjalizuje Wave. Przyjmuje tablicę danych wartości
         sygnału oraz jego długość.
-
-        Argumenty:
-        data - tablica wartości y punktów przebiegu
-        complete_length - długość przebiegu w czasie
-        wave_type - typ danych przebiegu, np. 'ecg' czy 'bp'
-        offset - przesunięcie w czasie względem pozostałych Wave 
-                 w Composite_data
         """
         # Okres nagranych danych; odległość w czasie między
         # punktami przebiegu.
@@ -174,16 +172,16 @@ class Points():
     """Klasa symbolizująca zestaw punktów jednego typu (np. R).
     Przechowuje je w dwóch tablicach - wartości x i y wszystkich
     punktów, posortowanych według x.
+
+    Atrybuty:
+        Points.data_x - tablica wartości x punktów
+        Points.data_y - tablica wartości y punktów
+        Points.point_type - typ punktów, np. 'r' czy 'sbp' 
     """
 
     def __init__(self, data_x, data_y, point_type='default'):
         """Inicjalizuje Points. Przyjmuje dwie tablice x i y
         punktów.
-
-        Argumenty:
-        data_x - tablica wartości x punktów
-        data_y - tablica wartości y punktów
-        point_type - typ punktów, np. 'r' czy 'sbp' 
         """
         # sortowanie by punkty były po kolei
         temp_data_x, temp_data_y = zip(*sorted(zip(data_x,data_y)))
@@ -308,11 +306,10 @@ class Parameter():
     czasowymi w formie list początkowych i końcowych czasów. Parametry 
     powstają jako wynik działania procedur.
     
-    Parametry przechowywane są za pomocą trzech list, w kolejności czasu
-    początkowego:
-        self.parmaeter_begin_times - zawiera czasy początkowe parametrów
-        self.parameter_end_times - zawiera czasy końcowe parametrów
-        self.parameter_values - zawiera wartość parametru
+    Atrybuty:
+        self.parmaeter_begin_times - tablica czasów początkowych parametrów
+        self.parameter_end_times - tablica czasów końcowych parametrów
+        self.parameter_values - tablica wartości parametru
     """
 
     def __init__(self, parameter_type):
