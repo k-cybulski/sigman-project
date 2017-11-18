@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Ten skrypt sprawdza działanie wszystkich funkcji pakietu sigman
+# W tym skrypcie zademonstrowane są wszystkie główne metody biblioteki sigman
 
 import sigman as sm
 from sigman import file_manager as fm
@@ -25,28 +25,25 @@ vis.visualize_composite_data(complete_data, title="Całość")
 print(">Próba wizualizacji wycinka danych")
 vis.visualize_composite_data(complete_data, begin_time=60, end_time=80, title="Wycinek dwudziestosekundowy")
 
-print(">Próba wizualizacji wycinka z jednym przebiegiem offsetowanym")
+print(">Próba wizualizacji wycinka z jednym przebiegiem przesuniętym w czasie")
 complete_data.waves['bp'].offset = -0.2
 vis.visualize_composite_data(complete_data, begin_time=60, end_time=80, title="Wycinek dwudziestosekundowy z offsetem -0.2s na BP")
 complete_data.waves['bp'].offset = 0
 
-
-print(">Próba importu procedury filtrowania")
-module = analyzer.import_procedure("modify_filter_butterworth")
-print("Procedure type:",module.procedure_type)
-print("Description:",module.description)
-print("Author:",module.author)
-
-print(">Próba przefiltrowania danych zewnętrzną procedurą filtrowania")
+print(">Próba importu zewnętrznej procedury filtrowania i przefiltrowania nią danych")
 butterworth = analyzer.import_procedure("modify_filter_butterworth")
+print("Procedure type:",butterworth.procedure_type)
+print("Description:",butterworth.description)
+print("Author:",butterworth.author)
+
 arguments = butterworth.default_arguments
 arguments['N'] = 3
 arguments['Wn'] = 30
-modifyed_wave = analyzer.modify_wave(complete_data.waves['bp'], 60, 70, butterworth, arguments)
-complete_data.waves['bp'].replace_slice(60, 70, modifyed_wave)
+modified_wave = analyzer.modify_wave(complete_data.waves['bp'], 60, 70, butterworth, arguments)
+complete_data.waves['bp'].replace_slice(60, 70, modified_wave)
 vis.visualize_composite_data(complete_data, begin_time=60, end_time=80, title="Wycinek dwudziestosekundowy po filtracji 30 Hz na zakresie <60s;70s>")
 
-print(">Próba usunięcia zakresu punktów")
+print(">Próba usunięcia punktów na danym zakresie")
 complete_data.points['r'].delete_slice(65,75)
 vis.visualize_composite_data(complete_data, begin_time=60, end_time=80, title="Wycinek dwudziestosekundowy po usunięciu punktów")
 
@@ -57,16 +54,15 @@ print(">Proba wczytania innego, bardzo chaotycznego sygnału EKG i przefiltrowan
 ecg_wave = fm.import_wave('example_data/EKG_messy.dat', wave_type = 'ecg_messy')
 arguments['N'] = 3
 arguments['Wn'] = 20
-modifyed_ecg = analyzer.modify_wave(ecg_wave, 0, ecg_wave.complete_length, butterworth, arguments)
-complete_data = sm.Composite_data(waves={'ecg_messy':ecg_wave,'ecg':modifyed_ecg})
+modified_ecg = analyzer.modify_wave(ecg_wave, 0, ecg_wave.complete_length, butterworth, arguments)
+complete_data = sm.Composite_data(waves={'ecg_messy':ecg_wave,'ecg':modified_ecg})
 vis.visualize_composite_data(complete_data, begin_time=10,end_time=15,title="EKG wejściowe (mocno zaburzone) oraz przefiltrowane filtrem 20 Hz")
 
 print(">Próba ponownego wczytania wcześniej zapisanego composite_data")
 complete_data = fm.load_composite_data('example_data/example_composite_data.pickle')
-vis.visualize_composite_data(complete_data, title="Wczytany ponownie")
+vis.visualize_composite_data(complete_data, title="Wczytany ponownie composite_data")
 os.remove('example_data/example_composite_data.pickle')
 
-#TODO: Odnajdywanie punktów na wykresie
 print(">Próba odnalezienia r na odcinku <65s, 75s>")
 find_r = analyzer.import_procedure('points_r_simple')
 arguments = find_r.default_arguments
@@ -84,16 +80,16 @@ vis.visualize_composite_data(complete_data, title = "Dane z całkowicie nowymi R
 print(">Próba obliczenia tempa bicia serca na kilku interwałach")
 calculate_hr = analyzer.import_procedure('parameter_heart_rate')
 param_tuples = []
-for i in range(10,100,10):
-    param_tuples.append((i-10,i))
+for i in range(20,200,20):
+    param_tuples.append((i-20,i))
 hr = analyzer.calculate_parameter(complete_data, param_tuples ,calculate_hr,
                                   calculate_hr.default_arguments, 'hr')
 complete_data.add_parameter(hr, 'hr')
-vis.visualize_composite_data(complete_data, begin_time = 0, end_time = 120,
-                             title = "Wycinek <0s; 120s> z parametrem")
+vis.visualize_composite_data(complete_data, begin_time = 160, end_time = 240,
+                             title = "Wycinek <160s; 240s> z parametrem")
 
 
-print(">Próba usunięcia pojedynczego punktu r i zastąpienia go nowym")
+print(">Próba usunięcia pojedynczego punktu r i przesunięcia go obok")
 vis.visualize_composite_data(complete_data, begin_time = 240, end_time = 243, title = "Wycinek <240s; 243s>")
 complete_data.points['r'].delete_point(241) #,y=5.8)
 x = 241.227
