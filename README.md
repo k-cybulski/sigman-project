@@ -58,6 +58,12 @@ r = fm.import_points('example_data/R.dat')
 ```
 lub odnajdywać za pomocą procedur, co zostanie wytłumaczone dogłębniej potem.
 
+Podobnie jak przy `sm.Wave` jest metoda `Points.data_slice`.
+```python
+>>> r.data_slice(20,23)
+(array([ 20.61868,  21.49193,  22.3552 ]), array([ 4.07120371,  3.76066208,  3.69650602]))
+```
+
 #### sm.Parameter
 Klasa zawierająca tablice obliczonych wartości `Parameter.values` parametru, np. częstotliwości bicia serca, a także informacje o tym od jakiego czasu `Parameter.begin_times`  do jakiego `Parameter.end_times` są one obliczone. Tworzy się je tylko wykorzystując procedury.
 
