@@ -29,8 +29,15 @@ Poniższe przykłady zakładają importowanie `sigman` jako `sm`, a `sigman.file
 #### sm.Wave
 Podstawowym rodzajem danych w bibliotece sigman jest przebieg `sm.Wave` (*z ang. waveform*) . Określony jest on przede wszystkim tablicą danych `Wave.data` oraz całkowitym czasem trwania `Wave.complete_length`. Z liczby danych oraz ich długości w czasie obliczana jest częstotliwość samplingowania `Wave.sample_rate`, oraz długość sampla `Wave.sample_length`. Do późniejszej analizy ważny będzie także typ przebiegu `Wave.type` określający rodzaj danych, np. `ecg` czy `bp`.
 
-Obiekty `sm.Wave` można importować za pomocą funkcji `fm.import_wave`.
+Inicjalizacja `sm.Wave` zawierającego wartości funkcji sinus od 0 do 4pi na umownej przestrzeni 10 sekund.
+```python
+import sigman as sm
+import numpy as np
+sine = np.sin(np.linspace(0,4*np.pi))
+sine_wave = sm.Wave(sine, 10, 'sine')
+```
 
+Obiekty `sm.Wave` można importować za pomocą funkcji `fm.import_wave`.
 ```python
 from sigman import file_manager as fm
 ecg = fm.import_wave('example_data/EKG.dat', 'ecg')
@@ -50,6 +57,14 @@ array([ 0.10659864,  0.35472794, -0.61547362, -0.75704451, -0.59674523])
 
 #### sm.Points
 Punkty oznaczające wydarzenia w czasie o danej wartości, np. R na przebiegu EKG, symbolizowane są klasą `sm.Points`. Zawiera on dwie tablice `Points.data_x` oraz `Points.data_y` posortowane w kolejności `data_x`, a także typ punktów jak `r`.
+
+Inicjalizacja kilku punktów.
+```python
+import sigman as sm
+data_x = [1, 4, 7]
+data_y = [3, -2, 4]
+points = sm.Points(data_x, data_y, 'example')
+```
 
 Punkty można importować
 ```python
