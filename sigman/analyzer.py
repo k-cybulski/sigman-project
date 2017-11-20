@@ -34,6 +34,8 @@ zawierać atrybuty:
                         przeprowadza samą procedurę
 
 Ponadto procedury poza procedurami modyfikacji powinny zawierać jeszcze:
+    <string> output_type - typ danych zwracany, np. dla punktów R 'r' a dla
+                           parametru częstotliwości bicia serca 'hr'
     <lista string> required_waves - wymagane rodzaje przebiegów dla procedury
     <lista string> required_points - wymagane punkty dla procedury
 
@@ -104,7 +106,8 @@ def validate_procedure_compatibility(procedure_module):
     if procedure_type in ['points', 'parameter']:
         required_attributes.extend([
             "required_waves",
-            "required_points"])
+            "required_points",
+            "output_type"])
     
     for attribute in required_attributes:
         if attribute not in procedure_module.__dict__:
@@ -124,17 +127,15 @@ def import_procedure(name):
 
 def modify_wave(wave, begin_time, end_time, 
                 procedure, arguments, 
-                wave_type = None):
+                wave_type=None):
     """Filtruje Wave podaną procedurą filtracji."""
     if wave_type is None:
         wave_type = wave.type
-    modifyed_data = procedure.execute(wave, begin_time, end_time, arguments)
-    return sm.Wave(modifyed_data, end_time-begin_time, 
-                        wave_type = wave_type)
+    modified_data = procedure.execute(wave, begin_time, end_time, arguments)
+    return sm.Wave(modified_data, end_time-begin_time, wave_type)
     
 def find_points(composite_data, begin_time, end_time, 
-                procedure, arguments, 
-                point_type = None):
+                procedure, arguments):
     """Odnajduje punkty na danym zakresie czasu za pomocą podanej 
     procedury.
     """
@@ -148,11 +149,10 @@ def find_points(composite_data, begin_time, end_time,
         composite_data, 
         begin_time, end_time, 
         arguments)
-    return sm.Points(found_points_x, found_points_y, 
-                          point_type = point_type)
+    return sm.Points(found_points_x, found_points_y, procedure.output_type)
 
 def calculate_parameter(composite_data, time_tuples,
-                         procedure, arguments, parameter_type):
+                         procedure, arguments):
     """Przeprowadza procedurę obliczającą wartość parametru na danym 
     Composite_data w danych zakresach czasowych i zwraca utworzony 
     Parameter.
@@ -163,7 +163,7 @@ def calculate_parameter(composite_data, time_tuples,
     if not all(points in composite_data.points for points in procedure.required_points): 
         raise ValueError('Composite_data nie zawiera wymaganych punktów z %s'
                          % procedure.required_points)
-    parameter = sm.Parameter(parameter_type)
+    parameter = sm.Parameter(procedure.output_type)
     for begin_time, end_time in time_tuples:
         value = procedure.execute(composite_data, begin_time, end_time,
                                     arguments)

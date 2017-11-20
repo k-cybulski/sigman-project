@@ -20,6 +20,7 @@ arguments = {
     'test_every':"Odstęp między badanymi punktami w focus_range"}
 default_arguments = {'net':'procedures/default_dn_net.pickle',
                      'focus_range':'0.1,0.5', 'test_every':0.005}
+output_type = 'dn'
 required_waves = ['bp','ecg']
 required_points = ['sbp']
 

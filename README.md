@@ -33,7 +33,7 @@ Obiekty `sm.Wave` można importować za pomocą funkcji `fm.import_wave`.
 
 ```python
 from sigman import file_manager as fm
-ecg = fm.import_wave('example_data/EKG.dat')
+ecg = fm.import_wave('example_data/EKG.dat', 'ecg')
 ```
 
 W wypadku rozsynchronizowania przebiegu względem innych w czasie ważna jest też zmienna `Wave.offset` pozwalająca korygować takie błędy przez przesuwanie przebiegu.
@@ -54,7 +54,7 @@ Punkty oznaczające wydarzenia w czasie o danej wartości, np. R na przebiegu EK
 Punkty można importować
 ```python
 from sigman import file_manager as fm
-r = fm.import_points('example_data/R.dat')
+r = fm.import_points('example_data/R.dat', 'r')
 ```
 lub odnajdywać za pomocą procedur, co zostanie wytłumaczone dogłębniej potem.
 
@@ -80,12 +80,12 @@ Dodawać je można i przy inicjalizacji i już po zainicjalizowaniu.
 import sigman as sm
 from sigman import file_manager as fm
 
-ecg = fm.import_wave('example_data/EKG.dat')
+ecg = fm.import_wave('example_data/EKG.dat', 'ecg')
 composite_data = sm.Composite_data(waves={'ecg':ecg})
 
-bp = fm.import_wave('example_data/BP.dat')
+bp = fm.import_wave('example_data/BP.dat', 'bp')
 composite_data.add_wave(bp, 'bp')
-r = fm.import_points('example_data/R.dat')
+r = fm.import_points('example_data/R.dat', 'r')
 composite_data.add_points(r, 'r')
 ```
 
@@ -126,7 +126,7 @@ from sigman import file_manager as fm
 from sigman import analyzer
 from sigman import visualizer as vis
 
-ecg = fm.import_wave('example_data/EKG.dat')
+ecg = fm.import_wave('example_data/EKG.dat', 'ecg')
 composite_data = sm.Composite_data(waves={'ecg':ecg})
 
 butterworth = analyzer.import_procedure('modify_filter_butterworth')
@@ -149,7 +149,7 @@ from sigman import file_manager as fm
 from sigman import analyzer
 from sigman import visualizer as vis
 
-bp = fm.import_wave('example_data/BP.dat')
+bp = fm.import_wave('example_data/BP.dat', 'bp')
 composite_data = sm.Composite_data(waves={'bp':bp})
 
 dbp_finder = analyzer.import_procedure('points_dbp_simple')
@@ -170,7 +170,7 @@ from sigman import file_manager as fm
 from sigman import analyzer
 from sigman import visualizer as vis
 
-ecg = fm.import_wave('example_data/EKG.dat')
+ecg = fm.import_wave('example_data/EKG.dat', 'ecg')
 composite_data = sm.Composite_data(waves={'ecg':ecg})
 
 # odnajdujemy punkty R
@@ -182,7 +182,7 @@ composite_data.add_points(r, 'r')
 # obliczamy HR
 hr_proc = analyzer.import_procedure('parameter_heart_rate')
 param_tuples = [(0,15),(15,60),(60,120)]
-hr = analyzer.calculate_parameter(composite_data, param_tuples, hr_proc, hr_proc.default_arguments, 'hr')
+hr = analyzer.calculate_parameter(composite_data, param_tuples, hr_proc, hr_proc.default_arguments)
 composite_data.add_parameter(hr, 'hr')
 
 vis.visualize_composite_data(composite_data) # Jak na razie wizualizacja parametrów jest niedopracowana

@@ -10,6 +10,7 @@ minutę w oparciu o punkty R.
 author = 'kcybulski'
 arguments = {}
 default_arguments = {}
+output_type = 'hr'
 required_waves = []
 required_points = ['r']
 

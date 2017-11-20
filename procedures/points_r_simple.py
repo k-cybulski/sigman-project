@@ -29,6 +29,7 @@ default_arguments = {
     'threshold_fraction':0.7,
     'threshold_period':2,
     'safe_period':0.25}
+output_type = 'r'
 required_waves = ['ecg']
 required_points = []
 

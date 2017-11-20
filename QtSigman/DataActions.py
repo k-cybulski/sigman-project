@@ -19,7 +19,7 @@ def importLine(compositeDataWrapper):
         path = fileDialog.getOpenFileName(filter = fileFilter)
         assert path[0] != ""
         title = path[0].split("/")[-1]
-        wave = fm.import_wave(path[0])
+        wave = fm.import_wave(path[0], 'default')
         dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
             forbiddenNames = compositeDataWrapper.waves.keys(),
             title = title)
@@ -39,7 +39,7 @@ def importPoints(compositeDataWrapper):
     try:
         path = fileDialog.getOpenFileName(filter = fileFilter)
         assert path[0] != ""
-        points = fm.import_points(path[0])
+        points = fm.import_points(path[0], 'default')
         dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
             forbiddenNames = compositeDataWrapper.points.keys(),
             title = path[0])

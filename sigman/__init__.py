@@ -32,7 +32,7 @@ class Wave():
         Wave.offset - przesunięcie w czasie w Composite_data
     """
 
-    def __init__(self, data, complete_length, wave_type='default', offset=0):
+    def __init__(self, data, complete_length, wave_type, offset=0):
         """Inicjalizuje Wave. Przyjmuje tablicę danych wartości
         sygnału oraz jego długość.
         """
@@ -179,7 +179,7 @@ class Points():
         Points.point_type - typ punktów, np. 'r' czy 'sbp' 
     """
 
-    def __init__(self, data_x, data_y, point_type='default'):
+    def __init__(self, data_x, data_y, point_type):
         """Inicjalizuje Points. Przyjmuje dwie tablice x i y
         punktów.
         """

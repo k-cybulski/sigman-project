@@ -40,7 +40,7 @@ def _import_dat(file_name):
     return x, y
 
 
-def _import_wave_dat(file_name, wave_type='default', offset=0):
+def _import_wave_dat(file_name, wave_type, offset=0):
     """Importuje przebieg o stałej częstotliwości z pliku .dat i
     zwraca odpowiadający mu sm.Wave.
     """
@@ -50,7 +50,7 @@ def _import_wave_dat(file_name, wave_type='default', offset=0):
                         wave_type = wave_type, 
                         offset = offset)
     
-def _import_point_dat(file_name, point_type='default'):
+def _import_point_dat(file_name, point_type):
     """Importuje współrzędne punktów z pliku .dat i zwraca odpowiadający
     im sm.Points.
     """
@@ -58,7 +58,7 @@ def _import_point_dat(file_name, point_type='default'):
     return sm.Points(x, y, 
                           point_type = point_type)
 
-def import_wave(file_name, wave_type='default', offset=0):
+def import_wave(file_name, wave_type, offset=0):
     """Importuje przebieg z danego pliku, przy czym wybiera odpowiednią
     funkcję do formatu danego pliku.
     """
@@ -72,7 +72,7 @@ def import_wave(file_name, wave_type='default', offset=0):
         wave_type = wave_type, 
         offset = offset)
 
-def import_points(file_name, point_type='default'):
+def import_points(file_name, point_type):
     """Importuje punkty z danego pliku, przy czym wybiera odpowiednią
     funkcję do formatu danego pliku.
     """

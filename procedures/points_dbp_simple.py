@@ -32,6 +32,7 @@ default_arguments = {
     'threshold_fraction':0.4,
     'threshold_period':2,
     'safe_period':0.25}
+output_type = 'dbp'
 required_waves = ['bp']
 required_points = []
 
