@@ -1,7 +1,28 @@
-# sigman-project
-Celem tego projektu jest utworzenie otwartej i dobrze udokumentowanej biblioteki **sigman** pozwalającej na dowolną analizę danych biomedycznych za pomocą prostych do utworzenia zewnętrznych procedur, a także aplikacji **QtSigman** która pozwoli na korzystanie z tej biblioteki przez interfejs graficzny.
+* [Wstęp](https://github.com/k-cybulski/sigman-project#sigman-project)
+* [Instalacja](https://github.com/k-cybulski/sigman-project#instalacja)
+  * [Technologie i biblioteki](https://github.com/k-cybulski/sigman-project#technologie-i-biblioteki)
+  * [Linux](https://github.com/k-cybulski/sigman-project#linux)
+    * [Ubuntu](https://github.com/k-cybulski/sigman-project#ubuntu)
+* [Obsługa](https://github.com/k-cybulski/sigman-project#obs%C5%82uga)
+  * [QtSigman](https://github.com/k-cybulski/sigman-project#qtsigman)
+  * [sigman](https://github.com/k-cybulski/sigman-project#sigman)
+    * [sigman.Wave](https://github.com/k-cybulski/sigman-project#sigmanwave)
+    * [sigman.Points](https://github.com/k-cybulski/sigman-project#sigmanpoints)
+    * [sigman.Parameter](https://github.com/k-cybulski/sigman-project#sigmanparameter)
+    * [sigman.Composite_data](https://github.com/k-cybulski/sigman-project#sigmancomposite_data)
+    * [sigman.visualizer](https://github.com/k-cybulski/sigman-project#sigmanvisualizer)
+    * [sigman.analyzer](https://github.com/k-cybulski/sigman-project#sigmananalyzer)
+    * [Filtracja / modyfikacja przebiegu](https://github.com/k-cybulski/sigman-project#filtracja--modyfikacja-przebiegu)
+    * [Odnajdywanie punktów](https://github.com/k-cybulski/sigman-project#odnajdywanie-punkt%C3%B3w)
+    * [Obliczanie parametrów](https://github.com/k-cybulski/sigman-project#obliczanie-parametr%C3%B3w)
+* [Stan obecny](https://github.com/k-cybulski/sigman-project#stan-obecny)
+  * [sigman](https://github.com/k-cybulski/sigman-project#sigman-1)
+  * [QtSigman](https://github.com/k-cybulski/sigman-project#qtsigman-1)
+* [Standardy kodu](https://github.com/k-cybulski/sigman-project#standardy-kodu)
+* [Podziękowania](https://github.com/k-cybulski/sigman-project#podzi%C4%99kowania)
 
-Główną zaletą biblioteki sigman jest możliwość łączenia kilku różnych rodzajów danych (np. sygnałów ciśnienia krwi i EKG) i operowaina na nich jednocześnie, wykorzystując ich wzajemne zależności.
+# sigman-project
+Celem tego projektu jest utworzenie otwartej i dobrze udokumentowanej biblioteki **sigman** pozwalającej na dowolną analizę danych biomedycznych w formie wielokanałowych sygnałów cyfrowych za pomocą prostych do utworzenia zewnętrznych procedur, a także aplikacji **QtSigman** która pozwoli na korzystanie z tej biblioteki przez interfejs graficzny.
 
 ## Instalacja
 ### Technologie i biblioteki
@@ -130,10 +151,10 @@ vis.visualize_composite_data(composite_data, begin_time=40, end_time=60, wanted_
 #### sigman.analyzer
 Moduł `analyzer` pozwala na stosowanie zewnętrznych procedur z folderu `sigman-project/procedures` na danych. Ich dokładna struktura i całokształt opisany jest głębiej w samym pliku modułu.
 
-Zakładany sposób wykorzystania procedur polega na zaimportowaniu, zmianie wybranych argumentów z `procedure.default_arguments`, użyciu ich oraz dodaniu/zamiany danych w `sigman.Composite_data` na nowe.
+Zakładany sposób wykorzystania procedur polega na zaimportowaniu ich funkcją `analyzer.import_procedure`, zmodyfikowaniu wybranych argumentów z `procedure.default_arguments`, zaaplikowaniu jej przez odpowiednią funkcję z `sigman.analyzer` a następnie zamiany danych w `sigman.Composite_data` na nowe.
 
 ##### Filtracja / modyfikacja przebiegu
-Filtracja / modyfikacja przebiegu polega na użyciu procedury typu `modify`, która przyjmuje jako argument `sigman.Wave` do modyfikacji i zwraca tablicę zawierającą nowy, przefiltrowany przebieg, a następnie zastąpieniu wycinka oryginalnego przebiegu nowym metodą `Wave.replace_slice`.
+Filtrację / modyfikację przebiegu możemy przeprowadzić importując procedurę typu `modify` i następnie aplikując ją korzystając z funkcji `analyzer.modify_wave`. Funkcja ta przyjmuje `sigman.Wave` do modyfikacji, początek i koniec zakresu czasowego na jakim należy przeprowadzić procedurę, zaimportowany moduł procedury oraz dict argumentów oparty na `procedure.default_arguments`. Zwróci ona natomiast nowy `sigman.Wave` o długości wymaganego zakresu czasu który możemy wykorzystać zamieniając ten sam zakres starego `sigman.Wave` metodą `Wave.replace_slice`.
 
 Przykład filtrowania wycinka przebiegu EKG.
 ```python
@@ -156,7 +177,7 @@ vis.visualize_composite_data(composite_data, begin_time = 55, end_time = 65, tit
 ```
 
 ##### Odnajdywanie punktów
-Odnajdywanie punktów polega na użyciu procedury typu `points` przyjmującej jako argument `sigman.Composite_data` a zwracającej zestaw punktów.
+Punkty możemy odnaleźć importując procedurę typu `points` i aplikując ją funkcją `analyzer.find_points`. Funkcja ta przymuje jako argumenty `sigman.Composite_data`, który chcemy badać, początek oraz koniec zakresu czasowego, moduł procedury oraz argumenty oparte na `procedure.default_arguments`. Zwróci ona `sigman.Points`, który możemy dodać do reszty danych przez `Composite_data.add_points` lub do innego istniejącego zestawu punktów przez `Points.add_points`.
 
 Przykład odnajdywania punktów DBP na całym przebiegu BP.
 ```python
@@ -177,7 +198,7 @@ composite_data.add_points(dbp, 'dbp')
 vis.visualize_composite_data(composite_data)
 ```
 ##### Obliczanie parametrów
-Obliczanie parametrów polega na użyciu procedury typu `parameter`, która przyjmuje jako argument `sigman.Composite_data` i listę tuple zakresów czasowych a zwraca tablicę wartości w tych czasach.
+Parametry możemy obliczyć importując procedurę typu `parameter` i aplikując ją funkcją `analyzer.calculate_parameter`. Funkcja ta przyjmuje `sigman.Composite_data`, listę tuples zawierających początek i koniec zakresów czasowych na których chcemy parametr obliczyć, moduł procedury i dodatkowe argumenty oparte na `procedure.default_arguments`.
 
 Przykład obliczenia częstotliwości bicia serca na zakresach <0s,15s>, <15s,60s> oraz <60s,120s> w oparciu o przebieg EKG.
 ```python
