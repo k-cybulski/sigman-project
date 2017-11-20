@@ -116,11 +116,15 @@ Moduł `analyzer` pozwala na stosowanie zewnętrznych procedur z folderu `sigman
 
 Zakładany sposób wykorzystania procedur polega na zaimportowaniu, zmianie wybranych argumentów z `procedure.default_arguments`, użyciu ich oraz dodaniu/zamiany danych w `sm.Composite_data` na nowe.
 
+##### Filtracja / modyfikacja przebiegu
+Filtracja / modyfikacja przebiegu polega na użyciu procedury typu `modify`, która przyjmuje jako argument `sm.Wave` do modyfikacji i zwraca tablicę zawierającą nowy, przefiltrowany przebieg, a następnie zastąpieniu wycinka oryginalnego przebiegu nowym metodą `Wave.replace_slice`.
+
 Przykład filtrowania wycinka przebiegu EKG.
 ```python
 import sigman as sm
 from sigman import file_manager as fm
 from sigman import analyzer
+from sigman import visualizer as vis
 
 ecg = fm.import_wave('example_data/EKG.dat')
 composite_data = sm.Composite_data(waves={'ecg':ecg})
@@ -129,11 +133,63 @@ butterworth = analyzer.import_procedure('modify_filter_butterworth')
 arguments = butterworth.default_arguments
 arguments['N'] = 3
 arguments['Wn'] = 30
-filtered_wave = analyzer.modify_wave(composite_data.waves['ecg'], 20, 60, butterworth, arguments)
-composite_data.waves['ecg'].replace_slice(20,60, filtered_wave)
+filtered_wave = analyzer.modify_wave(composite_data.waves['ecg'], 55, 60, butterworth, arguments)
+composite_data.waves['ecg'].replace_slice(55,60, filtered_wave)
+
+vis.visualize_composite_data(composite_data, begin_time = 55, end_time = 65, title="Porównanie przefiltrowanego fragmentu <55s, 60s> i nieprzefiltrowanego <60s, 65s>")
 ```
 
-Przykłady użycia różnych funkcji biblioteki w pliku `test_sigman.py`. Dokładniejszy opis wkrótce.
+##### Odnajdywanie punktów
+Odnajdywanie punktów polega na użyciu procedury typu `points` przyjmującej jako argument `sm.Composite_data` a zwracającej zestaw punktów.
+
+Przykład odnajdywania punktów DBP na całym przebiegu BP.
+```python
+import sigman as sm
+from sigman import file_manager as fm
+from sigman import analyzer
+from sigman import visualizer as vis
+
+bp = fm.import_wave('example_data/BP.dat')
+composite_data = sm.Composite_data(waves={'bp':bp})
+
+dbp_finder = analyzer.import_procedure('points_dbp_simple')
+# obliczamy zakres na którym mamy wszystkie dane (przebieg BP)
+begin_time, end_time = composite_data.calculate_time_range(['bp'])
+dbp = analyzer.find_points(composite_data, begin_time, end_time, dbp_finder, dbp_finder.default_arguments)
+composite_data.add_points(dbp, 'dbp')
+
+vis.visualize_composite_data(composite_data)
+```
+##### Obliczanie parametrów
+Obliczanie parametrów polega na użyciu procedury typu `parameter`, która przyjmuje jako argument `sm.Composite_data` i listę tuple zakresów czasowych a zwraca tablicę wartości w tych czasach.
+
+Przykład obliczenia częstotliwości bicia serca na zakresach <0s,15s>, <15s,60s> oraz <60s,120s> w oparciu o przebieg EKG.
+```python
+import sigman as sm
+from sigman import file_manager as fm
+from sigman import analyzer
+from sigman import visualizer as vis
+
+ecg = fm.import_wave('example_data/EKG.dat')
+composite_data = sm.Composite_data(waves={'ecg':ecg})
+
+# odnajdujemy punkty R
+r_finder = analyzer.import_procedure('points_r_simple')
+begin_time, end_time = composite_data.calculate_time_range(['ecg'])
+r = analyzer.find_points(composite_data, begin_time, end_time, r_finder, r_finder.default_arguments)
+composite_data.add_points(r, 'r')
+
+# obliczamy HR
+hr_proc = analyzer.import_procedure('parameter_heart_rate')
+param_tuples = [(0,15),(15,60),(60,120)]
+hr = analyzer.calculate_parameter(composite_data, param_tuples, hr_proc, hr_proc.default_arguments, 'hr')
+composite_data.add_parameter(hr, 'hr')
+
+vis.visualize_composite_data(composite_data) # Jak na razie wizualizacja parametrów jest niedopracowana
+```
+
+
+Przykłady użycia różnych funkcji biblioteki w pliku `test_sigman.py`.
 
 ## Stan obecny
 ### sigman
