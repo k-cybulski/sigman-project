@@ -27,10 +27,10 @@ Należy uruchomić skrypt `run_qtsigman.py`.
 ### sigman
 Poniższe przykłady zakładają importowanie `sigman` jako `sm`, a `sigman.file_manager` jako `fm`.
 
-#### sm.Wave
-Podstawowym rodzajem danych w bibliotece sigman jest przebieg `sm.Wave` (*z ang. waveform*) . Określony jest on przede wszystkim tablicą danych `Wave.data` oraz całkowitym czasem trwania `Wave.complete_length`. Z liczby danych oraz ich długości w czasie obliczana jest częstotliwość samplingowania `Wave.sample_rate`, oraz długość sampla `Wave.sample_length`. Do późniejszej analizy ważny będzie także typ przebiegu `Wave.type` określający rodzaj danych, np. `ecg` czy `bp`.
+#### sigman.Wave
+Podstawowym rodzajem danych w bibliotece sigman jest przebieg `sigman.Wave` (*z ang. waveform*) . Określony jest on przede wszystkim tablicą danych `Wave.data` oraz całkowitym czasem trwania `Wave.complete_length`. Z liczby danych oraz ich długości w czasie obliczana jest częstotliwość samplingowania `Wave.sample_rate`, oraz długość sampla `Wave.sample_length`. Do późniejszej analizy ważny będzie także typ przebiegu `Wave.type` określający rodzaj danych, np. `ecg` czy `bp`.
 
-Inicjalizacja `sm.Wave` zawierającego wartości funkcji sinus od 0 do 4pi na umownej przestrzeni 10 sekund.
+Inicjalizacja `sigman.Wave` zawierającego wartości funkcji sinus od 0 do 4pi na umownej przestrzeni 10 sekund.
 ```python
 import sigman as sm
 import numpy as np
@@ -38,7 +38,7 @@ sine = np.sin(np.linspace(0, 4*np.pi))
 sine_wave = sm.Wave(sine, 10, 'sine')
 ```
 
-Obiekty `sm.Wave` można importować za pomocą funkcji `fm.import_wave`.
+Obiekty `sigman.Wave` można importować za pomocą funkcji `file_manager.import_wave`.
 ```python
 from sigman import file_manager as fm
 ecg = fm.import_wave('example_data/EKG.dat', 'ecg')
@@ -46,7 +46,7 @@ ecg = fm.import_wave('example_data/EKG.dat', 'ecg')
 
 W wypadku rozsynchronizowania przebiegu względem innych w czasie ważna jest też zmienna `Wave.offset` pozwalająca korygować takie błędy przez przesuwanie przebiegu.
 
-Podstawową metodą pobierania informacji z `sm.Wave` jest `Wave.data_slice`, która zwraca tablicę wartości danych na danym zakresie czasowywm. Dokładniejsza dokumentacja w `sigman/__init__.py`. Kilka przykładów:
+Podstawową metodą pobierania informacji z `sigman.Wave` jest `Wave.data_slice`, która zwraca tablicę wartości danych na danym zakresie czasowywm. Dokładniejsza dokumentacja w `sigman/__init__.py`. Kilka przykładów:
 ```python
 >>> ecg.data_slice(5, 5.025) # 25 milisekundowy wycinek przebiegu
 array([ 0.10659864,  0.10404629,  0.1673287 ,  0.1688633 ,  0.04704312])
@@ -56,8 +56,8 @@ array([ 0.10659864, -0.52108215,  0.95624742])
 array([ 0.10659864,  0.35472794, -0.61547362, -0.75704451, -0.59674523])
 ```
 
-#### sm.Points
-Punkty oznaczające wydarzenia w czasie o danej wartości, np. R na przebiegu EKG, symbolizowane są klasą `sm.Points`. Zawiera on dwie tablice `Points.data_x` oraz `Points.data_y` posortowane w kolejności `data_x`, a także typ punktów jak `r`.
+#### sigman.Points
+Punkty oznaczające wydarzenia w czasie o danej wartości, np. R na przebiegu EKG, symbolizowane są klasą `sigman.Points`. Zawiera on dwie tablice `Points.data_x` oraz `Points.data_y` posortowane w kolejności `data_x`, a także typ punktów jak `r`.
 
 Inicjalizacja kilku punktów.
 ```python
@@ -74,17 +74,17 @@ r = fm.import_points('example_data/R.dat', 'r')
 ```
 lub odnajdywać za pomocą procedur, co zostanie wytłumaczone dogłębniej potem.
 
-Podobnie jak przy `sm.Wave` jest metoda `Points.data_slice`.
+Podobnie jak przy `sigman.Wave` jest metoda `Points.data_slice`.
 ```python
 >>> r.data_slice(20,23)
 (array([ 20.61868,  21.49193,  22.3552 ]), array([ 4.07120371,  3.76066208,  3.69650602]))
 ```
 
-#### sm.Parameter
+#### sigman.Parameter
 Klasa zawierająca tablice obliczonych wartości `Parameter.values` parametru, np. częstotliwości bicia serca, a także informacje o tym od jakiego czasu `Parameter.begin_times`  do jakiego `Parameter.end_times` są one obliczone. Tworzy się je tylko wykorzystując procedury.
 
-#### sm.Composite_data
-Klasa łącząca kilka powyższych danych w jedną spójną całość. Może zawierać nieokreśloną liczbę `sm.Wave`, `sm.Points` oraz `sm.Parameter`. Pozwala stosować procedury korzystające z kilku różnych danych, np. procedurę odnajdującą wcięcia dykrotyczne w oparciu o SBP i przebiegi BP oraz EKG.
+#### sigman.Composite_data
+Klasa łącząca kilka powyższych danych w jedną spójną całość. Może zawierać nieokreśloną liczbę `sigman.Wave`, `sigman.Points` oraz `sigman.Parameter`. Pozwala stosować procedury korzystające z kilku różnych danych, np. procedurę odnajdującą wcięcia dykrotyczne w oparciu o SBP i przebiegi BP oraz EKG.
 
 Dane przechowuje w trzech `dict` do których później odwołują się procedury, wobec czego bardzo ważne by dane były odpisane odpowiednio dla swych procedur. Te `dict` to:
 * `Composite_data.waves`
@@ -105,7 +105,7 @@ r = fm.import_points('example_data/R.dat', 'r')
 composite_data.add_points(r, 'r')
 ```
 
-`file_manager` zawiera też funkcje pozwalające zapisywać `sm.Composite_data` na potem.
+`file_manager` zawiera też funkcje pozwalające zapisywać `sigman.Composite_data` na potem.
 ```python
 fm.save_composite_data('temporary_save.pickle', composite_data)
 ```
@@ -117,12 +117,12 @@ composite_data = fm.load_composite_data('temporary_save.pickle')
 Obecnie wykorzystuje to moduł pythonowy `pickle`, choć jest w planach w przyszłości zamienić go na coś bezpieczniejszego.
 
 #### sigman.visualizer
-Biblioteka sigman zawiera moduł `visualizer` pozwalający na bardzo proste lecz dość ograniczone wizualizowanie `sm.Composite_data`. Po wykonaniu powyższego kodu tworzącego composite_data można spróbować:
+Biblioteka sigman zawiera moduł `visualizer` pozwalający na bardzo proste lecz dość ograniczone wizualizowanie `sigman.Composite_data`. Po wykonaniu powyższego kodu tworzącego composite_data można spróbować:
 ```python
 from sigman import visualizer as vis
 vis.visualize_composite_data(composite_data)
 ```
-`visualizer` pozwala także na wizualizację tylko wycinka czasowego, czy też tylko wybranych danych z `sm.Composite_data`.
+`visualizer` pozwala także na wizualizację tylko wycinka czasowego, czy też tylko wybranych danych z `sigman.Composite_data`.
 ```python
 vis.visualize_composite_data(composite_data, begin_time=40, end_time=60, wanted_waves=['ecg'], title="Wykres EKG") 
 ```
@@ -130,10 +130,10 @@ vis.visualize_composite_data(composite_data, begin_time=40, end_time=60, wanted_
 #### sigman.analyzer
 Moduł `analyzer` pozwala na stosowanie zewnętrznych procedur z folderu `sigman-project/procedures` na danych. Ich dokładna struktura i całokształt opisany jest głębiej w samym pliku modułu.
 
-Zakładany sposób wykorzystania procedur polega na zaimportowaniu, zmianie wybranych argumentów z `procedure.default_arguments`, użyciu ich oraz dodaniu/zamiany danych w `sm.Composite_data` na nowe.
+Zakładany sposób wykorzystania procedur polega na zaimportowaniu, zmianie wybranych argumentów z `procedure.default_arguments`, użyciu ich oraz dodaniu/zamiany danych w `sigman.Composite_data` na nowe.
 
 ##### Filtracja / modyfikacja przebiegu
-Filtracja / modyfikacja przebiegu polega na użyciu procedury typu `modify`, która przyjmuje jako argument `sm.Wave` do modyfikacji i zwraca tablicę zawierającą nowy, przefiltrowany przebieg, a następnie zastąpieniu wycinka oryginalnego przebiegu nowym metodą `Wave.replace_slice`.
+Filtracja / modyfikacja przebiegu polega na użyciu procedury typu `modify`, która przyjmuje jako argument `sigman.Wave` do modyfikacji i zwraca tablicę zawierającą nowy, przefiltrowany przebieg, a następnie zastąpieniu wycinka oryginalnego przebiegu nowym metodą `Wave.replace_slice`.
 
 Przykład filtrowania wycinka przebiegu EKG.
 ```python
@@ -156,7 +156,7 @@ vis.visualize_composite_data(composite_data, begin_time = 55, end_time = 65, tit
 ```
 
 ##### Odnajdywanie punktów
-Odnajdywanie punktów polega na użyciu procedury typu `points` przyjmującej jako argument `sm.Composite_data` a zwracającej zestaw punktów.
+Odnajdywanie punktów polega na użyciu procedury typu `points` przyjmującej jako argument `sigman.Composite_data` a zwracającej zestaw punktów.
 
 Przykład odnajdywania punktów DBP na całym przebiegu BP.
 ```python
@@ -177,7 +177,7 @@ composite_data.add_points(dbp, 'dbp')
 vis.visualize_composite_data(composite_data)
 ```
 ##### Obliczanie parametrów
-Obliczanie parametrów polega na użyciu procedury typu `parameter`, która przyjmuje jako argument `sm.Composite_data` i listę tuple zakresów czasowych a zwraca tablicę wartości w tych czasach.
+Obliczanie parametrów polega na użyciu procedury typu `parameter`, która przyjmuje jako argument `sigman.Composite_data` i listę tuple zakresów czasowych a zwraca tablicę wartości w tych czasach.
 
 Przykład obliczenia częstotliwości bicia serca na zakresach <0s,15s>, <15s,60s> oraz <60s,120s> w oparciu o przebieg EKG.
 ```python
