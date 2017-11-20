@@ -34,7 +34,7 @@ class Wave():
 
     def __init__(self, data, complete_length, wave_type, offset=0):
         """Inicjalizuje Wave. Przyjmuje tablicę danych wartości
-        sygnału oraz jego długość.
+        sygnału oraz jego długość, a także typ (np. 'bp').
         """
         # Okres nagranych danych; odległość w czasie między
         # punktami przebiegu.
@@ -181,7 +181,7 @@ class Points():
 
     def __init__(self, data_x, data_y, point_type):
         """Inicjalizuje Points. Przyjmuje dwie tablice x i y
-        punktów.
+        punktów, a także typ punktów (np. 'r').
         """
         # sortowanie by punkty były po kolei
         temp_data_x, temp_data_y = zip(*sorted(zip(data_x,data_y)))
