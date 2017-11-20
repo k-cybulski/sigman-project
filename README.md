@@ -1,6 +1,7 @@
 # sigman-project
 Celem tego projektu jest utworzenie otwartej i dobrze udokumentowanej biblioteki **sigman** pozwalającej na dowolną analizę danych biomedycznych za pomocą prostych do utworzenia zewnętrznych procedur, a także aplikacji **QtSigman** która pozwoli na korzystanie z tej biblioteki przez interfejs graficzny.
 
+Główną zaletą biblioteki sigman jest możliwość łączenia kilka różnych rodzajów danych (np. sygnałów ciśnienia krwi i EKG) i operowaina na nich jednocześnie, wykorzystując ich wzajemne zależności.
 
 ## Instalacja
 ### Technologie i biblioteki
