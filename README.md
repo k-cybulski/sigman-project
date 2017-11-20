@@ -105,9 +105,7 @@ Podobnie jak przy `sigman.Wave` jest metoda `Points.data_slice`.
 Klasa zawierająca tablice obliczonych wartości `Parameter.values` parametru, np. częstotliwości bicia serca, a także informacje o tym od jakiego czasu `Parameter.begin_times`  do jakiego `Parameter.end_times` są one obliczone. Tworzy się je tylko wykorzystując procedury.
 
 #### sigman.Composite_data
-Klasa łącząca kilka powyższych danych w jedną spójną całość. Może zawierać nieokreśloną liczbę `sigman.Wave`, `sigman.Points` oraz `sigman.Parameter`. Pozwala stosować procedury korzystające z kilku różnych danych, np. procedurę odnajdującą wcięcia dykrotyczne w oparciu o SBP i przebiegi BP oraz EKG.
-
-Dane przechowuje w trzech `dict` do których później odwołują się procedury, wobec czego bardzo ważne by dane były odpisane odpowiednio dla swych procedur. Te `dict` to:
+Klasa łącząca kilka powyższych danych w jedną spójną całość. Może zawierać nieokreśloną liczbę `sigman.Wave`, `sigman.Points` oraz `sigman.Parameter` w trzech `dict`. Pozwala dzięki temu stosować procedury korzystające z kilku kanałów danych, np. procedurę odnajdującą wcięcia dykrotyczne w oparciu o SBP i przebiegi BP oraz EKG. Procedury pobierają dane przez bezpośrednie odwołania do `dict` danych, np. `composite_data.waves['ecg']`. Te trzy `dict` to:
 * `Composite_data.waves`
 * `Composite_data.points`
 * `Composite_data.parameters`
@@ -118,10 +116,10 @@ import sigman as sm
 from sigman import file_manager as fm
 
 ecg = fm.import_wave('example_data/EKG.dat', 'ecg')
-composite_data = sm.Composite_data(waves={'ecg':ecg})
+composite_data = sm.Composite_data(waves={'ecg':ecg}) # przy inicjalizacji
 
 bp = fm.import_wave('example_data/BP.dat', 'bp')
-composite_data.add_wave(bp, 'bp')
+composite_data.add_wave(bp, 'bp') # po inicjalizacji
 r = fm.import_points('example_data/R.dat', 'r')
 composite_data.add_points(r, 'r')
 ```
@@ -154,7 +152,7 @@ Moduł `analyzer` pozwala na stosowanie zewnętrznych procedur z folderu `sigman
 Zakładany sposób wykorzystania procedur polega na zaimportowaniu ich funkcją `analyzer.import_procedure`, zmodyfikowaniu wybranych argumentów z `procedure.default_arguments`, zaaplikowaniu jej przez odpowiednią funkcję z `sigman.analyzer` a następnie zamiany danych w `sigman.Composite_data` na nowe.
 
 ##### Filtracja / modyfikacja przebiegu
-Filtrację / modyfikację przebiegu możemy przeprowadzić importując procedurę typu `modify` i następnie aplikując ją korzystając z funkcji `analyzer.modify_wave`. Funkcja ta przyjmuje `sigman.Wave` do modyfikacji, początek i koniec zakresu czasowego na jakim należy przeprowadzić procedurę, zaimportowany moduł procedury oraz dict argumentów oparty na `procedure.default_arguments`. Zwróci ona natomiast nowy `sigman.Wave` o długości wymaganego zakresu czasu który możemy wykorzystać zamieniając ten sam zakres starego `sigman.Wave` metodą `Wave.replace_slice`.
+Filtrację / modyfikację przebiegu możemy przeprowadzić importując procedurę typu `modify` i następnie aplikując ją korzystając z funkcji `analyzer.modify_wave`. Funkcja ta przyjmuje `sigman.Wave` do modyfikacji, początek i koniec zakresu czasowego na jakim należy przeprowadzić procedurę, zaimportowany moduł procedury oraz `dict` argumentów oparty na `procedure.default_arguments`. Zwróci ona natomiast nowy `sigman.Wave` o długości wymaganego zakresu czasu który możemy wykorzystać zamieniając ten sam zakres starego `sigman.Wave` metodą `Wave.replace_slice`.
 
 Przykład filtrowania wycinka przebiegu EKG.
 ```python
