@@ -49,7 +49,7 @@ Należy uruchomić skrypt `run_qtsigman.py`.
 Poniższe przykłady zakładają importowanie `sigman` jako `sm`, a `sigman.file_manager` jako `fm`.
 
 #### sigman.Wave
-Podstawowym rodzajem danych w bibliotece sigman jest przebieg `sigman.Wave` (*z ang. waveform*) . Określony jest on przede wszystkim tablicą danych `Wave.data` oraz całkowitym czasem trwania `Wave.complete_length`. Z liczby danych oraz ich długości w czasie obliczana jest częstotliwość samplingowania `Wave.sample_rate`, oraz długość sampla `Wave.sample_length`. Do późniejszej analizy ważny będzie także typ przebiegu `Wave.type` określający rodzaj danych, np. `ecg` czy `bp`.
+Podstawowym rodzajem danych w bibliotece sigman jest przebieg `sigman.Wave` (*z ang. waveform*) . Określony jest on przede wszystkim tablicą danych `Wave.data` oraz całkowitym czasem trwania `Wave.complete_length`. Z liczby danych oraz ich długości w czasie obliczana jest częstotliwość samplowania `Wave.sample_rate`, oraz długość sampla `Wave.sample_length`. Do późniejszej analizy ważny będzie także typ przebiegu `Wave.type` określający rodzaj danych, np. `ecg` czy `bp`.
 
 Inicjalizacja `sigman.Wave` zawierającego wartości funkcji sinus od 0 do 4pi na umownej przestrzeni 10 sekund.
 ```python
