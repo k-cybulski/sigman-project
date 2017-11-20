@@ -33,7 +33,7 @@ Inicjalizacja `sm.Wave` zawierającego wartości funkcji sinus od 0 do 4pi na um
 ```python
 import sigman as sm
 import numpy as np
-sine = np.sin(np.linspace(0,4*np.pi))
+sine = np.sin(np.linspace(0, 4*np.pi))
 sine_wave = sm.Wave(sine, 10, 'sine')
 ```
 
