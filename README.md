@@ -143,7 +143,8 @@ vis.visualize_composite_data(composite_data)
 ```
 `visualizer` pozwala także na wizualizację tylko wycinka czasowego, czy też tylko wybranych danych z `sigman.Composite_data`.
 ```python
-vis.visualize_composite_data(composite_data, begin_time=40, end_time=60, wanted_waves=['ecg'], title="Wykres EKG") 
+vis.visualize_composite_data(composite_data, begin_time=40, end_time=60, 
+                             wanted_waves=['ecg'], title="Wykres EKG") 
 ```
 
 #### sigman.analyzer
@@ -171,7 +172,8 @@ arguments['Wn'] = 30
 filtered_wave = analyzer.modify_wave(composite_data.waves['ecg'], 55, 60, butterworth, arguments)
 composite_data.waves['ecg'].replace_slice(55,60, filtered_wave)
 
-vis.visualize_composite_data(composite_data, begin_time = 55, end_time = 65, title="Porównanie przefiltrowanego fragmentu <55s, 60s> i nieprzefiltrowanego <60s, 65s>")
+vis.visualize_composite_data(composite_data, begin_time=55, end_time=65, 
+    title="Porównanie przefiltrowanego fragmentu <55s, 60s> i nieprzefiltrowanego <60s, 65s>")
 ```
 
 ##### Odnajdywanie punktów
