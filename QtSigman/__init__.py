@@ -208,11 +208,13 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
             points = compositeData.points,
             parameters = compositeData.parameters)
 
-    def add_wave(self, wave, dict_type, color, replace=False,
+    def add_wave(self, wave, dict_type, color=None, replace=False,
                       axis=Axis.Hidden):
         super(CompositeDataWrapper, self).add_wave(wave,
                                                         dict_type,
                                                         replace = replace)
+        if color is None:
+            color = defaultColors.getColor(dict_type)
         self.waves[dict_type] = VisualDataWave(
             self.waves[dict_type],
             color,
@@ -239,11 +241,13 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
         super(CompositeDataWrapper, self).delete_wave(dict_type)
         self.lineNumberChanged.emit()
 
-    def add_points(self, points, dict_type, color, join=False,
+    def add_points(self, points, dict_type, color=None, join=False,
                         axis=Axis.Hidden):
         super(CompositeDataWrapper, self).add_points(points,
                                                           dict_type,
                                                           join = join)
+        if color is None:
+            color = defaultColors.getColor(dict_type)
         self.points[dict_type] = VisualDataPoints(
             self.points[dict_type],
             color,
@@ -270,11 +274,13 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
         super(CompositeDataWrapper, self).delete_points(dict_type)
         self.pointNumberChanged.emit()
 
-    def add_parameter(self, parameter, dict_type, color, replace=False,
+    def add_parameter(self, parameter, dict_type, color=None, replace=False,
                       axis=Axis.Hidden):
         super(CompositeDataWrapper, self).add_parameter(parameter,
                                                         dict_type,
                                                         replace = replace)
+        if color is None:
+            color = defaultColors.getColor(dict_type)
         self.parameters[dict_type] = VisualParameter(
             self.parameters[dict_type],
             color,

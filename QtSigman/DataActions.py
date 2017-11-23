@@ -26,7 +26,7 @@ def importLine(compositeDataWrapper):
         if status is DataActionStatus.Ok: 
             wave.offset = offset
             compositeDataWrapper.add_wave(wave, dictType, 
-                                               color, axis = axis)
+                                          color=color, axis=axis)
     # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się
     # nie stało i nic nie zmieniamy
     except AssertionError:
@@ -45,7 +45,8 @@ def importPoints(compositeDataWrapper):
             title = path[0])
         if status is DataActionStatus.Ok:
             points.move_in_time(offset)
-            compositeDataWrapper.add_points(points, dictType, color, axis = axis)
+            compositeDataWrapper.add_points(points, dictType, 
+                                            color=color, axis=axis)
     # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się
     # nie stało i nic nie zmieniamy
     except AssertionError:
@@ -192,4 +193,5 @@ def findPoints(compositeDataWrapper):
             title=procedure.__name__)
         if status is DataActionStatus.Cancel:
             return
-        compositeDataWrapper.add_points(newPoints, dictType, color, axis=axis)
+        compositeDataWrapper.add_points(newPoints, dictType, 
+                                        color=color, axis=axis)
