@@ -110,23 +110,23 @@ class VisualParameter(VisualDataObject, sm.Parameter):
              keepMplObject=True, color=None):
         if color is None:
             color = self.color
-        lineTuples = self.generate_parameter_line_tuples(
+        waveTuples = self.generate_parameter_wave_tuples(
             begin_time = beginTime, end_time = endTime)
         if keepMplObject:
             if self.mplObject is None: #TODO: Ten if powinien być niepotrzebny
                 self.mplObject = []
-            if len(self.mplObject) != len(lineTuples):
+            if len(self.mplObject) != len(waveTuples):
                 self.removeMplObject()
             if self.mplObject == []:
-                for tup in lineTuples:
+                for tup in waveTuples:
                     mplLine, = axis.plot(tup[0], tup[1], color = color)
                     self.mplObject.append(mplLine)
             else:
-                for mplLine, tup in zip(self.mplObject, lineTuples):
+                for mplLine, tup in zip(self.mplObject, waveTuples):
                     mplLine.set_xdata(tup[0])
                     mplLine.set_ydata(tup[1])
         else:
-            for tup in lineTuples:
+            for tup in waveTuples:
                 axis.plot(tup[0], tup[1], color = color)
 
 
@@ -145,11 +145,11 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
     
     # Sygnały do pozostałych obiektów Qt
     # informujące o dodawaniu i usuwaniu obiektów danych, np do list
-    lineNumberChanged = QC.pyqtSignal()
+    waveNumberChanged = QC.pyqtSignal()
     pointNumberChanged = QC.pyqtSignal()
     parameterNumberChanged = QC.pyqtSignal()
     # informujące o zmianach wewnątrz obiektów danych, np do rysowania
-    lineChanged = QC.pyqtSignal()
+    waveChanged = QC.pyqtSignal()
     pointChanged = QC.pyqtSignal()
     parameterChanged = QC.pyqtSignal()
 
@@ -194,10 +194,10 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
             self.points,
             self.parameters]
 
-        self.lineNumberChanged.emit()
+        self.waveNumberChanged.emit()
         self.pointNumberChanged.emit()
         self.parameterNumberChanged.emit()
-        self.lineChanged.emit()
+        self.waveChanged.emit()
         self.pointChanged.emit()
         self.parameterChanged.emit()
 
@@ -219,7 +219,7 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
             self.waves[dict_type],
             color,
             axis)
-        self.lineNumberChanged.emit()
+        self.waveNumberChanged.emit()
 
     def editDataWaveSettings(self, dictType, newDictType, 
                                 color, axis, offset):
@@ -233,13 +233,13 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
         if dictType != newDictType:
             self.waves[newDictType] = wave
             self.waves.pop(dictType)
-            self.lineNumberChanged.emit()
-        self.lineChanged.emit()
+            self.waveNumberChanged.emit()
+        self.waveChanged.emit()
 
     def delete_wave(self, dict_type):
         self.waves[dict_type].removeMplObject()
         super(CompositeDataWrapper, self).delete_wave(dict_type)
-        self.lineNumberChanged.emit()
+        self.waveNumberChanged.emit()
 
     def add_points(self, points, dict_type, color=None, join=False,
                         axis=Axis.Hidden):
@@ -326,31 +326,31 @@ class QtSigmanWindow(QW.QMainWindow):
         mainLayout.addWidget(self.mplPlotWidget)
         # Podłączamy wszystkie możliwe sygnały qt wpływające na wykres do
         # obiektu wykresu
-        self.compositeDataWrapper.lineNumberChanged.connect(self._refreshPlot)
+        self.compositeDataWrapper.waveNumberChanged.connect(self._refreshPlot)
         self.compositeDataWrapper.pointNumberChanged.connect(self._refreshPlot)
         self.compositeDataWrapper.parameterNumberChanged.connect(self._refreshPlot)
-        self.compositeDataWrapper.lineChanged.connect(self._refreshPlot)
+        self.compositeDataWrapper.waveChanged.connect(self._refreshPlot)
         self.compositeDataWrapper.pointChanged.connect(self._refreshPlot)
         self.compositeDataWrapper.parameterChanged.connect(self._refreshPlot)
 
         # Po prawej
         rightVBoxLayout = QW.QVBoxLayout()
-        lineListLabel = QW.QLabel()
-        lineListLabel.setText("Przebiegi")
-        lineList = ListWidgets.DataListWidget()
-        lineList.itemClicked.connect(lambda listItemWidget:
+        waveListLabel = QW.QLabel()
+        waveListLabel.setText("Przebiegi")
+        waveList = ListWidgets.DataListWidget()
+        waveList.itemClicked.connect(lambda listItemWidget:
             DataActions.editLineSettings(self.compositeDataWrapper, 
-                lineList.itemWidget(listItemWidget).typeLabel.text()))
-        self.compositeDataWrapper.lineNumberChanged.connect(
+                waveList.itemWidget(listItemWidget).typeLabel.text()))
+        self.compositeDataWrapper.waveNumberChanged.connect(
             lambda:
-            lineList.updateData(self.compositeDataWrapper, 'line'))
+            waveList.updateData(self.compositeDataWrapper, 'wave'))
 #        self.compositeDataReloaded.connect(
 #            lambda:
-#            lineList.updateData(self.compositeDataWrapper, 'line'))
-        lineList.setSizePolicy(QW.QSizePolicy.Fixed,
+#            waveList.updateData(self.compositeDataWrapper, 'wave'))
+        waveList.setSizePolicy(QW.QSizePolicy.Fixed,
                                QW.QSizePolicy.Expanding)
-        rightVBoxLayout.addWidget(lineListLabel)
-        rightVBoxLayout.addWidget(lineList)
+        rightVBoxLayout.addWidget(waveListLabel)
+        rightVBoxLayout.addWidget(waveList)
         pointListLabel = QW.QLabel()
         pointListLabel.setText("Punkty") 
         pointList = ListWidgets.DataListWidget()
@@ -385,7 +385,7 @@ class QtSigmanWindow(QW.QMainWindow):
         # Ustawienie paska menu
         self.file_menu = QW.QMenu('Plik', self)
         self.file_menu.addAction('Importuj przebieg', lambda:
-            DataActions.importLine(self.compositeDataWrapper))
+            DataActions.importWave(self.compositeDataWrapper))
         self.file_menu.addAction('Eksportuj przebieg // TODO', lambda:
             QW.QMessageBox.information(self, "Informacja",
                                       "Nie zaimplementowano"))

@@ -11,7 +11,7 @@ from QtSigman import DataActionWidgets
 from QtSigman.DataActionWidgets import DataActionStatus
 from QtSigman.MplWidgets import Axis
 
-def importLine(compositeDataWrapper):
+def importWave(compositeDataWrapper):
     fileFilter = "dat (*.dat)"
     fileDialog = QW.QFileDialog()
     fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
@@ -52,7 +52,7 @@ def importPoints(compositeDataWrapper):
     except AssertionError:
         pass
 
-def editLineSettings(compositeDataWrapper, dictType):
+def editWaveSettings(compositeDataWrapper, dictType):
     forbiddenNames = list(compositeDataWrapper.waves.keys())
     forbiddenNames.remove(dictType)
     newDictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
@@ -172,7 +172,7 @@ def modifyWave(compositeDataWrapper):
             return
         compositeDataWrapper.waves[dictType].replace_slice(
             beginTime, endTime, modifiedWave)
-        compositeDataWrapper.lineChanged.emit()
+        compositeDataWrapper.waveChanged.emit()
 
 def findPoints(compositeDataWrapper):
     proc = DataActionWidgets.ProcedureDialog.getProcedure(
