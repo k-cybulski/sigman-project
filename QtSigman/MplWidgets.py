@@ -107,7 +107,6 @@ class PlotToolbar(NavigationToolbar2QT):
         if found >= 0:
             self.selectedPointsComboBox.setCurrentIndex(found)
     
-
     def getEditMode(self):
         if self.editCheckBox.isChecked():
             if self.editTypeComboBox.currentIndex() == 0:
@@ -146,8 +145,14 @@ class PlotWidget(QW.QWidget):
         self.lastX = 0
         self.lastY = 0
 
+        self.plotToolbar.editTypeComboBox.currentTextChanged.connect(
+            lambda x: self.correctZOrder())
+
     def handlePress(self, mouseEvent):
         mode = self.plotToolbar.getEditMode()
+        if (self.compositeDataWrapper.points[
+                self.plotToolbar.getSelectedPointType()]):
+            return
         if mode is EditMode.Static and mouseEvent.button == 1:
             self.compositeDataWrapper.points[
                 self.plotToolbar.getSelectedPointType()].add_point(
@@ -156,6 +161,9 @@ class PlotWidget(QW.QWidget):
 
     def handlePick(self, pickEvent):
         mode = self.plotToolbar.getEditMode()
+        if (self.compositeDataWrapper.points[
+                self.plotToolbar.getSelectedPointType()]):
+            return
         if mode is EditMode.Static and pickEvent.mouseevent.button == 3:
             points = pickEvent.artist
             if(points.get_label() == self.plotToolbar.getSelectedPointType()):
@@ -205,6 +213,20 @@ class PlotWidget(QW.QWidget):
         if self.dragging:
             self.dragging = False
 
+    def correctZOrder(self):
+        """Poprawia zorder axisLeft i axisRight, pozwalając na
+        interakcję z odpowiednimi punktami. W innym wypadku
+        każdy mouseEvent będzie oddziaływał tylko z lewą osią."""
+        selectedPoints = self.plotToolbar.getSelectedPointType()
+        if selectedPoints != "":
+            visualPoints = self.compositeDataWrapper.points[selectedPoints]
+            if visualPoints.axis is Axis.Right:
+                self.plotCanvas.axisRight.zorder = 1
+                self.plotCanvas.axisLeft.zorder = 0
+            else:
+                self.plotCanvas.axisRight.zorder = 0
+                self.plotCanvas.axisLeft.zorder = 1
+    
     def updateCompositeData(self, compositeDataWrapper):
         #TODO: Wykres powinien być tylko odświeżony nie resetując pozycji
         # obserwatora
