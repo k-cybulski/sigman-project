@@ -339,7 +339,7 @@ class QtSigmanWindow(QW.QMainWindow):
         waveListLabel.setText("Przebiegi")
         waveList = ListWidgets.DataListWidget()
         waveList.itemClicked.connect(lambda listItemWidget:
-            DataActions.editLineSettings(self.compositeDataWrapper, 
+            DataActions.editWaveSettings(self.compositeDataWrapper, 
                 waveList.itemWidget(listItemWidget).typeLabel.text()))
         self.compositeDataWrapper.waveNumberChanged.connect(
             lambda:
