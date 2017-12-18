@@ -338,9 +338,9 @@ class QtSigmanWindow(QW.QMainWindow):
         waveListLabel = QW.QLabel()
         waveListLabel.setText("Przebiegi")
         waveList = ListWidgets.DataListWidget()
-        waveList.itemClicked.connect(lambda listItemWidget:
-            DataActions.editWaveSettings(self.compositeDataWrapper, 
-                waveList.itemWidget(listItemWidget).typeLabel.text()))
+#        waveList.itemClicked.connect(lambda listItemWidget:
+#            DataActions.editWaveSettings(self.compositeDataWrapper, 
+#                waveList.itemWidget(listItemWidget).typeLabel.text()))
         self.compositeDataWrapper.waveNumberChanged.connect(
             lambda:
             waveList.updateData(self.compositeDataWrapper, 'wave'))
@@ -354,9 +354,9 @@ class QtSigmanWindow(QW.QMainWindow):
         pointListLabel = QW.QLabel()
         pointListLabel.setText("Punkty") 
         pointList = ListWidgets.DataListWidget()
-        pointList.itemClicked.connect(lambda listItemWidget:
-            DataActions.editPointSettings(self.compositeDataWrapper, 
-                pointList.itemWidget(listItemWidget).typeLabel.text()))
+#        pointList.itemClicked.connect(lambda listItemWidget:
+#            DataActions.editPointSettings(self.compositeDataWrapper, 
+#                pointList.itemWidget(listItemWidget).typeLabel.text()))
         self.compositeDataWrapper.pointNumberChanged.connect(
             lambda:
             pointList.updateData(self.compositeDataWrapper, 'point'))

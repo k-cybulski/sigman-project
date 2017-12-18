@@ -1,11 +1,19 @@
 from PyQt5 import QtWidgets as QW
 
+from QtSigman import DataActions
+
 class DataListItemWidget(QW.QWidget):
     def __init__(self, parent=None):
         super(DataListItemWidget, self).__init__(parent)
         self.mainHBoxLayout = QW.QHBoxLayout()
+        
         self.typeLabel = QW.QLabel()
         self.mainHBoxLayout.addWidget(self.typeLabel)
+
+        self.editMetadataButton = QW.QPushButton()
+        self.editMetadataButton.setText("Zmień metadane")
+        self.mainHBoxLayout.addWidget(self.editMetadataButton)
+
         self.setLayout(self.mainHBoxLayout)
         self.setStyleSheet("""
         .QWidget {
@@ -22,15 +30,20 @@ class DataListWidget(QW.QListWidget):
     def updateData(self, compositeDataWrapper, dataType):
         if dataType == 'wave':
             items = compositeDataWrapper.waves.items()
+            settingsFunction = DataActions.editWaveSettings
         elif dataType == 'point':
             items = compositeDataWrapper.points.items()
+            settingsFunction = DataActions.editPointSettings
         elif dataType == 'parameter':
             items = compositeDataWrapper.parameters.items()
+            settingsFunction = DataActions.editParameterSettings
 
         self.clear()
         for key, item in items:
             itemWidget = DataListItemWidget()
             itemWidget.setInfo(compositeDataWrapper, dataType, key)
+            itemWidget.editMetadataButton.clicked.connect(lambda:
+                settingsFunction(compositeDataWrapper, key))
             item = QW.QListWidgetItem(self)
             item.setSizeHint(itemWidget.sizeHint())
             self.addItem(item)
