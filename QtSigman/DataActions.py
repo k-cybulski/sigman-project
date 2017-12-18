@@ -52,7 +52,7 @@ def importPoints(compositeDataWrapper):
     except AssertionError:
         pass
 
-def editWaveSettings(compositeDataWrapper, dictType):
+def inputWaveSettings(compositeDataWrapper, dictType):
     forbiddenNames = list(compositeDataWrapper.waves.keys())
     forbiddenNames.remove(dictType)
     newDictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
@@ -64,12 +64,12 @@ def editWaveSettings(compositeDataWrapper, dictType):
         askDelete = True,
         color = compositeDataWrapper.waves[dictType].color)
     if status is DataActionStatus.Ok:
-        compositeDataWrapper.editDataWaveSettings(
+        compositeDataWrapper.editWaveSettings(
             dictType, newDictType, color, axis, offset)
     if status is DataActionStatus.Delete:
         compositeDataWrapper.delete_wave(dictType)
 
-def editPointSettings(compositeDataWrapper, dictType):
+def inputPointSettings(compositeDataWrapper, dictType):
     forbiddenNames = list(compositeDataWrapper.points.keys())
     forbiddenNames.remove(dictType)
     newDictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
@@ -80,12 +80,12 @@ def editPointSettings(compositeDataWrapper, dictType):
         askDelete = True,
         color = compositeDataWrapper.points[dictType].color)
     if status is DataActionStatus.Ok:
-        compositeDataWrapper.editDataPointsSettings(
+        compositeDataWrapper.editPointsSettings(
             dictType, newDictType, color, axis, offset)
     if status is DataActionStatus.Delete:
         compositeDataWrapper.delete_points(dictType)
 
-def editParameterSettings(compositeDataWrapper, dictType):
+def inputParameterSettings(compositeDataWrapper, dictType):
     forbiddenNames = list(compositeDataWrapper.parameters.keys())
     forbiddenNames.remove(dictType)
     newDictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
@@ -97,7 +97,7 @@ def editParameterSettings(compositeDataWrapper, dictType):
         color = compositeDataWrapper.parameters[dictType].color,
         offset = None)
     if status is DataActionStatus.Ok:
-        compositeDataWrapper.editParameterSettings(
+        compositeDataWrapper.inputParameterSettings(
             dictType, newDictType, color, axis)
     if status is DataActionStatus.Delete:
         compositeDataWrapper.delete_parameter(dictType)

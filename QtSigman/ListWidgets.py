@@ -30,13 +30,13 @@ class DataListWidget(QW.QListWidget):
     def updateData(self, compositeDataWrapper, dataType):
         if dataType == 'wave':
             items = compositeDataWrapper.waves.items()
-            settingsFunction = DataActions.editWaveSettings
+            settingsFunction = DataActions.inputWaveSettings
         elif dataType == 'point':
             items = compositeDataWrapper.points.items()
-            settingsFunction = DataActions.editPointSettings
+            settingsFunction = DataActions.inputPointSettings
         elif dataType == 'parameter':
             items = compositeDataWrapper.parameters.items()
-            settingsFunction = DataActions.editParameterSettings
+            settingsFunction = DataActions.inputParameterSettings
 
         self.clear()
         for key, item in items:

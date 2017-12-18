@@ -221,8 +221,9 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
             axis)
         self.waveNumberChanged.emit()
 
-    def editDataWaveSettings(self, dictType, newDictType, 
+    def editWaveSettings(self, dictType, newDictType, 
                                 color, axis, offset):
+        """Changes settings of a selected wave."""
         wave = self.waves[dictType]
         if wave.color != color:
             wave.setMplColor(color)
@@ -254,8 +255,9 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
             axis)
         self.pointNumberChanged.emit()
 
-    def editDataPointsSettings(self, dictType, newDictType, 
+    def editPointsSettings(self, dictType, newDictType, 
                                 color, axis, offset):
+        """Changes settings of a selected set of points."""
         points = self.points[dictType]
         if points.color != color:
             points.setMplColor(color)
@@ -289,6 +291,7 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
 
     def editParameterSettings(self, dictType, newDictType, 
                                 color, axis):
+        """Changes settings of a selected parameter."""
         parameter = self.parameters[dictType]
         parameter.color = color
         if parameter.axis != axis:
@@ -339,7 +342,7 @@ class QtSigmanWindow(QW.QMainWindow):
         waveListLabel.setText("Przebiegi")
         waveList = ListWidgets.DataListWidget()
 #        waveList.itemClicked.connect(lambda listItemWidget:
-#            DataActions.editWaveSettings(self.compositeDataWrapper, 
+#            DataActions.inputWaveSettings(self.compositeDataWrapper, 
 #                waveList.itemWidget(listItemWidget).typeLabel.text()))
         self.compositeDataWrapper.waveNumberChanged.connect(
             lambda:
@@ -355,7 +358,7 @@ class QtSigmanWindow(QW.QMainWindow):
         pointListLabel.setText("Punkty") 
         pointList = ListWidgets.DataListWidget()
 #        pointList.itemClicked.connect(lambda listItemWidget:
-#            DataActions.editPointSettings(self.compositeDataWrapper, 
+#            DataActions.inputPointSettings(self.compositeDataWrapper, 
 #                pointList.itemWidget(listItemWidget).typeLabel.text()))
         self.compositeDataWrapper.pointNumberChanged.connect(
             lambda:
