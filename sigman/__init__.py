@@ -282,8 +282,8 @@ class Points():
         """
         if y is not None:
             points = np.vstack((self.data_x, self.data_y))
-            point = np.array([[x],[y]])
-            comparison_distances = np.sum((points - point)**2,axis=0)
+            point = np.array([[x,y]])
+            comparison_distances = np.sum((points - point)**2, axis=1)
             closest_id = np.argmin(comparison_distances) 
         else:
             closest_id = np.argmin(np.abs(self.data_x - x))
