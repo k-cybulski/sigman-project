@@ -67,12 +67,13 @@ class VisualDataWave(VisualDataObject, sm.Wave):
             begin_x = tempBeginTime)
         if keepMplObject:
             if self.mplObject is None:
-                self.mplObject, = axis.plot(x, y, color = color)
+                self.mplObject, = axis.plot(x, y, color = color, label =
+                                            self.type)
             else:
                 self.mplObject.set_xdata(x)
                 self.mplObject.set_ydata(y)
         else:
-            axis.plot(x, y, color = color)
+            axis.plot(x, y, color = color, label = self.type)
 
 class VisualDataPoints(VisualDataObject, sm.Points):
     def __init__(self, data, color, axis):
@@ -89,12 +90,15 @@ class VisualDataPoints(VisualDataObject, sm.Points):
         x, y = self.data_slice(beginTime, endTime)
         if keepMplObject:
             if self.mplObject is None:
-                self.mplObject, = axis.plot(x, y, color = color, marker = 'o', linestyle = 'None')
+                self.mplObject, = axis.plot(x, y, color = color, marker = 'o',
+                                            linestyle = 'None', picker = 5,
+                                            label = self.type)
             else:
                 self.mplObject.set_xdata(x)
                 self.mplObject.set_ydata(y)
         else:
-            axis.plot(x, y, color = color, marker = 'o', linestyle = 'None')
+            axis.plot(x, y, color = color, marker = 'o', linestyle = 'None',
+                      picker = 5, label = self.type)
 
 class VisualParameter(VisualDataObject, sm.Parameter):
     def __init__(self, data, color, axis):
@@ -119,7 +123,8 @@ class VisualParameter(VisualDataObject, sm.Parameter):
                 self.removeMplObject()
             if self.mplObject == []:
                 for tup in waveTuples:
-                    mplLine, = axis.plot(tup[0], tup[1], color = color)
+                    mplLine, = axis.plot(tup[0], tup[1], color = color, label =
+                                        self.type)
                     self.mplObject.append(mplLine)
             else:
                 for mplLine, tup in zip(self.mplObject, waveTuples):
@@ -127,7 +132,7 @@ class VisualParameter(VisualDataObject, sm.Parameter):
                     mplLine.set_ydata(tup[1])
         else:
             for tup in waveTuples:
-                axis.plot(tup[0], tup[1], color = color)
+                axis.plot(tup[0], tup[1], color = color, label = self.type)
 
 
     def removeMplObject(self):
@@ -232,6 +237,8 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
             wave.removeMplObject()
         wave.offset = offset 
         if dictType != newDictType:
+            wave.type = newDictType
+            wave.mplObject.set_label(wave.type)
             self.waves[newDictType] = wave
             self.waves.pop(dictType)
             self.waveNumberChanged.emit()
@@ -266,6 +273,8 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
             points.removeMplObject()
         points.move_in_time(offset)
         if dictType != newDictType:
+            points.type = newDictType
+            points.mplObject.set_label(points.type)
             self.points[newDictType] = points
             self.points.pop(dictType)
             self.pointNumberChanged.emit()
@@ -325,7 +334,7 @@ class QtSigmanWindow(QW.QMainWindow):
         mainLayout = QW.QHBoxLayout(self.mainWidget)
         self.setCentralWidget(self.mainWidget)
         # Po lewej
-        self.mplPlotWidget = MplWidgets.PlotWidget()
+        self.mplPlotWidget = MplWidgets.PlotWidget(self.compositeDataWrapper)
         mainLayout.addWidget(self.mplPlotWidget)
         # Podłączamy wszystkie możliwe sygnały qt wpływające na wykres do
         # obiektu wykresu
@@ -335,6 +344,12 @@ class QtSigmanWindow(QW.QMainWindow):
         self.compositeDataWrapper.waveChanged.connect(self._refreshPlot)
         self.compositeDataWrapper.pointChanged.connect(self._refreshPlot)
         self.compositeDataWrapper.parameterChanged.connect(self._refreshPlot)
+        self.compositeDataWrapper.pointNumberChanged.connect(lambda:
+            self.mplPlotWidget.plotToolbar.updatePointComboBox(
+                self.compositeDataWrapper))
+        self.compositeDataWrapper.pointChanged.connect(lambda:
+            self.mplPlotWidget.plotToolbar.updatePointComboBox(
+                self.compositeDataWrapper))
 
         # Po prawej
         rightVBoxLayout = QW.QVBoxLayout()

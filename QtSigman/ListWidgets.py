@@ -11,7 +11,7 @@ class DataListItemWidget(QW.QWidget):
         self.mainHBoxLayout.addWidget(self.typeLabel)
 
         self.editMetadataButton = QW.QPushButton()
-        self.editMetadataButton.setText("Zmień metadane")
+        self.editMetadataButton.setText("Zmień metainformacje")
         self.mainHBoxLayout.addWidget(self.editMetadataButton)
 
         self.setLayout(self.mainHBoxLayout)
@@ -25,6 +25,10 @@ class DataListItemWidget(QW.QWidget):
 
     def setInfo(self, compositeDataWrapper, dataType, key):
         self.typeLabel.setText(key)
+
+def generateMetadataButtonResponse(settingsFunction, compositeDataWrapper, key):
+    return lambda: settingsFunction(compositeDataWrapper, key)
+
 
 class DataListWidget(QW.QListWidget):
     def updateData(self, compositeDataWrapper, dataType):
@@ -42,8 +46,9 @@ class DataListWidget(QW.QListWidget):
         for key, item in items:
             itemWidget = DataListItemWidget()
             itemWidget.setInfo(compositeDataWrapper, dataType, key)
-            itemWidget.editMetadataButton.clicked.connect(lambda:
-                settingsFunction(compositeDataWrapper, key))
+            itemWidget.editMetadataButton.clicked.connect(
+                generateMetadataButtonResponse(
+                    settingsFunction, compositeDataWrapper, key))
             item = QW.QListWidgetItem(self)
             item.setSizeHint(itemWidget.sizeHint())
             self.addItem(item)

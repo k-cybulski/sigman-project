@@ -25,6 +25,7 @@ def importWave(compositeDataWrapper):
             title = title)
         if status is DataActionStatus.Ok: 
             wave.offset = offset
+            wave.type = dictType
             compositeDataWrapper.add_wave(wave, dictType, 
                                           color=color, axis=axis)
     # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się
@@ -45,6 +46,7 @@ def importPoints(compositeDataWrapper):
             title = path[0])
         if status is DataActionStatus.Ok:
             points.move_in_time(offset)
+            points.type = dictType
             compositeDataWrapper.add_points(points, dictType, 
                                             color=color, axis=axis)
     # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się

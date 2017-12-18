@@ -16,6 +16,11 @@ class Axis(Enum):
     Right = 2
     Hidden = 3
 
+class EditMode(Enum):
+    Inactive = 1
+    Static = 2 # Addition or removal of points
+    Dynamic = 3 # Movement of existing points
+
 class PlotCanvas(FigureCanvas):
     """Widget przedstawiający sam wykres."""
     
@@ -31,8 +36,6 @@ class PlotCanvas(FigureCanvas):
         self.axisLeft = self.figure.add_subplot(1,1,1)
         self.axisRight = self.axisLeft.twinx()
 
-        
-        
     def plotCompositeDataWrapper(self, compositeDataWrapper, beginTime, endTime):
         """Rysuje lub tylko odświeża już narysowane dane z 
         CompositeDataWrapper.
@@ -70,26 +73,104 @@ class PlotCanvas(FigureCanvas):
                       keepMplObject = False, color = color)
         self.axisLeft.legend(handles = handles)
 
-class NavigationToolbar(NavigationToolbar2QT):
+class PlotToolbar(NavigationToolbar2QT):
     toolitems = [t for t in NavigationToolbar2QT.toolitems if
                  t[0] in ('Pan', 'Zoom', 'Save')] # 'Home' do skorygowania
+    
+    def __init__(self, canvas, parent):
+        NavigationToolbar2QT.__init__(self, canvas, parent)
+        
+        self.editCheckBox = QW.QCheckBox("Tryb edycji")
+        self.addWidget(self.editCheckBox)
+
+        editTypes = ["Dodaj LPM/Usuń PPM"]
+                   # "Przesuń"]
+        self.editTypeComboBox = QW.QComboBox()
+        self.editTypeComboBox.addItems(editTypes)
+        self.addWidget(self.editTypeComboBox)
+
+        self.selectedLabel = QW.QLabel("Wybrane punkty:")
+        self.addWidget(self.selectedLabel)
+        
+        self.selectedPointsComboBox = QW.QComboBox()
+        self.addWidget(self.selectedPointsComboBox)
+
+    def updatePointComboBox(self, compositeDataWrapper):
+        selectedPoints = self.getSelectedPointType()
+        self.selectedPointsComboBox.clear()
+        items = []
+        for key, item in compositeDataWrapper.points.items():
+            items.append(key)
+        self.selectedPointsComboBox.addItems(items)
+        found = self.selectedPointsComboBox.findText(selectedPoints)
+        if found >= 0:
+            self.selectedPointsComboBox.setCurrentIndex(found)
+    
+
+    def getEditMode(self):
+        if self.editCheckBox.isChecked():
+            if self.editTypeComboBox.currentIndex() == 0:
+                return EditMode.Static
+            else:
+                return EditMode.Dynamic
+        else:
+            return EditMode.Inactive
+
+    def getSelectedPointType(self):
+        return self.selectedPointsComboBox.currentText()
+
 
 class PlotWidget(QW.QWidget):
     """Widget przedstawiający wykres wraz z paskiem nawigacji."""
 
-    def __init__(self, parent=None):     
+    def __init__(self, compositeDataWrapper, parent=None):     
         super(PlotWidget, self).__init__(parent)
 
         self.plotCanvas = PlotCanvas()
-        self.plotNavigationToolbar = NavigationToolbar(self.plotCanvas, self)
+        self.plotToolbar = PlotToolbar(self.plotCanvas, self)
+
+        self.plotCanvas.mpl_connect('button_press_event', self.handlePress)
+        self.plotCanvas.mpl_connect('pick_event', self.handlePick)
+        self.plotCanvas.mpl_connect('motion_notify_event', self.handleMotion)
+        self.plotCanvas.mpl_connect('button_release_event', self.handleRelease)
 
         layout = QW.QVBoxLayout(self)
         layout.addWidget(self.plotCanvas)
-        layout.addWidget(self.plotNavigationToolbar)
+        layout.addWidget(self.plotToolbar)
+
+        self.compositeDataWrapper = compositeDataWrapper
+
+    def handlePress(self, mouseEvent):
+        mode = self.plotToolbar.getEditMode()
+        if mode is EditMode.Static and mouseEvent.button == 1:
+            self.compositeDataWrapper.points[
+                self.plotToolbar.getSelectedPointType()].add_point(
+                    mouseEvent.xdata, mouseEvent.ydata)
+            self.compositeDataWrapper.pointNumberChanged.emit()
+
+    def handlePick(self, pickEvent):
+        mode = self.plotToolbar.getEditMode()
+        if mode is EditMode.Static and pickEvent.mouseevent.button == 3:
+            points = pickEvent.artist
+            if(points.get_label() == self.plotToolbar.getSelectedPointType()):
+                xData = points.get_xdata()
+                yData = points.get_ydata()
+                ind = [pickEvent.ind[0]]
+                self.compositeDataWrapper.points[
+                    self.plotToolbar.getSelectedPointType()].delete_point(
+                        xData[ind], y=yData[ind])
+                self.compositeDataWrapper.pointNumberChanged.emit()
+
+    def handleMotion(self, mouseEvent):
+        pass
+
+    def handleRelease(self, mouseEvent):
+        pass
 
     def updateCompositeData(self, compositeDataWrapper):
         #TODO: Wykres powinien być tylko odświeżony nie resetując pozycji
         # obserwatora
+        self.compositeDataWrapper = compositeDataWrapper
         beginTime, endTime = compositeDataWrapper.calculate_complete_time_span()
         self.plotCanvas.plotCompositeDataWrapper(compositeDataWrapper,
                                                  beginTime, endTime)
