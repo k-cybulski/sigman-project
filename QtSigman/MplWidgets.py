@@ -3,6 +3,7 @@ Moduł zajmujący się widgetem wizualizującym wykres.
 """
 from enum import Enum
 
+import numpy as np
 from PyQt5 import QtWidgets as QW
 import matplotlib
 matplotlib.use('Qt5Agg')
@@ -83,8 +84,8 @@ class PlotToolbar(NavigationToolbar2QT):
         self.editCheckBox = QW.QCheckBox("Tryb edycji")
         self.addWidget(self.editCheckBox)
 
-        editTypes = ["Dodaj LPM/Usuń PPM"]
-                   # "Przesuń"]
+        editTypes = ["Dodaj LPM/Usuń PPM",
+                    "Przesuń"]
         self.editTypeComboBox = QW.QComboBox()
         self.editTypeComboBox.addItems(editTypes)
         self.addWidget(self.editTypeComboBox)
@@ -133,12 +134,17 @@ class PlotWidget(QW.QWidget):
         self.plotCanvas.mpl_connect('pick_event', self.handlePick)
         self.plotCanvas.mpl_connect('motion_notify_event', self.handleMotion)
         self.plotCanvas.mpl_connect('button_release_event', self.handleRelease)
+        self.plotCanvas.mpl_connect('axes_leave_event', self.handleLeave)
 
         layout = QW.QVBoxLayout(self)
         layout.addWidget(self.plotCanvas)
         layout.addWidget(self.plotToolbar)
 
         self.compositeDataWrapper = compositeDataWrapper
+
+        self.dragging = False
+        self.lastX = 0
+        self.lastY = 0
 
     def handlePress(self, mouseEvent):
         mode = self.plotToolbar.getEditMode()
@@ -160,12 +166,44 @@ class PlotWidget(QW.QWidget):
                     self.plotToolbar.getSelectedPointType()].delete_point(
                         xData[ind], y=yData[ind])
                 self.compositeDataWrapper.pointNumberChanged.emit()
+        if mode is EditMode.Dynamic and pickEvent.mouseevent.button == 1:
+            points = pickEvent.artist
+            if(points.get_label() == self.plotToolbar.getSelectedPointType()):
+                xData = points.get_xdata()
+                yData = points.get_ydata()
+                ind = [pickEvent.ind[0]]
+                self.lastX = xData[ind]
+                self.lastY = yData[ind]
+                self.dragging = True
+                self.compositeDataWrapper.pointChanged.emit()
 
     def handleMotion(self, mouseEvent):
-        pass
+        mode = self.plotToolbar.getEditMode()
+        if(mode is EditMode.Dynamic and mouseEvent.button == 1 and
+                self.dragging):
+            points = self.compositeDataWrapper.points[
+                self.plotToolbar.getSelectedPointType()]
+            points.move_point(
+                self.lastX, self.lastY,
+                mouseEvent.xdata, mouseEvent.ydata)
+            self.lastX = np.array([mouseEvent.xdata])
+            self.lastY = np.array([mouseEvent.ydata])
+            self.compositeDataWrapper.pointChanged.emit()
 
     def handleRelease(self, mouseEvent):
-        pass
+        mode = self.plotToolbar.getEditMode()
+        if(mode is EditMode.Dynamic and mouseEvent.button == 1 and
+                self.dragging):
+            points = self.compositeDataWrapper.points[
+                self.plotToolbar.getSelectedPointType()]
+            points.move_point(
+                self.lastX, self.lastY,
+                mouseEvent.xdata, mouseEvent.ydata)
+            self.dragging = False
+        
+    def handleLeave(self, mouseEvent):
+        if self.dragging:
+            self.dragging = False
 
     def updateCompositeData(self, compositeDataWrapper):
         #TODO: Wykres powinien być tylko odświeżony nie resetując pozycji

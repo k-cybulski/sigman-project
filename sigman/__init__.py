@@ -281,14 +281,30 @@ class Points():
         symbolizują wydarzenia w czasie i ich y są mniej ważne.
         """
         if y is not None:
-            points = np.vstack((self.data_x, self.data_y))
-            point = np.array([[x,y]])
-            comparison_distances = np.sum((points - point)**2, axis=1)
-            closest_id = np.argmin(comparison_distances) 
+            closest_id = self.closest_point_id(x, y)
         else:
             closest_id = np.argmin(np.abs(self.data_x - x))
         self.data_x = np.delete(self.data_x, closest_id)
         self.data_y = np.delete(self.data_y, closest_id)
+    
+    def move_point(self, x1, y1, x2, y2):
+        closest_id = self.closest_point_id(x1, y1)
+        if not (isclose(self.data_x[closest_id], x1) and
+                isclose(self.data_y[closest_id], y1)):
+            raise ValueError('Nie ma punktu o takich x1 i y1')
+        # Powtarzamy się tutaj by nie wywoływać funkcji, które w QtSigman
+        # mogą wywołać rysowanie od zera
+        self.data_x = np.delete(self.data_x, closest_id)
+        self.data_y = np.delete(self.data_y, closest_id)
+        i = np.searchsorted(self.data_x, x2)
+        self.data_x=np.insert(self.data_x, i, x2)
+        self.data_y=np.insert(self.data_y, i, y2)
+
+    def closest_point_id(self, x, y):
+        points = np.vstack((self.data_x, self.data_y))
+        point = np.array([[x,y]])
+        comparison_distances = np.sum((points - point)**2, axis=1)
+        return np.argmin(comparison_distances) 
 
     def align_to_line(self, wave):
         """Wyrównuje współrzędne y punktów do y danego Wave."""
