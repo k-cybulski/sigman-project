@@ -442,7 +442,8 @@ class QtSigmanWindow(QW.QMainWindow):
         self.mplPlotWidget.updateCompositeData(self.compositeDataWrapper)
 
     def _replaceCompositeDataWrapper(self, compositeDataWrapper):
-        self.compositeDataWrapper.replaceWithCompositeDataWrapper(compositeDataWrapper)
+        if compositeDataWrapper is not None:
+            self.compositeDataWrapper.replaceWithCompositeDataWrapper(compositeDataWrapper)
 
     def fileQuit(self):
         self.close()
