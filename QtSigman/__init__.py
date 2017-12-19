@@ -51,8 +51,8 @@ class VisualDataWave(VisualDataObject, sm.Wave):
         sm.Wave.__init__(self,
                               data.data,
                               data.complete_length,
-                              wave_type = data.type,
-                              offset = data.offset)
+                              wave_type=data.type,
+                              offset=data.offset)
 
     def plot(self, axis, beginTime, endTime,
              keepMplObject=True, color=None):
@@ -62,18 +62,18 @@ class VisualDataWave(VisualDataObject, sm.Wave):
         tempEndTime = min(endTime, self.offset 
                           + self.complete_length)
         x, y = self.generate_coordinate_tables(
-            begin_time = tempBeginTime,
-            end_time = tempEndTime,
-            begin_x = tempBeginTime)
+            begin_time=tempBeginTime,
+            end_time=tempEndTime,
+            begin_x=tempBeginTime)
         if keepMplObject:
             if self.mplObject is None:
-                self.mplObject, = axis.plot(x, y, color = color, label =
-                                            self.type)
+                self.mplObject, = axis.plot(x, y, 
+                                            color=color, label=self.type)
             else:
                 self.mplObject.set_xdata(x)
                 self.mplObject.set_ydata(y)
         else:
-            axis.plot(x, y, color = color, label = self.type)
+            axis.plot(x, y, color=color, label=self.type)
 
 class VisualDataPoints(VisualDataObject, sm.Points):
     def __init__(self, data, color, axis):
@@ -81,7 +81,7 @@ class VisualDataPoints(VisualDataObject, sm.Points):
         sm.Points.__init__(self,
                                 data.data_x,
                                 data.data_y,
-                                point_type = data.type)
+                                point_type=data.type)
 
     def plot(self, axis, beginTime, endTime,
              keepMplObject=True, color=None):
@@ -90,15 +90,15 @@ class VisualDataPoints(VisualDataObject, sm.Points):
         x, y = self.data_slice(beginTime, endTime)
         if keepMplObject:
             if self.mplObject is None:
-                self.mplObject, = axis.plot(x, y, color = color, marker = 'o',
-                                            linestyle = 'None', picker = 5,
-                                            label = self.type)
+                self.mplObject, = axis.plot(x, y, color=color, marker='o',
+                                            linestyle='None', picker=5,
+                                            label=self.type)
             else:
                 self.mplObject.set_xdata(x)
                 self.mplObject.set_ydata(y)
         else:
-            axis.plot(x, y, color = color, marker = 'o', linestyle = 'None',
-                      picker = 5, label = self.type)
+            axis.plot(x, y, color=color, marker='o', linestyle='None',
+                      picker=5, label=self.type)
 
 class VisualParameter(VisualDataObject, sm.Parameter):
     def __init__(self, data, color, axis):
@@ -115,7 +115,7 @@ class VisualParameter(VisualDataObject, sm.Parameter):
         if color is None:
             color = self.color
         waveTuples = self.generate_parameter_wave_tuples(
-            begin_time = beginTime, end_time = endTime)
+            begin_time=beginTime, end_time=endTime)
         if keepMplObject:
             if self.mplObject is None: #TODO: Ten if powinien być niepotrzebny
                 self.mplObject = []
@@ -123,8 +123,8 @@ class VisualParameter(VisualDataObject, sm.Parameter):
                 self.removeMplObject()
             if self.mplObject == []:
                 for tup in waveTuples:
-                    mplLine, = axis.plot(tup[0], tup[1], color = color, label =
-                                        self.type)
+                    mplLine, = axis.plot(tup[0], tup[1], 
+                                         color=color, label=self.type)
                     self.mplObject.append(mplLine)
             else:
                 for mplLine, tup in zip(self.mplObject, waveTuples):
@@ -132,7 +132,7 @@ class VisualParameter(VisualDataObject, sm.Parameter):
                     mplLine.set_ydata(tup[1])
         else:
             for tup in waveTuples:
-                axis.plot(tup[0], tup[1], color = color, label = self.type)
+                axis.plot(tup[0], tup[1], color=color, label=self.type)
 
 
     def removeMplObject(self):
@@ -217,7 +217,7 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
                       axis=Axis.Hidden):
         super(CompositeDataWrapper, self).add_wave(wave,
                                                         dict_type,
-                                                        replace = replace)
+                                                        replace=replace)
         if color is None:
             color = defaultColors.getColor(dict_type)
         self.waves[dict_type] = VisualDataWave(
@@ -253,7 +253,7 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
                         axis=Axis.Hidden):
         super(CompositeDataWrapper, self).add_points(points,
                                                           dict_type,
-                                                          join = join)
+                                                          join=join)
         if color is None:
             color = defaultColors.getColor(dict_type)
         self.points[dict_type] = VisualDataPoints(
@@ -289,7 +289,7 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
                       axis=Axis.Hidden):
         super(CompositeDataWrapper, self).add_parameter(parameter,
                                                         dict_type,
-                                                        replace = replace)
+                                                        replace=replace)
         if color is None:
             color = defaultColors.getColor(dict_type)
         self.parameters[dict_type] = VisualParameter(

@@ -103,38 +103,20 @@ class DataSettingsDialog(QW.QDialog):
 
     def checkCorrectness(self):
         if self.typeLineEdit.text()=="":
-            #TODO: CHANGE ALL INTO QW.QMessageBox.warning(self, 'title',
-            # 'stuff')
-
-
-
-
-
-            msg = QW.QMessageBox()
-            msg.setIcon(QW.QMessageBox.Warning)
-            msg.setText("Nazwa nie może być pusta.")
-            msg.exec_()
+            QW.QMessageBox.warning(self, "Błąd", "Nazwa nie może być pusta.")
             return False
         if self.typeLineEdit.text().strip() in self.forbiddenNames:
-            msg = QW.QMessageBox()
-            msg.setIcon(QW.QMessageBox.Warning)
-            msg.setText("Nazwa zajęta.")
-            msg.exec_()
+            QW.QMessageBox.warning(self, "Błąd", "Nazwa zajęta.")
             return False
         if _getColorString(self.colorLineEdit.text()) == "":
-            msg = QW.QMessageBox()
-            msg.setIcon(QW.QMessageBox.Warning)
-            msg.setText("Niewłaściwy kolor.")
-            msg.exec_()
+            QW.QMessageBox.warning(self, "Błąd", "Niewłaściwy kolor.")
             return False
         if self.offset is not None:
             try:
                 float(self.offsetLineEdit.text())
             except ValueError:
-                msg = QW.QMessageBox()
-                msg.setIcon(QW.QMessageBox.Warning)
-                msg.setText("Niewłaściwe przesunięcie (musi być liczbą).")
-                msg.exec_()
+                QW.QMessageBox.warning(
+                    self, "Błąd", "Niewłaściwe przesunięcie (musi być liczbą)")
                 return False
         return True
 
