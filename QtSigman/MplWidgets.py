@@ -150,8 +150,8 @@ class PlotWidget(QW.QWidget):
 
     def handlePress(self, mouseEvent):
         mode = self.plotToolbar.getEditMode()
-        if (self.compositeDataWrapper.points[
-                self.plotToolbar.getSelectedPointType()]):
+        if (self.plotToolbar.getSelectedPointType() 
+                not in self.compositeDataWrapper.points):
             return
         if mode is EditMode.Static and mouseEvent.button == 1:
             self.compositeDataWrapper.points[
@@ -161,8 +161,8 @@ class PlotWidget(QW.QWidget):
 
     def handlePick(self, pickEvent):
         mode = self.plotToolbar.getEditMode()
-        if (self.compositeDataWrapper.points[
-                self.plotToolbar.getSelectedPointType()]):
+        if (self.plotToolbar.getSelectedPointType() 
+                not in self.compositeDataWrapper.points):
             return
         if mode is EditMode.Static and pickEvent.mouseevent.button == 3:
             points = pickEvent.artist
