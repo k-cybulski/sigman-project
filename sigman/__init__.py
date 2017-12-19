@@ -168,6 +168,9 @@ class Wave():
         output_y = np.array(output_y)
         return output_x, output_y
 
+class EmptyPointsError(Exception):
+    pass
+
 class Points():
     """Klasa symbolizująca zestaw punktów jednego typu (np. R).
     Przechowuje je w dwóch tablicach - wartości x i y wszystkich
@@ -183,11 +186,14 @@ class Points():
         """Inicjalizuje Points. Przyjmuje dwie tablice x i y
         punktów, a także typ punktów (np. 'r').
         """
-        # sortowanie by punkty były po kolei
-        temp_data_x, temp_data_y = zip(*sorted(zip(data_x,data_y)))
-        self.data_x = np.array(temp_data_x) 
-        self.data_y = np.array(temp_data_y) 
-        self.type = point_type 
+        if len(data_x) > 0:
+            # sortowanie by punkty były po kolei
+            temp_data_x, temp_data_y = zip(*sorted(zip(data_x,data_y)))
+            self.data_x = np.array(temp_data_x) 
+            self.data_y = np.array(temp_data_y) 
+            self.type = point_type 
+        else:
+            raise EmptyPointsError
     
     @classmethod
     def copy(cls, points):

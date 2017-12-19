@@ -3,7 +3,7 @@ import pickle
 
 from PyQt5 import QtWidgets as QW
 from sigman import file_manager as fm
-from sigman import analyzer
+from sigman import analyzer, EmptyPointsError
 import sigman as sm
 
 import QtSigman
@@ -181,19 +181,22 @@ def findPoints(compositeDataWrapper):
         'points', compositeDataWrapper)
     beginTime, endTime, procedure, arguments, status = proc
     if status is DataActionStatus.Ok:
-        newPoints = analyzer.find_points(compositeDataWrapper, 
-                                         beginTime, endTime, 
-                                         procedure, arguments)
-        nameBase = 'found_points'
-        nameNum = 0
-        name = nameBase + str(nameNum)
-        while name in compositeDataWrapper.points:
-            nameNum += 1
+        try:
+            newPoints = analyzer.find_points(compositeDataWrapper, 
+                                             beginTime, endTime, 
+                                             procedure, arguments)
+            nameBase = 'found_points'
+            nameNum = 0
             name = nameBase + str(nameNum)
-        dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-            forbiddenNames = compositeDataWrapper.points.keys(),
-            title=procedure.__name__)
-        if status is DataActionStatus.Cancel:
-            return
-        compositeDataWrapper.add_points(newPoints, dictType, 
-                                        color=color, axis=axis)
+            while name in compositeDataWrapper.points:
+                nameNum += 1
+                name = nameBase + str(nameNum)
+            dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
+                forbiddenNames = compositeDataWrapper.points.keys(),
+                title=procedure.__name__)
+            if status is DataActionStatus.Cancel:
+                return
+            compositeDataWrapper.add_points(newPoints, dictType, 
+                                            color=color, axis=axis)
+        except EmptyPointsError:
+            QW.QMessageBox.warning(None, 'Błąd', 'Nie odnaleziono punktów')
