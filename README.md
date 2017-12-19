@@ -260,14 +260,14 @@ Aplikacja wymaga pracy nim będzie w stanie użytkowym.
       - [x] przesuwanie
       - [x] ukrywanie i pokazywanie elementów
       - [ ] sprawdzanie dokładnych wartości
-      - [ ] manualna edycja punktów
+      - [x] manualna edycja punktów
   - [ ] listy obiektów
     - [x] przebiegi
     - [x] punkty
     - [ ] parametry
-    - [ ] interaktywność
+    - [x] interaktywność
       - [x] edycja metainformacji
-      - [ ] tryb edycji punktów
+      - [x] tryb edycji punktów
     - [ ] wyświetlanie metainformacji o danych na listach
 - [ ] Obsługa plików
   - [x] importowanie przebiegów i punktów
