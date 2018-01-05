@@ -67,7 +67,7 @@ os.remove('example_data/example_composite_data.pickle')
 print(">Próba odnalezienia r na odcinku <65s, 75s>")
 find_r = analyzer.import_procedure('points_r_simple')
 arguments = find_r.default_arguments
-found_points = analyzer.find_points(complete_data, 65, 75, find_r, arguments)
+found_points = analyzer.find_points(complete_data.waves, complete_data.points, 65, 75, find_r, arguments)
 complete_data.add_points(found_points, 'r', join=True)
 vis.visualize_composite_data(complete_data, begin_time=60, end_time=80,
                              title="Dane z odnalezionymi ponownie na zakresie <65s, 75s> R-ami")
@@ -75,7 +75,7 @@ vis.visualize_composite_data(complete_data, begin_time=60, end_time=80,
 print(">Próba usunięcia i odnalezienia wszystkich r")
 complete_data.delete_points('r')
 begin_time, end_time = complete_data.calculate_time_range(required_waves=['ecg'])
-found_points = analyzer.find_points(complete_data, begin_time, end_time, find_r, arguments)
+found_points = analyzer.find_points(complete_data.waves, complete_data.points, begin_time, end_time, find_r, arguments)
 complete_data.add_points(found_points, 'r')
 vis.visualize_composite_data(complete_data, title="Dane z całkowicie nowymi R-ami")
 
@@ -84,7 +84,7 @@ calculate_hr = analyzer.import_procedure('parameter_heart_rate')
 param_tuples = []
 for i in range(20,200,20):
     param_tuples.append((i-20,i))
-hr = analyzer.calculate_parameter(complete_data, param_tuples ,calculate_hr,
+hr = analyzer.calculate_parameter(complete_data.waves, complete_data.points, param_tuples ,calculate_hr,
                                   calculate_hr.default_arguments)
 complete_data.add_parameter(hr, 'hr')
 vis.visualize_composite_data(complete_data, begin_time=160, end_time=240,
@@ -104,12 +104,12 @@ print(">Próba oznaczenia SBP i DBP")
 find_sbp = analyzer.import_procedure('points_sbp_simple')
 arguments = find_sbp.default_arguments
 begin_time, end_time = complete_data.calculate_time_range(required_waves=['bp'])
-found_sbp = analyzer.find_points(complete_data, begin_time, end_time, find_sbp, arguments)
+found_sbp = analyzer.find_points(complete_data.waves, complete_data.points, begin_time, end_time, find_sbp, arguments)
 complete_data.add_points(found_sbp, 'sbp')
 find_dbp = analyzer.import_procedure('points_dbp_simple')
 arguments = find_dbp.default_arguments
 begin_time, end_time = complete_data.calculate_time_range(required_waves=['bp'])
-found_dbp = analyzer.find_points(complete_data, begin_time, end_time, find_dbp, arguments)
+found_dbp = analyzer.find_points(complete_data.waves, complete_data.points, begin_time, end_time, find_dbp, arguments)
 complete_data.add_points(found_dbp, 'dbp')
 vis.visualize_composite_data(complete_data, title="Dane z odnalezionymi SBP i DBP")
 
@@ -117,6 +117,6 @@ print(">Próba oznaczenia DN")
 find_dn = analyzer.import_procedure('points_dn_net')
 arguments = find_dn.default_arguments
 begin_time, end_time = complete_data.calculate_time_range(required_waves=['ecg','bp'])
-found_dn = analyzer.find_points(complete_data, begin_time, end_time, find_dn, arguments)
+found_dn = analyzer.find_points(complete_data.waves, complete_data.points, begin_time, end_time, find_dn, arguments)
 complete_data.add_points(found_dn, 'dn')
 vis.visualize_composite_data(complete_data, title="Dane z odnalezionymi DN")
