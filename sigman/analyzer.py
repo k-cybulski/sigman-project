@@ -116,7 +116,6 @@ def validate_procedure_compatibility(procedure_module):
             return False, error_message
     return True, ""
     
-
 def import_procedure(name):
     """Zwraca moduł procedury o danej nazwie z folderu procedures."""
     procedure = importlib.import_module("procedures."+name)
@@ -134,38 +133,42 @@ def modify_wave(wave, begin_time, end_time,
     modified_data = procedure.execute(wave, begin_time, end_time, arguments)
     return sm.Wave(modified_data, end_time-begin_time, wave_type)
     
-def find_points(composite_data, begin_time, end_time, 
+def find_points(waves, points, begin_time, end_time, 
                 procedure, arguments):
     """Odnajduje punkty na danym zakresie czasu za pomocą podanej 
     procedury.
     """
-    if not all(wave in composite_data.waves for wave in procedure.required_waves):
-        raise ValueError('Composite_data nie zawiera wymaganych linii z %s'
+    if (procedure.required_waves
+        and not all(wave in procedure.required_waves for wave in waves)):
+        raise ValueError('Nie podano wymaganych przebiegów z %s'
                          % procedure.required_waves)
-    if not all(points in composite_data.points for points in procedure.required_points): 
-        raise ValueError('Composite_data nie zawiera wymaganych punktów z %s'
+    if (procedure.required_points
+        and not all(points_ in procedure.required_points for points_ in points)):
+        raise ValueError('Nie podano wymaganych punktów z %s'
                          % procedure.required_points)
     found_points_x, found_points_y = procedure.execute(
-        composite_data, 
+        waves, points,
         begin_time, end_time, 
         arguments)
     return sm.Points(found_points_x, found_points_y, procedure.output_type)
 
-def calculate_parameter(composite_data, time_tuples,
-                         procedure, arguments):
+def calculate_parameter(waves, points, time_tuples,
+                        procedure, arguments):
     """Przeprowadza procedurę obliczającą wartość parametru na danym 
     Composite_data w danych zakresach czasowych i zwraca utworzony 
     Parameter.
     """
-    if not all(wave in composite_data.waves for wave in procedure.required_waves):
-        raise ValueError('Composite_data nie zawiera wymaganych linii z %s'
+    if not all(wave in procedure.required_waves for wave in waves):
+        raise ValueError('Nie podano wymaganych przebiegów z %s'
                          % procedure.required_waves)
-    if not all(points in composite_data.points for points in procedure.required_points): 
-        raise ValueError('Composite_data nie zawiera wymaganych punktów z %s'
+    if not all(points_ in procedure.required_points for point_ in points):
+        raise ValueError('Nie podano wymaganych punktów z %s'
                          % procedure.required_points)
     parameter = sm.Parameter(procedure.output_type)
     for begin_time, end_time in time_tuples:
-        value = procedure.execute(composite_data, begin_time, end_time,
-                                    arguments)
+        value = procedure.execute(
+            waves, points,
+            begin_time, end_time,
+            arguments)
         parameter.add_value(begin_time, end_time, value)
     return parameter

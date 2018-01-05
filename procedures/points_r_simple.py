@@ -33,7 +33,7 @@ output_type = 'r'
 required_waves = ['ecg']
 required_points = []
 
-def validate_arguments(composite_data, arguments):
+def validate_arguments(waves, points, arguments):
     """Sprawdza, czy podane argumenty są poprawne."""
     # Wszystkie powinny być zwykłymi floatami
     for key, item in arguments.items():
@@ -51,8 +51,8 @@ def interpret_arguments(arguments):
         output_arguments[key] = float(item)
     return output_arguments
 
-def procedure(comp_data, begin_time, end_time, settings):
-    wave = comp_data.waves['ecg']
+def procedure(waves, points, begin_time, end_time, settings):
+    wave = waves['ecg']
     
     # Obliczamy kwadrat pochodnej
     sample_length = wave.sample_length
@@ -108,10 +108,10 @@ def procedure(comp_data, begin_time, end_time, settings):
     r_x = np.array(r_x)
     return r_x, r_y
 
-def execute(comp_data, begin_time, end_time, arguments):
+def execute(waves, points, begin_time, end_time, arguments):
     """Sprawdza poprawność argumentów i wykonuje procedurę."""
-    valid, error_message = validate_arguments(comp_data, arguments)
+    valid, error_message = validate_arguments(waves, points, arguments)
     if not valid:
         raise InvalidArgumentError(error_message)
     arguments = interpret_arguments(arguments)
-    return procedure(comp_data, begin_time, end_time, arguments)
+    return procedure(waves, points, begin_time, end_time, arguments)

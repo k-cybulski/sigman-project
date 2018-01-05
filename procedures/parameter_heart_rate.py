@@ -14,16 +14,16 @@ output_type = 'hr'
 required_waves = []
 required_points = ['r']
 
-def validate_arguments(composite_data, arguments):
+def validate_arguments(waves, points, arguments):
     return True, "" # nie ma argumentów
 
-def procedure(comp_data, begin_time, end_time, arguments):
-    r_x, r_y = comp_data.points['r'].data_slice(begin_time, end_time)
+def procedure(waves, points, begin_time, end_time, arguments):
+    r_x, r_y = points['r'].data_slice(begin_time, end_time)
     periods = np.diff(r_x)
     average_period = np.average(periods)
     heart_rate = 1/average_period
     return heart_rate * 60
 
-def execute(comp_data, begin_time, end_time, arguments):
-    return procedure(comp_data, begin_time, end_time, arguments)
+def execute(waves, points, begin_time, end_time, arguments):
+    return procedure(waves, points, begin_time, end_time, arguments)
 
