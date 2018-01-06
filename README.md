@@ -283,7 +283,7 @@ Aplikacja wymaga pracy nim będzie w stanie użytkowym.
 ## Standardy kodu
 Kod projektu powinien być utrzymywany jak najbliżej norm [PEP-8](https://www.python.org/dev/peps/pep-0008/). W bibliotece sigman utrzymywane jest nazewnictwo `lowercase_with_underscores`, natomiast w kodzie aplikacji QtSigman w ramach konsystencji z biblioteką PyQt5 wykrozystywane jest nazewnictwo `CamelCase`.
 
-Obecnie dokumentacja jest po polsku, natomiast zostanie ona przetłumaczona na angielski dla szerszego odbioru.
+Obecnie dokumentacja jest po polsku i trwają prace nad przetłumaczeniem jej na angielski. Dokumentacja nowo powstałego kodu powinna już być tylko po angielsku.
 
 ## Podziękowania
 * [Instytut Medycyny Doświadczalnej i Klinicznej im. M. Mossakowskiego PAN](http://imdik.pan.pl/pl/) - wsparcie i nakierowanie projektu, dane
