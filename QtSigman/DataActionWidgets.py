@@ -67,7 +67,7 @@ class DataSettingsDialog(QW.QDialog):
         gridLayout.addWidget(self.axisComboBox,3,2)
 
         self.offset = offset
-        # offset jest None w wypadku parametrów, gdyż bezsensowne jest
+        # offset jest None w wypadku parametrów, gdyż bezsensowe jest
         # przesuwanie ich w czasie
         if offset is not None:
             self.offsetLabel = QW.QLabel("Przesunięcie:")
@@ -195,6 +195,59 @@ class ProcedureArgumentsWidget(QW.QWidget):
         for key, item in self.argumentLineEdits.items():
             arguments[key] = item.text()
         return arguments
+class DataArgumentWidget(QW.QWidget):
+    """Widget służący do wybierania przebiegów/punktów. Zawiera QLabel
+    informujący o typie wymaganych danych a także QComboBox z możliwymi
+    do wyboru.
+    """
+    def __init__(self, argumentType, options, parent=None):
+        """Inicjalizuje DataArgumentWidget.
+
+        argumentType -- string określający typ danych, np. 'ecg'
+        options -- lista zawierające możliwe dane do wyboru
+        """
+        super().__init__(parent)
+
+        hBoxLayout = QW.QHBoxLayout()
+        hBoxLayout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(hBoxLayout)
+
+        self.argumentType = argumentType
+
+        # no need to keep in .self
+        self.argumentTypeWidget = QW.QLabel(argumentType+":")
+        hBoxLayout.addWidget(self.argumentTypeWidget)
+
+        self.optionComboBox = QW.QComboBox() 
+        self.optionComboBox.addItems(options)
+        hBoxLayout.addWidget(self.optionComboBox)
+
+    def getSelectedOption(self):
+        return self.optionComboBox.currentText()
+
+class DataArgumentCollectionWidget(QW.QWidget):
+    """Widget zawierający zestaw DataArgumentWidget. Służy do
+    generowania dict argumentów waves oraz points dla procedur.
+    """
+    def __init__(self, wantedArguments, options, parent=None):
+        super().__init__(parent)
+
+        gridLayout = QW.QGridLayout()
+        gridLayout.setSpacing(0)
+        gridLayout.setContentsMargins(0,0,0,0)
+        self.setLayout(gridLayout)
+
+        self.argumentWidgets = []
+        for arg in wantedArguments:
+            argWidget = DataArgumentWidget(arg, options, self)
+            self.argumentWidgets.append(argWidget)
+            gridLayout.addWidget(argWidget,len(self.argumentWidgets),1)
+
+    def getArguments(self):
+        arguments = {}
+        for argWidget in self.argumentWidgets:
+            arguments[argWidget.argumentType] = argWidget.getSelectedOption()
+        return arguments
 
 class ProcedureWidget(QW.QWidget):
     """Widget zawierający wszystkie informacje i ustawienia dotyczące
@@ -217,17 +270,36 @@ class ProcedureWidget(QW.QWidget):
         self.descriptionWidget.setText(procedure.description)
         self.descriptionWidget.setMinimumWidth(480)
         self.vBoxLayout.addWidget(self.descriptionWidget)
-
-        if procedure.procedure_type == 'modify':
-            self.addWaveSelection()
-        else:
-            self.addRequiredDataWidgets()
         
+        if procedure.procedure_type == 'modify':
+            requiredWaves = ["Przebieg"]
+            requiredPoints = []
+        else:
+            requiredWaves = procedure.required_waves
+            requiredPoints = procedure.required_points
+
+        self.waveArgumentWidgets = {}
+        self.pointArgumentWidgets = {}
+
+        if len(requiredWaves) > 0:
+            requiredWavesLabel = QW.QLabel("Wymagane przebiegi:")
+            self.vBoxLayout.addWidget(requiredWavesLabel)
+            self.requiredWavesWidget = DataArgumentCollectionWidget(
+                requiredWaves, self.compositeDataWrapper.waves.keys())
+            self.vBoxLayout.addWidget(self.requiredWavesWidget)
+        
+        if len(requiredPoints) > 0:
+            requiredPointsLabel = QW.QLabel("Wymagane punkty:")
+            self.vBoxLayout.addWidget(requiredPointsLabel)
+            self.requiredPointsWidget = DataArgumentCollectionWidget(
+                requiredPoints, self.compositeDataWrapper.points.keys())
+            self.vBoxLayout.addWidget(self.requiredPointsWidget)
+
         timeRangeLayout = QW.QHBoxLayout()
         timeRangeLabel = QW.QLabel("Zakres czasowy:")
         timeRangeLayout.addWidget(timeRangeLabel)
         self.timeRangeLineEdit = QW.QLineEdit() 
-        self._setMaximumTimeRange(initial=True)
+        self._setMaximumTimeRange()
         timeRangeLayout.addWidget(self.timeRangeLineEdit)
         timeRangeMaximumButton = QW.QPushButton("Maksymalny zakres")
         timeRangeMaximumButton.clicked.connect(lambda:
@@ -254,28 +326,18 @@ class ProcedureWidget(QW.QWidget):
         bottomHBoxLayout.addWidget(self.rejectButton)
         self.vBoxLayout.addLayout(bottomHBoxLayout)
 
-    def _setMaximumTimeRange(self, initial=False):
-        if self.procedure.procedure_type == 'modify':
-            selectedWave = self.getSelectedWave()
-            if selectedWave is not None:
-                beginTime = self.getSelectedWave().offset
-                endTime = (self.getSelectedWave().offset +
-                    selectedWave.complete_length)
-                timeRangeString = str(beginTime)+","+str(endTime)
-                self.timeRangeLineEdit.setText(timeRangeString)
+    def _setMaximumTimeRange(self):
+        if ((self.procedure.procedure_type == 'modify' 
+                or len(self.procedure.required_waves) > 0)
+                and self.getSelectedWaves()):
+            waves = self.requiredWavesWidget.getArguments().values()
+            begin, end = self.compositeDataWrapper.calculate_time_range(waves)
+            text = str(begin) + ", " + str(end)
+            self.timeRangeLineEdit.setText(text)
         else:
-            if not all(wave in self.compositeDataWrapper.waves for wave 
-                       in self.procedure.required_waves):
-                if initial:
-                    self.timeRangeLineEdit.setText('0,1')
-                    return
-                QW.QMessageBox.warning(self, "Błąd ogólny",
-                                       "Nie ma wszystkich wymaganych przebiegów")
-                return
-            beginTime, endTime = self.compositeDataWrapper.calculate_time_range(
-                self.procedure.required_waves)
-            timeRangeString = str(beginTime)+","+str(endTime)
-            self.timeRangeLineEdit.setText(timeRangeString)
+            # jeśli wymagane są tylko punkty nie jesteśmy w stanie
+            # określić zakresu czasu
+            pass
 
     def getTimeRange(self):
         vals = self.timeRangeLineEdit.text().strip().split(',')
@@ -301,79 +363,83 @@ class ProcedureWidget(QW.QWidget):
                                    "Niewłaściwy zakres czasowy")
             return False
         if self.procedure.procedure_type == "modify":
-            if self.getSelectedWave() is None:
+            if not self.getSelectedWaves():
                 QW.QMessageBox.warning(self, "Błąd ogólny",
                                    "Wybierz przebieg")
                 return False
         else:
-            #TODO: Sprawdzanie odpowiednie dane są dostępne na tym zakresie
-            if not all(wave in self.compositeDataWrapper.waves for wave 
-                       in self.procedure.required_waves):
+            #TODO: Sprawdzanie czy odpowiednie dane są dostępne na tym zakresie
+            if self.procedure.required_waves and not self.getSelectedWaves():
                 QW.QMessageBox.warning(self, "Błąd ogólny",
-                                       "Nie ma wszystkich wymaganych przebiegów")
+                    "Nie ma wszystkich wymaganych przebiegów")
                 return False
-            if not all(points in self.compositeDataWrapper.points for points 
-                       in self.procedure.required_points): 
+            if self.procedure.required_points and not self.getSelectedPoints():
                 QW.QMessageBox.warning(self, "Błąd ogólny",
-                                       "Nie ma wszystkich wymaganych punktów")
+                    "Nie ma wszystkich wymaganych punktów")
                 return False
         arguments = self.procedureArgumentsWidget.getArguments()
         if self.procedure.procedure_type == 'modify':
-            dataInput = self.getSelectedWave()
+            wave = self.getSelectedWaves()['Przebieg']
+            valid, message = self.procedure.validate_arguments(
+                wave, arguments)
         else:
-            dataInput = self.compositeDataWrapper
-        valid, message = self.procedure.validate_arguments(
-            dataInput, arguments)
+            waves = self.getSelectedWaves()
+            points = self.getSelectedPoints()
+            valid, message = self.procedure.validate_arguments(
+                waves, points, arguments)
         if not valid:
             QW.QMessageBox.warning(self, "Błąd argumentów",
                                    message)
             return False
         return True
 
-    #
-    # Do procedur wymagających poszczególnych danych
-    #
-
-    def addRequiredDataWidgets(self):
-        requiredWavesText = "Wymagane przebiegi: "
-        for requiredWave in self.procedure.required_waves:
-            requiredWavesText+=requiredWave+" "
-        requiredWavesLabel = QW.QLabel(requiredWavesText)
-        self.vBoxLayout.addWidget(requiredWavesLabel)
-
-        requiredPointsText = "Wymagane punkty: "
-        for requiredPoints in self.procedure.required_points:
-            requiredPointsText+=requiredPoints+" "
-        requiredPointsLabel = QW.QLabel(requiredPointsText)
-        self.vBoxLayout.addWidget(requiredPointsLabel)
-
-    #
-    # Do procedur modyfikacji przebiegu
-    #
-
-    def addWaveSelection(self):
-        hBoxLayout = QW.QHBoxLayout()
-        selectedWaveLabel = QW.QLabel("Wybrany przebieg:")
-        hBoxLayout.addWidget(selectedWaveLabel)
-
-        self.selectedWaveComboBox = QW.QComboBox()
-        items = [""]
-        for key, item in self.compositeDataWrapper.waves.items():
-            items.append(key)
-        self.selectedWaveComboBox.addItems(items)
-        hBoxLayout.addWidget(self.selectedWaveComboBox)
-
-        self.vBoxLayout.addLayout(hBoxLayout)
-
-    def getSelectedWaveType(self):
-        return self.selectedWaveComboBox.currentText()
-
-    def getSelectedWave(self):
-        key = self.getSelectedWaveType()
-        if key == "":
+    def getSelectedWaveKeys(self):
+        """Zwraca dict kluczy w Composite_data.waves wybranych 
+        przebiegów. Jeśli nie zostały wybrane, zwraca None.
+        """
+        try:
+            waves = self.requiredWavesWidget.getArguments()
+        except AttributeError:
             return None
-        return self.compositeDataWrapper.waves[key]
+        if not all(wave for wave in waves.values()):
+            return None
+        return waves
 
+    def getSelectedWaves(self):
+        """Zwraca dict wybranych przebiegów. Jeśli nie zostały wybrane,
+        zwraca None.
+        """
+        waves = self.getSelectedWaveKeys()
+        if (not waves
+            or not all(wave for wave in waves.values())):
+            return None
+        for key, item in waves.items():
+            waves[key] = self.compositeDataWrapper.waves[item]
+        return waves
+
+    def getSelectedPointsKeys(self):
+        """Zwraca dict kluczy w Composite_data.points wybranych punktów. 
+        Jeśli nie zostały wybrane, zwraca None.
+        """
+        try:
+            points = self.requiredPointsWidget.getArguments()
+        except AttributeError:
+            return None
+        if not all(point for point in points.values()):
+            return None
+        return points
+
+    def getSelectedPoints(self):
+        """Zwraca dict wybranych punktów. Jeśli nie zostały wybrane,
+        zwraca None.
+        """
+        points = self.getSelectedPointsKeys()
+        if (not points
+            or not all(point for point in points.values())):
+            return None
+        for key, item in points.items():
+            points[key] = self.compositeDataWrapper.points[item]
+        return points
 
 class ProcedureDialog(QW.QDialog):
     """Okno dialogowe wyświetlające listę dostępnych procedur danego
@@ -457,22 +523,24 @@ class ProcedureDialog(QW.QDialog):
         if self.procedureType == 'modify':
             if self.dataActionStatus is DataActionStatus.Ok:
                 selectedProcedureWidget = self.procedureWidgetDict[self.selectedProcedureName]
-                dictType = selectedProcedureWidget.getSelectedWaveType()
+                wave = selectedProcedureWidget.getSelectedWaveKeys()['Przebieg']
                 beginTime, endTime = selectedProcedureWidget.getTimeRange()
                 procedure = selectedProcedureWidget.procedure
                 arguments = selectedProcedureWidget.getArguments()
-                return dictType, beginTime, endTime, procedure, arguments
+                return wave, beginTime, endTime, procedure, arguments
             else:
                 return None, None, None, None, None
         else:
             if self.dataActionStatus is DataActionStatus.Ok:
                 selectedProcedureWidget = self.procedureWidgetDict[self.selectedProcedureName]
+                waveDict = selectedProcedureWidget.getSelectedWaves()
+                pointsDict = selectedProcedureWidget.getSelectedPoints()
                 beginTime, endTime = selectedProcedureWidget.getTimeRange()
                 procedure = selectedProcedureWidget.procedure
                 arguments = selectedProcedureWidget.getArguments()
-                return beginTime, endTime, procedure, arguments
+                return waveDict, pointsDict, beginTime, endTime, procedure, arguments
             else:
-                return None, None, None, None
+                return None, None, None, None, None, None
 
     @classmethod
     def getProcedure(cls, procedureType, compositeDataWrapper):

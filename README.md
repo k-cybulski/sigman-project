@@ -168,7 +168,8 @@ composite_data = sm.Composite_data(waves={'bp':bp})
 dbp_finder = analyzer.import_procedure('points_dbp_simple')
 # we have to calculate the maximum time range (i.e. containing the entirety of bp)
 begin_time, end_time = composite_data.calculate_time_range(['bp'])
-dbp = analyzer.find_points(composite_data, begin_time, end_time, dbp_finder, dbp_finder.default_arguments)
+waves = {'bp':composite_data.waves['bp']}
+dbp = analyzer.find_points(waves, None, begin_time, end_time, dbp_finder, dbp_finder.default_arguments)
 composite_data.add_points(dbp, 'dbp')
 
 vis.visualize_composite_data(composite_data)
@@ -190,13 +191,15 @@ composite_data = sm.Composite_data(waves={'ecg':ecg})
 # we must first find the r points
 r_finder = analyzer.import_procedure('points_r_simple')
 begin_time, end_time = composite_data.calculate_time_range(['ecg'])
-r = analyzer.find_points(composite_data, begin_time, end_time, r_finder, r_finder.default_arguments)
+waves = {'ecg':composite_data.waves['ecg']}
+r = analyzer.find_points(waves, None, begin_time, end_time, r_finder, r_finder.default_arguments)
 composite_data.add_points(r, 'r')
 
 # heart rate calculation
 hr_proc = analyzer.import_procedure('parameter_heart_rate')
 param_tuples = [(0,15),(15,60),(60,120)]
-hr = analyzer.calculate_parameter(composite_data, param_tuples, hr_proc, hr_proc.default_arguments)
+points = {'r':composite_data.points['r']}
+hr = analyzer.calculate_parameter(None, points, param_tuples, hr_proc, hr_proc.default_arguments)
 composite_data.add_parameter(hr, 'hr')
 
 vis.visualize_composite_data(composite_data)

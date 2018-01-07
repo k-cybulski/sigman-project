@@ -145,88 +145,101 @@ class PlotWidget(QW.QWidget):
         self.lastX = 0
         self.lastY = 0
 
-        self.plotToolbar.editTypeComboBox.currentTextChanged.connect(
-            lambda x: self.correctZOrder())
+    def _getEventXY(self, event):
+        """This method returns x and y coordinates of an event on the 
+        axis of currently selected points to edit. This is a workaround 
+        for the way matplotlib handles events when more than 1 axis is 
+        present on the same canvas (with twinx).
+        """
+        # matplotlib only returns xdata and ydata for the topmost axis
+        # https://stackoverflow.com/questions/16672530/cursor-tracking-using-matplotlib-and-twinx/16672970#16672970
+        selectedPoints = self.plotToolbar.getSelectedPointType()
+        visualPoints = self.compositeDataWrapper.points[selectedPoints]
+        ax = visualPoints.mplObject.axes
+        if event.inaxes != ax:
+            inv = ax.transData.inverted()
+            x, y = inv.transform(
+                np.array((event.x, event.y)).reshape(1, 2)).ravel()
+        else:
+            x, y = event.xdata, event.ydata
+        return x, y
 
-    def handlePress(self, mouseEvent):
+    def handlePress(self, event):
         mode = self.plotToolbar.getEditMode()
-        if (self.plotToolbar.getSelectedPointType() 
+        selectedPoints = self.plotToolbar.getSelectedPointType()
+        if (selectedPoints
                 not in self.compositeDataWrapper.points):
             return
-        if mode is EditMode.Static and mouseEvent.button == 1:
+        if mode is EditMode.Static and event.button == 1:
+            x, y = self._getEventXY(event)
             self.compositeDataWrapper.points[
-                self.plotToolbar.getSelectedPointType()].add_point(
-                    mouseEvent.xdata, mouseEvent.ydata)
+                selectedPoints].add_point(x, y)
             self.compositeDataWrapper.pointNumberChanged.emit()
+        else:
+            # if a pick had been made on an object not on the topmost axis
+            # it will not trigger; this is a workaround
+            self.compositeDataWrapper.points[
+                selectedPoints].mplObject.pick(event)
 
-    def handlePick(self, pickEvent):
+    def handlePick(self, event):
         mode = self.plotToolbar.getEditMode()
-        if (self.plotToolbar.getSelectedPointType() 
+        selectedPoints = self.plotToolbar.getSelectedPointType()
+        if (selectedPoints 
                 not in self.compositeDataWrapper.points):
             return
-        if mode is EditMode.Static and pickEvent.mouseevent.button == 3:
-            points = pickEvent.artist
-            if(points.get_label() == self.plotToolbar.getSelectedPointType()):
+        if mode is EditMode.Static and event.mouseevent.button == 3:
+            points = event.artist
+            if(points.get_label() == selectedPoints):
                 xData = points.get_xdata()
                 yData = points.get_ydata()
-                ind = [pickEvent.ind[0]]
+                ind = [event.ind[0]]
                 self.compositeDataWrapper.points[
-                    self.plotToolbar.getSelectedPointType()].delete_point(
+                    selectedPoints].delete_point(
                         xData[ind], y=yData[ind])
                 self.compositeDataWrapper.pointNumberChanged.emit()
-        if mode is EditMode.Dynamic and pickEvent.mouseevent.button == 1:
-            points = pickEvent.artist
-            if(points.get_label() == self.plotToolbar.getSelectedPointType()):
+        if mode is EditMode.Dynamic and event.mouseevent.button == 1:
+            points = event.artist
+            if(points.get_label() == selectedPoints):
                 xData = points.get_xdata()
                 yData = points.get_ydata()
-                ind = [pickEvent.ind[0]]
+                ind = [event.ind[0]]
                 self.lastX = xData[ind]
                 self.lastY = yData[ind]
                 self.dragging = True
                 self.compositeDataWrapper.pointChanged.emit()
 
-    def handleMotion(self, mouseEvent):
+    def handleMotion(self, event):
         mode = self.plotToolbar.getEditMode()
-        if(mode is EditMode.Dynamic and mouseEvent.button == 1 and
+        selectedPoints = self.plotToolbar.getSelectedPointType()
+        if(mode is EditMode.Dynamic and event.button == 1 and
                 self.dragging):
+            x, y = self._getEventXY(event)
             points = self.compositeDataWrapper.points[
-                self.plotToolbar.getSelectedPointType()]
+                selectedPoints]
             points.move_point(
                 self.lastX, self.lastY,
-                mouseEvent.xdata, mouseEvent.ydata)
-            self.lastX = np.array([mouseEvent.xdata])
-            self.lastY = np.array([mouseEvent.ydata])
+                x, y)
+            self.lastX = np.array([x])
+            self.lastY = np.array([y])
             self.compositeDataWrapper.pointChanged.emit()
 
-    def handleRelease(self, mouseEvent):
+    def handleRelease(self, event):
         mode = self.plotToolbar.getEditMode()
-        if(mode is EditMode.Dynamic and mouseEvent.button == 1 and
+        selectedPoints = self.plotToolbar.getSelectedPointType()
+        if(mode is EditMode.Dynamic and event.button == 1 and
                 self.dragging):
+            x, y = self._getEventXY(event)
             points = self.compositeDataWrapper.points[
-                self.plotToolbar.getSelectedPointType()]
+                selectedPoints]
             points.move_point(
                 self.lastX, self.lastY,
-                mouseEvent.xdata, mouseEvent.ydata)
+                x, y)
             self.dragging = False
         
-    def handleLeave(self, mouseEvent):
+    def handleLeave(self, event):
         if self.dragging:
             self.dragging = False
 
-    def correctZOrder(self):
-        """Poprawia zorder axisLeft i axisRight, pozwalając na
-        interakcję z odpowiednimi punktami. W innym wypadku
-        każdy mouseEvent będzie oddziaływał tylko z lewą osią."""
-        selectedPoints = self.plotToolbar.getSelectedPointType()
-        if selectedPoints != "":
-            visualPoints = self.compositeDataWrapper.points[selectedPoints]
-            if visualPoints.axis is Axis.Right:
-                self.plotCanvas.axisRight.zorder = 1
-                self.plotCanvas.axisLeft.zorder = 0
-            else:
-                self.plotCanvas.axisRight.zorder = 0
-                self.plotCanvas.axisLeft.zorder = 1
-    
     def updateCompositeData(self, compositeDataWrapper):
         #TODO: Wykres powinien być tylko odświeżony nie resetując pozycji
         # obserwatora

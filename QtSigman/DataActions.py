@@ -162,27 +162,27 @@ def saveCompositeData(compositeData):
         pass
 
 def modifyWave(compositeDataWrapper):
-    proc = DataActionWidgets.ProcedureDialog.getProcedure(
+    pr = DataActionWidgets.ProcedureDialog.getProcedure(
         'modify', compositeDataWrapper)
-    dictType, beginTime, endTime, procedure, arguments, status = proc
+    waveKey, beginTime, endTime, procedure, arguments, status = pr
     if status is DataActionStatus.Ok:
-        originalWave = compositeDataWrapper.waves[dictType]
+        originalWave = compositeDataWrapper.waves[waveKey]
         modifiedWave = analyzer.modify_wave(originalWave, 
                                             beginTime, endTime, 
                                             procedure, arguments)
         if status is DataActionStatus.Cancel:
             return
-        compositeDataWrapper.waves[dictType].replace_slice(
+        compositeDataWrapper.waves[waveKey].replace_slice(
             beginTime, endTime, modifiedWave)
         compositeDataWrapper.waveChanged.emit()
 
 def findPoints(compositeDataWrapper):
-    proc = DataActionWidgets.ProcedureDialog.getProcedure(
+    pr = DataActionWidgets.ProcedureDialog.getProcedure(
         'points', compositeDataWrapper)
-    beginTime, endTime, procedure, arguments, status = proc
+    waveDict, pointsDict, beginTime, endTime, procedure, arguments, status = pr
     if status is DataActionStatus.Ok:
         try:
-            newPoints = analyzer.find_points(compositeDataWrapper, 
+            newPoints = analyzer.find_points(waveDict, pointsDict, 
                                              beginTime, endTime, 
                                              procedure, arguments)
             nameBase = 'found_points'
