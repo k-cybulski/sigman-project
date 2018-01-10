@@ -122,3 +122,38 @@ def export_points(file_name, points):
     else:
         raise ValueError("Nieodpowiedni format plików")
     export_func(file_name, points)
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
+def import_data_from_modelflow (file_name):
+    x = []
+    y = []
+    names = []
+    with open(file_name) as f:
+       flaga = False
+       for line in f:
+           if "END preamble" in line:
+              flaga = True        
+           if flaga== True:
+               pom = line.split( )
+              
+               if len(pom)> 2:
+                   if is_number(pom[0]):
+                       x.append(float(pom[0]))  
+                       if (len(y)<len(pom)):
+                             y = [ [ 0 for i in range(1) ] for j in range(len(pom))]
+                             for i in range(1, len(pom)):
+                                 y[i-1][0]=(float(pom[i]))                                          
+                       else:
+                           for i in range(1, len(pom)):
+                                y[i-1].append(float(pom[i]))
+                   else:
+                       if len (names)<1:
+                           names = pom;
+    return x, y, names

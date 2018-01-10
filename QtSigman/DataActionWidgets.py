@@ -550,3 +550,79 @@ class ProcedureDialog(QW.QDialog):
         values = list(procedureWidget.getValues())
         values.append(procedureWidget.dataActionStatus)
         return tuple(values)
+
+class ModelflowImportDialog (QW.QDialog):
+    
+    
+    def __init__(self, path,compositeDataWrapper):
+        super().__init__()
+        self.title = "Wczytaj dane"
+        self.setWindowTitle(self.title)
+        gridLayout = QW.QGridLayout()
+        self.setLayout(gridLayout)
+       
+        self.typeLabel = QW.QLabel("Scieżka do danych modelflow:")
+        gridLayout.addWidget(self.typeLabel,1,1)
+
+        self.pathLabel = QW.QLabel(path)
+        gridLayout.addWidget(self.pathLabel,2,1)
+        
+        self.changeButton = QW.QPushButton("Zmień")
+        self.changeButton.clicked.connect(self.Change)
+        gridLayout.addWidget(self.changeButton,2,2)
+
+
+        self.matchLabel = QW.QLabel("Wybierz rodzaj użytych punktów do dopasowania:")
+        gridLayout.addWidget(self.matchLabel,3,1)
+
+        self.matchList = QW.QComboBox()
+        
+        axisItems = ['SBP','DBP','R']
+        self.matchList.addItems(axisItems)
+        self.matchList.setCurrentIndex(0)
+        gridLayout.addWidget(self.matchList,4,1)
+
+        self.selectLabel = QW.QLabel("Wybierz punkty (Posłużą do dopasowania danych)")
+        gridLayout.addWidget(self.selectLabel,5,1)
+
+        self.listPoints = QW.QComboBox()
+
+        for nazwa in compositeDataWrapper.points.keys():
+            self.listPoints.addItem(nazwa)
+        self.listPoints.setCurrentIndex(0)
+        gridLayout.addWidget(self.listPoints,6,1)
+
+        self.confirmButton = QW.QPushButton("Potwierdź")
+        self.confirmButton.setDefault(True)
+        self.confirmButton.clicked.connect(self.Confirm)
+        gridLayout.addWidget(self.confirmButton,7,2)
+
+        self.abortButton = QW.QPushButton("Anuluj")
+        self.abortButton.clicked.connect(self.reject)
+        gridLayout.addWidget(self.abortButton,7,1)
+        self.setGeometry(300, 300, 290, 150)
+
+        self.exec()
+        self.show()
+
+    def Confirm(self): 
+        self.accept()
+        return DataActionStatus.Ok 
+        self.close()
+
+    def PathModelflow(self):
+        return self.pathLabel.text()
+
+    def SelectedPointsType(self):
+        return self.matchList.currentIndex()
+
+    def SelectedPoints(self):
+        return self.listPoints.currentText()
+
+    def Change(self):
+         fileFilter = "(*.A00)"
+         fileDialog = QW.QFileDialog()
+         fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
+         newpath = fileDialog.getOpenFileName(filter = fileFilter)
+         self.pathLabel.setText(newpath[0])
+ 

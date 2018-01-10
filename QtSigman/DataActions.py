@@ -7,27 +7,84 @@ from sigman import analyzer, EmptyPointsError
 import sigman as sm
 
 import QtSigman
-from QtSigman import DataActionWidgets
+from QtSigman import DataActionWidgets, ImportModelflow, DefaultColors
 from QtSigman.DataActionWidgets import DataActionStatus
 from QtSigman.MplWidgets import Axis
+
+def importModelflow (compositeDataWrapper):
+    fileFilter = "(*.A00)"
+    fileDialog = QW.QFileDialog()
+    fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
+    
+    try:
+        path = fileDialog.getOpenFileName(filter = fileFilter)
+        assert path[0] != ""
+        title = path[0].split("/")[-1]
+        ex = DataActionWidgets.ModelflowImportDialog(path[0],compositeDataWrapper)
+        status = ex.result()
+        if status == 1:
+            ModelflowData = fm.import_data_from_modelflow(ex.PathModelflow())
+           
+        
+           
+
+            if (ex.SelectedPointsType() == 0):
+                FitNumber = 0
+                HR = compositeDataWrapper.points[ex.SelectedPoints()].data_y
+            elif (ex.SelectedPointsType() == 1):
+                FitNumber = 1
+                HR = compositeDataWrapper.points[ex.SelectedPoints()].data_y
+            else:
+                FitNumber = 6
+                HR = ImportModelflow.DetermineHR(compositeDataWrapper.points[ex.SelectedPoints()].data_x)
+                wave = sm.Points(compositeDataWrapper.points[ex.SelectedPoints()].data_x,HR,'wyznaczoneHRzR')
+                wave.offset = 0
+                wave.type = 'wyznaczoneHRzR'
+                compositeDataWrapper.add_points(wave, 'wyznaczoneHRzR', 
+                                              color=DefaultColors.generateColor('wyznaczoneHRzR'), axis=Axis.Hidden)
+
+            ModelflowOffset = ImportModelflow.EstimateModelflowDataOffset (ModelflowData[1][FitNumber],HR)
+
+            #jesli przesuniecie rowna sie 2 oznacza to ze czas dane[2] ma się równać czasowi HR[0]
+            if (ModelflowOffset>0):
+                offset =compositeDataWrapper.points[ex.SelectedPoints()].data_x[0] - ModelflowData[0][ModelflowOffset]
+                for i in range(len(ModelflowData[0])):
+                    ModelflowData[0][i] = ModelflowData[0][i]+offset
+
+           
+
+            for i in range(len(ModelflowData[1])-1):
+                  wave = sm.Points(ModelflowData[0],ModelflowData[1][i], ModelflowData[2][i+1])
+                  wave.offset = 0
+                  wave.type = ModelflowData[2][i+1]
+                  compositeDataWrapper.add_points(wave, ModelflowData[2][i+1], 
+                                          color=DefaultColors.generateColor(ModelflowData[2][i+1]), axis=Axis.Hidden)
+    # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się
+    # nie stało i nic nie zmieniamy
+    except AssertionError:
+        pass
+
 
 def importWave(compositeDataWrapper):
     fileFilter = "dat (*.dat)"
     fileDialog = QW.QFileDialog()
     fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
     try:
-        path = fileDialog.getOpenFileName(filter = fileFilter)
+        path = fileDialog.getOpenFileNames(filter = fileFilter)
         assert path[0] != ""
-        title = path[0].split("/")[-1]
-        wave = fm.import_wave(path[0], 'default')
-        dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-            forbiddenNames = compositeDataWrapper.waves.keys(),
-            title = title)
-        if status is DataActionStatus.Ok: 
-            wave.offset = offset
-            wave.type = dictType
-            compositeDataWrapper.add_wave(wave, dictType, 
-                                          color=color, axis=axis)
+
+        
+        j = 0;
+        for s in path[0]:
+         title = s.split("/")[-1]
+         title = title.split (".")[0]
+         wave = fm.import_wave(s, 'default')
+         wave.offset = 0
+         wave.type = title
+         compositeDataWrapper.add_wave(wave, title, 
+                                          color=DefaultColors.generateColor(title), axis=Axis.Hidden)
+         j = j + 1
+
     # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się
     # nie stało i nic nie zmieniamy
     except AssertionError:
