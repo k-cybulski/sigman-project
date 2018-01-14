@@ -1,6 +1,6 @@
 # Contributing to sigman
 
-First of all, cheers for the interestest in making sigman smooth :fireworks::tada::sparkler:
+First of all, cheers for the interest in making sigman smooth :fireworks::tada::sparkler:
 
 Sigman is, above all, built with cooperation in mind. In this spirit there are a few guidelines to follow when contributing to avoid spaghettification of our code, written below.
 

@@ -1,5 +1,5 @@
 # sigman-project
-The goal of this project is the creation of a free and open multichannel digital signal analysis library **sigman** as well as a GUI application **QtSigman** to work along with it.
+The goal of this project is the creation of a free, open and well documented multichannel digital signal analysis library **sigman** that is easily extendable by external procedures, as well as a GUI application **QtSigman** to go along with it.
 
 ## Installation
 ### Requirements
@@ -14,7 +14,7 @@ The goal of this project is the creation of a free and open multichannel digital
 ```
 git clone "https://github.com/k-cybulski/sigman-project.git"
 sudo apt install python3-pip
-pip3 install PyQt5 numpy scipy matplotlib XlsxWriter
+pip3 install PyQt5 numpy scipy matplotlib
 ```
 
 ## Usage
@@ -207,8 +207,8 @@ vis.visualize_composite_data(composite_data)
 
 Examples of various sigman functions may be found in the file `test_sigman.py`
 
-## Code standards
-The code should stick to the [PEP-8](https://www.python.org/dev/peps/pep-0008/) as closely as possible. The **sigman** library naming convention is `lowercase_with_underscore`, whereas the **QtSigman** application naming convention, in an effort to be consistent with PyQt, is `CamelCase`.
+## Contributing
+If you wish to contribute check out [CONTRIBUTING.md](https://github.com/k-cybulski/sigman-project/blob/master/CONTRIBUTING.md)
 
 ## Credits
 * [Mossakowski Medical Research Centre PAN](http://imdik.pan.pl/en/) - assistance and directing the project, data

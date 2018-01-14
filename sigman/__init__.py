@@ -1,17 +1,17 @@
 """
 sigman
 ======
-Library for digital signal processing. It operates on two basic types of 
-data: signal waveforms and points that describe events in time (i.e. QRS
-complexes on an ECG signal).
+Digital signal processing library. It operates on two basic types of 
+data: signal waveforms and points that describe events in time (i.e. R
+points of QRS complexes on an ECG signal).
 
 This file defines the following classes:
     Wave            - signal waveform
     Points          - sorted collection of points
     Parameter       - parameter calculated in chosen time ranges
     Composite_data  - class containing a set of Wave, Points and 
-                      Parameter classes allowing for an analysis of 
-                      multiple types of data simultaneously.
+                      Parameter objects allowing for simultaneous
+                      analysis of multiple types of data.
 """
 # TODO: Documentation should be PEP-257 compliant
 from math import isclose
@@ -19,8 +19,7 @@ from math import isclose
 import numpy as np
 
 class Wave():
-    """
-    Class describing a signal waveform. 
+    """Class describing a signal waveform. 
     
     It may be offset in time and not begin at t=0. In such a case all 
     references to its value at a certain time will include such an 
@@ -33,14 +32,19 @@ class Wave():
         Wave.complete_length    - length of the signal in seconds
         Wave.sample_length      - length of a sample in seconds
         Wave.sample_rate        - samlping rate in Hz
-        Wave.wave_type          - string describing the type of data, 
-                                  i.e. 'ecg' or 'bp'
+        Wave.type               - string describing the type of data, 
+                                  e.g. 'ecg' or 'bp'
         Wave.offset             - time offset
-
     """
+
     def __init__(self, data, complete_length, wave_type, offset=0):
-        """Initializes a Wave object given its values, complete length 
-        and type of data.
+        """Initializes a Wave object.
+        
+        Arguments:
+            data            - list of values of the signal
+            complete_length - length of the signal in seconds
+            type            - string describing the type of data,
+                              e.g. 'ecg' or 'bp'
         """
         self.sample_length = complete_length/len(data)
         self.sample_rate = 1/self.sample_length        
@@ -51,16 +55,16 @@ class Wave():
 
     @classmethod
     def copy(cls, wave):
-        """It returns a new Wave exactly like the given one."""
+        """Returns a new Wave exactly like the one given."""
         return cls(wave.data, wave.complete_length,
                    wave_type=wave.type, offset=wave.offset)
 
     def __len__(self):
-        """Returns the number of samples."""
+        """Returns the total number of samples."""
         return len(self.data)
 
     def sample_at(self, time):
-        """Returns the index of the sample at a given time."""
+        """Returns the index of the sample at a given time in seconds."""
         index = round((time-self.offset) / self.sample_length)
         if index == len(self):
             index -= 1
@@ -70,8 +74,8 @@ class Wave():
         return int(index)
     
     def value_at(self, time):
-        """Returns the value of the waveform at a given time calculated
-        using linear approximation of surrounding values.
+        """Returns the value of the waveform at a given time in seconds 
+        calculated using linear approximation of surrounding samples.
         """
         approx_index = (time-self.offset) / self.sample_length
         interp_index = int(approx_index)
@@ -85,8 +89,19 @@ class Wave():
     
     def data_slice(self, begin_time, end_time, 
                    value_every=0, value_count=None):
-        """
+        """Returns an array of values from a time range.
 
+        If value_every is set and not equal to self.sample_rate, the 
+        output array values will be the result of linear interpolation
+        like with Wave.value_at.
+
+        Arguments:
+            begin_time  - beginning of the time range
+            end_time    - end of the time range
+            value_every - time between values (i.e. frequency) of the
+                          returned array
+            value_count - number of values to return. If value_every is
+                          also set, value_count supersedes it.
         """
         begin_i = self.sample_at(begin_time)
         end_i = self.sample_at(end_time)
@@ -102,15 +117,21 @@ class Wave():
         return interpolated_table
 
     def replace_slice(self, begin_time, end_time, wave):
+        """Replaces the values of this Wave in a given time range with
+        those of a given Wave.
+
+        The given Wave must have the same sample_rate as this one.
+
+        Arguments:
+            begin_time - beginning of the time range
+            end_time   - end of the time range
+            wave       - the given Wave
+        """
         if not isclose(self.sample_length,
                        wave.sample_length, rel_tol=0.0001):
-            # TRANSLATE THIS
-            raise ValueError('Fragment do wklejenia ma częstotliwość danych '
-                             'niezgodną z częstotliwością danych całości')
+            raise ValueError('Wave to replace has incompatible sample_rate')
         if end_time - begin_time > wave.complete_length:
-            # TRANSLATE THIS
-            raise ValueError('Dany Wave krótszy niż zakres czasu danych '
-                             'do zastąpienia')
+            raise ValueError('Given Wave shorter than the time wanted range')
         begin_i = self.sample_at(begin_time)
         end_i = self.sample_at(end_time)
         for j in range(end_i-begin_i):
@@ -118,6 +139,17 @@ class Wave():
     
     def generate_coordinate_tables(self, begin_time=0, end_time=None,
                                    begin_x=0):
+        """Returns points of the waveform in the form of two arrays - 
+        x and y values.
+
+        Useful for visualization.
+
+        Arguments:
+            begin_time - the beginning of the time range
+            end_time   - the end of the time range
+            begin_x    - x value of the first point in the output array
+        """
+        # TODO: Rethink this; arguments seem shady
         data = self.data_slice(begin_time, end_time)
         output_x = []
         output_y = []
@@ -129,10 +161,27 @@ class Wave():
         return output_x, output_y
 
 class EmptyPointsError(Exception):
-    pass
+    """Raised when an empty Points class is initialized."""
 
 class Points():
+    """Class describing points, i.e. events in time with a value.
+
+    It keeps them in two arrays of x and y values sorted by x.
+
+    Attributes:
+        Points.data_x - array of x coordinates
+        Points.data_y - array of y coordinates
+        Points.type   - type of points, e.g. 'r' or 'sbp'
+    """
+    # TODO: rename data_x and data_y into x and y (?may be less clear)
     def __init__(self, data_x, data_y, point_type):
+        """Initializes Points.
+
+        Arguments:
+            data_x - array of x coordinates of points
+            data_y - array of y coordinates of points
+            point_type - type of points, e.g. 'r' or 'sbp'
+        """
         if len(data_x) > 0:
             temp_data_x, temp_data_y = zip(*sorted(zip(data_x,data_y)))
             self.data_x = np.array(temp_data_x) 
@@ -143,13 +192,21 @@ class Points():
     
     @classmethod
     def copy(cls, points):
+        """Initializes a new Points just like the given one."""
         return cls(points.data_x, points.data_y,
                    point_type = points.type)
 
     def __len__(self):
+        """Returns number of points."""
         return len(self.data_x)
 
     def slice_range(self, begin_time, end_time):
+        """Returns a list of indices of points in a given time range.
+
+        Arguments:
+            begin_time - beginning of the time range
+            end_time   - end of the time range
+        """
         begin_i = np.searchsorted(self.data_x, begin_time)
         end_i = np.searchsorted(self.data_x, end_time)
         if begin_i != end_i:
@@ -158,6 +215,16 @@ class Points():
             return None
 
     def data_slice(self, begin_time, end_time, left_offset=0):
+        """Returns two lists of x and y coordinates of points in a
+        given time range.
+
+        Arguments:
+            begin_time  - beginning of the time range
+            end_time    - end of the time range
+            left_offset - number of points to the left of the time
+                          range, i.e. with smaller x, to include in the
+                          output
+        """
         temp_range = self.slice_range(begin_time, end_time)
         if temp_range is None:
             return None
