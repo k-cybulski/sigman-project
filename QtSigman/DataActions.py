@@ -9,100 +9,94 @@ import sigman as sm
 import QtSigman
 from QtSigman import DataActionWidgets
 from QtSigman.DataActionWidgets import DataActionStatus
-from QtSigman.MplWidgets import Axis
+from QtSigman.VisualObjects import VWave
 
-def importWave(compositeDataWrapper):
+class ActionCancelledError(Exception):
+    """Raised when an action is cancelled."""
+
+def loadWave(forbiddenNames):
+    """Imports an sm.Wave instance from a file and opens up a dialog
+    window with possible metainformaiton options.
+
+    Returns the Wave, chosen dictType, color and axis.
+    """
     fileFilter = "dat (*.dat)"
     fileDialog = QW.QFileDialog()
     fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
-    try:
-        path = fileDialog.getOpenFileName(filter = fileFilter)
-        assert path[0] != ""
-        title = path[0].split("/")[-1]
-        wave = fm.import_wave(path[0], 'default')
-        dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-            forbiddenNames = compositeDataWrapper.waves.keys(),
-            title = title)
-        if status is DataActionStatus.Ok: 
-            wave.offset = offset
-            wave.type = dictType
-            compositeDataWrapper.add_wave(wave, dictType, 
-                                          color=color, axis=axis)
-    # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się
-    # nie stało i nic nie zmieniamy
-    except AssertionError:
-        pass
+    path = fileDialog.getOpenFileName(filter=fileFilter)
+    if path[0] == "":
+        raise ActionCancelledError
+    title = path[0].split("/")[-1]
+    wave = fm.import_wave(path[0], 'default')
+    dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
+        forbiddenNames=forbiddenNames,
+        title=title)
+    if status is DataActionStatus.Ok: 
+        wave.offset = offset
+        wave.type = dictType
+        return wave, dictType, color, axis
+    else:
+        raise ActionCancelledError
 
-def importPoints(compositeDataWrapper):
+def loadPoints(forbiddenNames):
+    """Imports an sm.Points instance from a file and opens up a dialog
+    window with possible metainformaiton options.
+
+    Returns the Points, chosen dictType, color and axis.
+    """
     fileFilter = "dat (*.dat)"
     fileDialog = QW.QFileDialog()
     fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
-    try:
-        path = fileDialog.getOpenFileName(filter = fileFilter)
-        assert path[0] != ""
-        points = fm.import_points(path[0], 'default')
-        dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-            forbiddenNames = compositeDataWrapper.points.keys(),
-            title = path[0])
-        if status is DataActionStatus.Ok:
-            points.move_in_time(offset)
-            points.type = dictType
-            compositeDataWrapper.add_points(points, dictType, 
-                                            color=color, axis=axis)
-    # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się
-    # nie stało i nic nie zmieniamy
-    except AssertionError:
-        pass
-
-def inputWaveSettings(compositeDataWrapper, dictType):
-    forbiddenNames = list(compositeDataWrapper.waves.keys())
-    forbiddenNames.remove(dictType)
-    newDictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-        forbiddenNames = forbiddenNames,
-        dictType = dictType,
-        title = dictType,
-        axis = compositeDataWrapper.waves[dictType].axis,
-        offset = str(compositeDataWrapper.waves[dictType].offset),
-        askDelete = True,
-        color = compositeDataWrapper.waves[dictType].color)
+    path = fileDialog.getOpenFileName(filter=fileFilter)
+    if path[0] == "":
+        raise ActionCancelledError
+    points = fm.import_points(path[0], 'default')
+    dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
+        forbiddenNames=forbiddenNames,
+        title=path[0])
     if status is DataActionStatus.Ok:
-        compositeDataWrapper.editWaveSettings(
-            dictType, newDictType, color, axis, offset)
-    if status is DataActionStatus.Delete:
-        compositeDataWrapper.delete_wave(dictType)
+        points.move_in_time(offset)
+        points.type = dictType
+        return points, dictType, color, axis
+    else:
+        raise ActionCancelledError
 
-def inputPointSettings(compositeDataWrapper, dictType):
-    forbiddenNames = list(compositeDataWrapper.points.keys())
-    forbiddenNames.remove(dictType)
-    newDictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-        forbiddenNames = forbiddenNames,
-        dictType = dictType,
-        title = dictType,
-        axis = compositeDataWrapper.points[dictType].axis,
-        askDelete = True,
-        color = compositeDataWrapper.points[dictType].color)
+def setVWaveSettings(vWave, key, allKeys):
+    forbiddenKeys = list(allKeys)
+    forbiddenKeys.remove(key)
+    newKey, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
+        forbiddenNames=forbiddenKeys,
+        dictType=key,
+        title=key,
+        axis=vWave.axis,
+        offset=str(vWave.data.offset),
+        askDelete=True,
+        color=vWave.color)
     if status is DataActionStatus.Ok:
-        compositeDataWrapper.editPointsSettings(
-            dictType, newDictType, color, axis, offset)
+        vWave.setSettings(color, axis)
+        vWave.data.offset = offset
+        vWave.data.changed.emit()
+        vWave.setDictKey(newKey)
     if status is DataActionStatus.Delete:
-        compositeDataWrapper.delete_points(dictType)
+        vWave.delete()
 
-def inputParameterSettings(compositeDataWrapper, dictType):
-    forbiddenNames = list(compositeDataWrapper.parameters.keys())
-    forbiddenNames.remove(dictType)
-    newDictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-        forbiddenNames = forbiddenNames,
-        dictType = dictType,
-        title = dictType,
-        axis = compositeDataWrapper.parameters[dictType].axis,
-        askDelete = True,
-        color = compositeDataWrapper.parameters[dictType].color,
-        offset = None)
+def setVPointsSettings(vPoints, key, allKeys):
+    forbiddenKeys = list(allKeys)
+    forbiddenKeys.remove(key)
+    newKey, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
+        forbiddenNames=forbiddenKeys,
+        dictType=key,
+        title=key,
+        axis=vPoints.axis,
+        offset="0",
+        askDelete=True,
+        color=vPoints.color)
     if status is DataActionStatus.Ok:
-        compositeDataWrapper.inputParameterSettings(
-            dictType, newDictType, color, axis)
+        vPoints.setSettings(color, axis)
+        vPoints.data.move_in_time(offset)
+        vPoints.setDictKey(newKey)
     if status is DataActionStatus.Delete:
-        compositeDataWrapper.delete_parameter(dictType)
+        vPoints.delete()
 
 class _PickledCompositeDataWrapper:
     """Obiekt zawierający wszystkie kluczowe informacje zawarte w 
