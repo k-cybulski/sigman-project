@@ -24,9 +24,6 @@ def importModelflow (compositeDataWrapper):
         status = ex.result()
         if status == 1:
             ModelflowData = fm.import_data_from_modelflow(ex.PathModelflow())
-           
-        
-           
 
             if (ex.SelectedPointsType() == 0):
                 FitNumber = 0
@@ -41,7 +38,8 @@ def importModelflow (compositeDataWrapper):
                 wave.offset = 0
                 wave.type = 'wyznaczoneHRzR'
                 compositeDataWrapper.add_points(wave, 'wyznaczoneHRzR', 
-                                              color=DefaultColors.generateColor('wyznaczoneHRzR'), axis=Axis.Hidden)
+                    color=DefaultColors.getColor('wyznaczoneHRzR'), 
+                    axis=Axis.Hidden)
 
             ModelflowOffset = ImportModelflow.EstimateModelflowDataOffset (ModelflowData[1][FitNumber],HR)
 
@@ -51,14 +49,13 @@ def importModelflow (compositeDataWrapper):
                 for i in range(len(ModelflowData[0])):
                     ModelflowData[0][i] = ModelflowData[0][i]+offset
 
-           
-
             for i in range(len(ModelflowData[1])-1):
-                  wave = sm.Points(ModelflowData[0],ModelflowData[1][i], ModelflowData[2][i+1])
-                  wave.offset = 0
-                  wave.type = ModelflowData[2][i+1]
-                  compositeDataWrapper.add_points(wave, ModelflowData[2][i+1], 
-                                          color=DefaultColors.generateColor(ModelflowData[2][i+1]), axis=Axis.Hidden)
+                wave = sm.Points(ModelflowData[0],ModelflowData[1][i], ModelflowData[2][i+1])
+                wave.offset = 0
+                wave.type = ModelflowData[2][i+1]
+                compositeDataWrapper.add_points(wave, ModelflowData[2][i+1], 
+                    color=DefaultColors.getColor(ModelflowData[2][i+1]), 
+                    axis=Axis.Hidden)
     # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się
     # nie stało i nic nie zmieniamy
     except AssertionError:
@@ -82,7 +79,7 @@ def importWave(compositeDataWrapper):
          wave.offset = 0
          wave.type = title
          compositeDataWrapper.add_wave(wave, title, 
-                                          color=DefaultColors.generateColor(title), axis=Axis.Hidden)
+             color=DefaultColors.getColor(title), axis=Axis.Hidden)
          j = j + 1
 
     # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się
