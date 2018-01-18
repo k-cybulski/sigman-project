@@ -2,7 +2,6 @@
 kolorami.
 """
 import random
-from random import randint  
 
 defaultColors={'ecg':'C0', 'bp':'C1', 
              'r':'r', 
@@ -22,9 +21,3 @@ def getColor(text):
     if text in defaultColors:
         return defaultColors[text]
     return generateColor(text)
-
-def getColorsArray (count):
-     colors = []
-     for i in range(count):
-             colors.append('#%06X' % randint(0, 0xFFFFFF))
-     return colors
