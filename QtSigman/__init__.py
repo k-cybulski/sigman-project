@@ -407,6 +407,8 @@ class QtSigmanWindow(QW.QMainWindow):
         self.file_menu.addAction('Eksportuj przebieg // TODO', lambda:
             QW.QMessageBox.information(self, "Informacja",
                                       "Nie zaimplementowano"))
+        self.file_menu.addAction('Wczytaj dane Modelflow', lambda:
+            DataActions.importModelflow(self.compositeDataWrapper))
         self.file_menu.addAction('Importuj punkty', lambda:
             DataActions.importPoints(self.compositeDataWrapper))
         self.file_menu.addAction('Eksportuj punkty // TODO', lambda:
