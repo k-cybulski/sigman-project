@@ -256,6 +256,7 @@ class VCollection(QC.QObject):
             self.addPoints(item, key)
         for key, item in parameters.items():
             self.addParameter(item, key)
+        self.connections = []
     
     @classmethod
     def fromCompositeDataWrapper(cls, compositeDataWrapper):
@@ -273,18 +274,14 @@ class VCollection(QC.QObject):
         for key, item in parameters.items():
             parameters[key] = VParameter(item, getColor(key), -1)
         out = cls(waves, points, parameters)
-        compositeDataWrapper.waveKeyChanged.connect(
-            out.changeWaveKey)
-        compositeDataWrapper.waveDeleted.connect(
-            out.deleteWave)
-        compositeDataWrapper.pointsKeyChanged.connect(
-            out.changePointsKey)
-        compositeDataWrapper.pointsDeleted.connect(
-            out.deletePoints)
-        compositeDataWrapper.parameterKeyChanged.connect(
-            out.changeParameterKey)
-        compositeDataWrapper.parameterDeleted.connect(
-            out.deleteParameter)
+        connections = [
+            (compositeDataWrapper.waveKeyChanged, out.changeWaveKey),
+            (compositeDataWrapper.waveDeleted, out.deleteWave),
+            (compositeDataWrapper.pointsKeyChanged, out.changePointsKey),
+            (compositeDataWrapper.pointsDeleted, out.deletePoints),
+            (compositeDataWrapper.parameterKeyChanged, out.changeParameterKey),
+            (compositeDataWrapper.parameterDeleted, out.deleteParameter)]
+        out.connectConnections(connections)
         return out
 
     @classmethod
@@ -314,27 +311,30 @@ class VCollection(QC.QObject):
                 axis = -1
             parameters[key] = VParameter(item.data, item.color, axis)
         out = cls(waves, points, parameters)
-        vCollection.waveKeyChanged.connect(
-            out.changeWaveKey)
-        vCollection.waveDeleted.connect(
-            out.deleteWave)
-        vCollection.pointsKeyChanged.connect(
-            out.changePointsKey)
-        vCollection.pointsDeleted.connect(
-            out.deletePoints)
-        vCollection.parameterKeyChanged.connect(
-            out.changeParameterKey)
-        vCollection.parameterDeleted.connect(
-            out.deleteParameter)
+        connections = [
+            (vCollection.waveKeyChanged, out.changeWaveKey),
+            (vCollection.waveDeleted, out.deleteWave),
+            (vCollection.pointsKeyChanged, out.changePointsKey),
+            (vCollection.pointsDeleted, out.deletePoints),
+            (vCollection.parameterKeyChanged, out.changeParameterKey),
+            (vCollection.parameterDeleted, out.deleteParameter)]
+        out.connectConnections(connections)
         return out
     
+    def connectConnections(self, connections):
+        for connection in connections:
+            connection[0].connect(connection[1])
+        self.connections.extend(connections)
+
     def delete(self):
-        waveAdded.disconnect()
-        waveDeleted.disconnect()
-        pointsAdded.disconnect()
-        pointsDeleted.disconnect()
-        parameterAdded.disconnect()
-        parameterDeleted.disconnect()
+        self.waveAdded.disconnect()
+        self.waveDeleted.disconnect()
+        self.pointsAdded.disconnect()
+        self.pointsDeleted.disconnect()
+        self.parameterAdded.disconnect()
+        self.parameterDeleted.disconnect()
+        for connection in self.connections:
+            connection[0].disconnect(connection[1])
         for dict_ in [self.waves,
                       self.points,
                       self.parameters]:

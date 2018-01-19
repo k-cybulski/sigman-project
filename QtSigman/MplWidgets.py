@@ -281,3 +281,14 @@ class PlotWidget(QW.QWidget):
     def handleLeave(self, event):
         if self.dragging:
             self.dragging = False
+
+    def replaceVCollection(self, vCollection):
+        self.vCollection.remove()
+        self.vCollection = vCollection
+        for dict_ in [vCollection.waves,
+                      vCollection.points,
+                      vCollection.parameters]:
+            for key, vObject in dict_.items():
+                self.plotCanvas.plotVObject(vObject)
+                self._added(vObject, key)
+        self.plotCanvas.plotVCollection(vCollection)

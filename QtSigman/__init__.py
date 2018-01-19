@@ -180,11 +180,17 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
         self.waveDeleted.emit(dict_type)
 
     def setWaveKey(self, dictTypeFrom, dictTypeTo):
-        """Changes the dict key of a chosen wave from one to an other."""
+        """Changes the dict key of a chosen wave from one to an other.
+        Reconnects the toDelete and toSetKey signals.
+        """
         if dictTypeFrom == dictTypeTo:
             return
         self.waves[dictTypeTo] = self.waves[dictTypeFrom]
         self.waves.pop(dictTypeFrom)
+        self.waves[dictTypeTo].toDelete.disconnect()
+        self.waves[dictTypeTo].toDelete.connect(
+            lambda: self.delete_wave(
+                dictTypeTo))
         self.waves[dictTypeTo].toSetKey.disconnect()
         self.waves[dictTypeTo].toSetKey.connect(
             lambda key: self.setWaveKey(
@@ -318,8 +324,10 @@ class QtSigmanWindow(QW.QMainWindow):
  #      self.file_menu.addAction('Zamknij', self.quit)
         self.menuBar().addMenu(self.file_menu)
 
-        self.windowMenu = QW.QMenu('Okno', self)
+        self.windowMenu = QW.QMenu('Widok', self)
         self.windowMenu.addAction('Dodaj wykres', self.addPlot)
+        self.menuBar().addMenu(self.windowMenu)
+        self.windowMenu.addAction('Usuń wykres', self.deletePlot)
         self.menuBar().addMenu(self.windowMenu)
 
         self.procedure_menu = QW.QMenu('Procedury', self)
@@ -354,7 +362,8 @@ class QtSigmanWindow(QW.QMainWindow):
         """Adds a new PlotWidget to self.plotTabWidget based on the 
         first PlotWidget, as well as a corresponding 
         VCollectionListWidget to self.listWidgets. If it is the first
-        PlotWidget, it's instead directly based on self.compositeDataWrapper."""
+        PlotWidget, it's instead directly based on self.compositeDataWrapper.
+        """
         if len(self.plotWidgets) == 0:
             self.plotWidgets.append(
                 MplWidgets.PlotWidget.fromCompositeDataWrapper(
@@ -374,6 +383,22 @@ class QtSigmanWindow(QW.QMainWindow):
         self.stackedListWidget.addWidget(
             self.listWidgets[-1])
 
+    def deletePlot(self):
+        """Deletes the currently selected plot. If the main plot is
+        selected, it does nothing.
+        """
+        index = self.plotTabWidget.currentIndex()
+        if index == 0:
+            return
+        self.plotWidgets[index].vCollection.delete()
+        self.plotTabWidget.removeTab(index)
+        self.stackedListWidget.removeWidget(
+            self.stackedListWidget.widget(index))
+        del self.plotWidgets[index]
+        del self.listWidgets[index]
+        for i in range(1, self.plotTabWidget.count()+1):
+            self.plotTabWidget.setTabText(i, str(i))
+        
     def importWave(self):
         try:
             wave, key, color, axis = DataActions.loadWave(

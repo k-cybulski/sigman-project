@@ -74,6 +74,7 @@ def setVWaveSettings(vWave, key, allKeys):
         color=vWave.color)
     if status is DataActionStatus.Ok:
         vWave.setSettings(color, axis)
+        vWave.data.type = newKey
         vWave.data.offset = offset
         vWave.data.changed.emit()
         vWave.setDictKey(newKey)
@@ -93,6 +94,7 @@ def setVPointsSettings(vPoints, key, allKeys):
         color=vPoints.color)
     if status is DataActionStatus.Ok:
         vPoints.setSettings(color, axis)
+        vPoints.data.type = newKey
         vPoints.data.move_in_time(offset)
         vPoints.setDictKey(newKey)
     if status is DataActionStatus.Delete:
