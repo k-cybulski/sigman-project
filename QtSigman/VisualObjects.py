@@ -23,10 +23,12 @@ class VObject(QC.QObject):
     changed = QC.pyqtSignal()
     axisChanged = QC.pyqtSignal()
 
-    def __init__(self, qDataObject, color, axis):
+    def __init__(self, qDataObject, color=None, axis=-1):
         super().__init__()
         self.data = qDataObject
         qDataObject.changed.connect(self.update)
+        if color is None:
+            color = getColor(qDataObject.type)
         self.color = color
         self.mplObject = None
         self.axis = axis
@@ -234,13 +236,13 @@ class VParameter(VObject):
 
 class VCollection(QC.QObject):
     """Contains three dicts of VObjects, similar to Composite_data."""
-    waveAdded = QC.pyqtSignal(str)
+    waveAdded = QC.pyqtSignal(VWave, str)
     waveKeyChanged = QC.pyqtSignal(str, str)
     waveDeleted = QC.pyqtSignal(str)
-    pointsAdded = QC.pyqtSignal(str)
+    pointsAdded = QC.pyqtSignal(VPoints, str)
     pointsKeyChanged = QC.pyqtSignal(str, str)
     pointsDeleted = QC.pyqtSignal(str)
-    parameterAdded = QC.pyqtSignal(str)
+    parameterAdded = QC.pyqtSignal(VParameter, str)
     parameterKeyChanged = QC.pyqtSignal(str, str)
     parameterDeleted = QC.pyqtSignal(str)
 
@@ -268,17 +270,20 @@ class VCollection(QC.QObject):
         points = compositeDataWrapper.points.copy()
         parameters = compositeDataWrapper.parameters.copy()
         for key, item in waves.items():
-            waves[key] = VWave(item, getColor(key), -1)
+            waves[key] = VWave(item)
         for key, item in points.items():
-            points[key] = VPoints(item, getColor(key), -1)
+            points[key] = VPoints(item)
         for key, item in parameters.items():
-            parameters[key] = VParameter(item, getColor(key), -1)
+            parameters[key] = VParameter(item)
         out = cls(waves, points, parameters)
         connections = [
+            (compositeDataWrapper.waveAdded, out.addWave),
             (compositeDataWrapper.waveKeyChanged, out.changeWaveKey),
             (compositeDataWrapper.waveDeleted, out.deleteWave),
+            (compositeDataWrapper.pointsAdded, out.addPoints),
             (compositeDataWrapper.pointsKeyChanged, out.changePointsKey),
             (compositeDataWrapper.pointsDeleted, out.deletePoints),
+            (compositeDataWrapper.parameterAdded, out.addParameter),
             (compositeDataWrapper.parameterKeyChanged, out.changeParameterKey),
             (compositeDataWrapper.parameterDeleted, out.deleteParameter)]
         out.connectConnections(connections)
@@ -312,15 +317,18 @@ class VCollection(QC.QObject):
             parameters[key] = VParameter(item.data, item.color, axis)
         out = cls(waves, points, parameters)
         connections = [
+            (vCollection.waveAdded, out.addWave),
             (vCollection.waveKeyChanged, out.changeWaveKey),
             (vCollection.waveDeleted, out.deleteWave),
+            (vCollection.pointsAdded, out.addPoints),
             (vCollection.pointsKeyChanged, out.changePointsKey),
             (vCollection.pointsDeleted, out.deletePoints),
+            (vCollection.parameterAdded, out.addParameter),
             (vCollection.parameterKeyChanged, out.changeParameterKey),
             (vCollection.parameterDeleted, out.deleteParameter)]
         out.connectConnections(connections)
         return out
-    
+
     def connectConnections(self, connections):
         for connection in connections:
             connection[0].connect(connection[1])
@@ -348,8 +356,12 @@ class VCollection(QC.QObject):
         if key in self.waves:
             raise ValueError("Key %s is taken"
                              % key)
+        if not isinstance(wave, VWave):
+            wave = VWave(wave)
+        else:
+            wave = wave.copy()
         self.waves[key] = wave
-        self.waveAdded.emit(key)
+        self.waveAdded.emit(wave, key)
 
     def changeWaveKey(self, keyFrom, keyTo):
         self.waves[keyTo] = self.waves[keyFrom]
@@ -367,8 +379,12 @@ class VCollection(QC.QObject):
         if key in self.points:
             raise ValueError("Key %s is taken"
                              % key)
+        if not isinstance(points, VPoints):
+            points = VPoints(points)
+        else:
+            points = points.copy()
         self.points[key] = points
-        self.pointsAdded.emit(key)
+        self.pointsAdded.emit(points, key)
 
     def deletePoints(self, key):
         if key not in self.points:
@@ -386,8 +402,12 @@ class VCollection(QC.QObject):
         if key in self.parameters:
             raise ValueError("Key %s is taken"
                              % key)
+        if not isinstance(parameter, VParameter):
+            parameter = VPoints(parameter)
+        else:
+            parameter = parameter.copy()
         self.parameters[key] = parameter
-        self.parameterAdded.emit(key)
+        self.parameterAdded.emit(parameter, key)
 
     def deleteParameter(self, key):
         if key not in self.parameters:

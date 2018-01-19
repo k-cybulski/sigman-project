@@ -104,13 +104,13 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
     that allow for external editing (e.g. via functions from
     QtSigman.DataActions).
     """
-    waveAdded = QC.pyqtSignal(str)
+    waveAdded = QC.pyqtSignal(QWave, str)
     waveKeyChanged = QC.pyqtSignal(str, str)
     waveDeleted = QC.pyqtSignal(str)
-    pointsAdded = QC.pyqtSignal(str)
+    pointsAdded = QC.pyqtSignal(QPoints, str)
     pointsKeyChanged = QC.pyqtSignal(str, str)
     pointsDeleted = QC.pyqtSignal(str)
-    parameterAdded = QC.pyqtSignal(str)
+    parameterAdded = QC.pyqtSignal(QParameter, str)
     parameterKeyChanged = QC.pyqtSignal(str, str)
     parameterDeleted = QC.pyqtSignal(str)
 
@@ -137,14 +137,11 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
         """Replaces all of the items in this CompositeDataWrapper with
         those from an other Composite_data instance.
         """
-        if not isinstance(compData, CompositeDataWrapper):
-            compData = CompositeDataWrapper.fromCompositeData(compData)
         for dict_ in [self.waves,
                       self.points,
                       self.parameters]:
-            for item in dict_.values():
-                item.changed.disconnect()
-            dict_.clear()
+            for key in list(dict_.keys()):
+                self._delete(dict_[key], key)
         waves = compData.waves
         points = compData.points
         parameters = compData.parameters
@@ -154,6 +151,14 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
             self.add_points(item, key)
         for key, item in parameters.items():
             self.add_parameter(item, key)
+
+    def _delete(self, data, key):
+        if isinstance(data, QWave):
+            self.delete_wave(key)
+        elif isinstance(data, QPoints):
+            self.delete_points(key)
+        elif isinstance(data, QParameter):
+            self.delete_parameter(key)
 
     def add_wave(self, wave, dict_type, replace=False):
         """Adds a Wave as a QWave and emits waveNumberChanged signal.
@@ -168,7 +173,7 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
         self.waves[dict_type].toSetKey.connect(
             lambda key: self.setWaveKey(
                 dict_type, key))
-        self.waveAdded.emit(dict_type)
+        self.waveAdded.emit(self.waves[dict_type], dict_type)
 
     def delete_wave(self, dict_type):
         """Deletes a QWave with the given dict type and emits
@@ -176,6 +181,8 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
 
         Overrides delete_wave."""
         self.waves[dict_type].changed.disconnect()
+        self.waves[dict_type].toDelete.disconnect()
+        self.waves[dict_type].toSetKey.disconnect()
         super().delete_wave(dict_type)
         self.waveDeleted.emit(dict_type)
 
@@ -210,15 +217,17 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
         self.points[dict_type].toSetKey.connect(
             lambda key: self.setPointsKey(
                 dict_type, key))
-        self.pointsAdded.emit(dict_type)
+        self.pointsAdded.emit(self.points[dict_type], dict_type)
 
-    def delete__points(self, dict_type):
+    def delete_points(self, dict_type):
         """Deletes a QPoints with the given dict type and emits
         pointNumberChanged signal.
         
         Overrides delete_points.
         """
         self.points[dict_type].changed.disconnect()
+        self.points[dict_type].toDelete.disconnect()
+        self.points[dict_type].toSetKey.disconnect()
         super().delete_points(dict_type)
         self.pointsDeleted.emit(dict_type)
 
@@ -247,7 +256,7 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
         self.parameters[dict_type].toSetKey.connect(
             lambda key: self.setParameterKey(
                 dict_type, key))
-        self.parameterAdded.emit(dict_type)
+        self.parameterAdded.emit(self.parameters[dict_type], dict_type)
 
     def delete_parameter(self, dict_type):
         """Deletes a QParameter with the given dict type and emits
@@ -256,6 +265,8 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
         Overrides delete_parameter.
         """
         self.parameters[dict_type].changed.disconnect()
+        self.parameters[dict_type].toDelete.disconnect()
+        self.parameters[dict_type].toSetKey.disconnect()
         super().delete_parameter(dict_type)
         self.parameterDeleted.emit(dict_type)
 
@@ -313,15 +324,9 @@ class QtSigmanWindow(QW.QMainWindow):
         self.file_menu.addAction('Eksportuj punkty // TODO', lambda:
             QW.QMessageBox.information(self, "Informacja",
                                       "Nie zaimplementowano"))
- #      self.file_menu.addAction('Eksportuj parametr // TODO', lambda:
- #          QW.QMessageBox.information(self, "Informacja",
- #                                    "Nie zaimplementowano"))
- #      self.file_menu.addAction('Wczytaj projekt', lambda:
- #          self._replaceCompositeDataWrapper(
- #              DataActions.loadCompositeData()))
- #      self.file_menu.addAction('Zapisz projekt', lambda:
- #          DataActions.saveCompositeData(self.compositeDataWrapper))
- #      self.file_menu.addAction('Zamknij', self.quit)
+        self.file_menu.addAction('Wczytaj projekt', self.loadCompositeData)
+        self.file_menu.addAction('Zapisz projekt', self.saveCompositeData)
+        self.file_menu.addAction('Zamknij', self.quit)
         self.menuBar().addMenu(self.file_menu)
 
         self.windowMenu = QW.QMenu('Widok', self)
@@ -404,13 +409,8 @@ class QtSigmanWindow(QW.QMainWindow):
             wave, key, color, axis = DataActions.loadWave(
                 self.compositeDataWrapper.waves.keys())
             self.compositeDataWrapper.add_wave(wave, key)
-            wave = self.compositeDataWrapper.waves[key] # it is now a QObject
-            for plot in self.plotWidgets:
-                if plot == self.plotTabWidget.currentWidget():
-                    vWave = VWave(wave, color, axis)
-                else:
-                    vWave = VWave(wave, color, -1)
-                plot.vCollection.addWave(vWave, key)
+            self.plotTabWidget.currentWidget().vCollection.waves[key].setSettings(
+                color, axis)
         except ActionCancelledError:
             pass
 
@@ -419,13 +419,21 @@ class QtSigmanWindow(QW.QMainWindow):
             points, key, color, axis = DataActions.loadPoints(
                 self.compositeDataWrapper.points.keys())
             self.compositeDataWrapper.add_points(points, key)
-            points = self.compositeDataWrapper.points[key] # it is now a QObject
-            for plot in self.plotWidgets:
-                if plot == self.plotTabWidget.currentWidget():
-                    vPoints = VPoints(points, color, axis)
-                else:
-                    vPoints = VPoints(points, color, -1)
-                plot.vCollection.addPoints(vPoints, key)
+            self.plotTabWidget.currentWidget().vCollection.points[key].setSettings(
+                color, axis)
+        except ActionCancelledError:
+            pass
+    
+    def saveCompositeData(self):
+        try:
+            DataActions.saveCompositeData(self.compositeDataWrapper)
+        except ActionCancelledError:
+            pass
+
+    def loadCompositeData(self):
+        try:
+            compData = DataActions.loadCompositeData()
+            self.compositeDataWrapper.replace(compData)
         except ActionCancelledError:
             pass
 

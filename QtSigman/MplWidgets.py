@@ -170,31 +170,28 @@ class PlotWidget(QW.QWidget):
         outVCollection = VCollection.fromVCollection(vCollection, allHidden)
         return cls(outVCollection, parent=parent)
 
-    def _waveAdded(self, key):
-        vObject = self.vCollection.waves[key]
+    def _waveAdded(self, vObject, key):
         self.plotCanvas.plotVObject(vObject)
         vObject.axisChanged.connect(
             lambda: self.plotCanvas.plotVObject(vObject))
 
-    def _pointsAdded(self, key):
-        vObject = self.vCollection.points[key]
+    def _pointsAdded(self, vObject, key):
         self.plotCanvas.plotVObject(vObject)
         vObject.axisChanged.connect(
             lambda: self.plotCanvas.plotVObject(vObject))
 
-    def _parameterAdded(self, key):
-        vObject = self.vCollection.parameters[key]
+    def _parameterAdded(self, vObject, key):
         self.plotCanvas.plotVObject(vObject)
         vObject.axisChanged.connect(
             lambda: self.plotCanvas.plotVObject(vObject))
     
     def _added(self, vObject, key):
         if isinstance(vObject, VWave):
-            self._waveAdded(key)
+            self._waveAdded(vObject, key)
         elif isinstance(vObject, VPoints):
-            self._pointsAdded(key)
+            self._pointsAdded(vObject, key)
         elif isinstance(vObject, VParameter):
-            self._parameterAdded(key)
+            self._parameterAdded(vObject, key)
 
     def _getEventXY(self, event):
         """This method returns x and y coordinates of an event on the 
