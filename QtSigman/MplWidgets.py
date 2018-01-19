@@ -94,10 +94,10 @@ class PlotToolbar(NavigationToolbar2QT):
         selectedPoints = self.getSelectedPointType()
         self.selectedPointsComboBox.clear()
         keys = []
-        for key, item in parent.vCollection.points.items():
+        for key, item in self.parent.vCollection.points.items():
             if item.axis >= 0:
                 keys.append(key)
-        self.selectedPointsComboBox.addItems(items)
+        self.selectedPointsComboBox.addItems(keys)
         found = self.selectedPointsComboBox.findText(selectedPoints)
         if found >= 0:
             self.selectedPointsComboBox.setCurrentIndex(found)
@@ -145,6 +145,10 @@ class PlotWidget(QW.QWidget):
         self.vCollection.pointsAdded.connect(self._pointsAdded)
         self.vCollection.parameterAdded.connect(self._parameterAdded)
 
+        self.vCollection.pointsAdded.connect(self.plotToolbar.updatePointComboBox)
+        self.vCollection.pointsKeyChanged.connect(self.plotToolbar.updatePointComboBox)
+        self.vCollection.pointsDeleted.connect(self.plotToolbar.updatePointComboBox)
+
         self.dragging = False
         self.lastX = 0
         self.lastY = 0
@@ -179,6 +183,7 @@ class PlotWidget(QW.QWidget):
         self.plotCanvas.plotVObject(vObject)
         vObject.axisChanged.connect(
             lambda: self.plotCanvas.plotVObject(vObject))
+        vObject.axisChanged.connect(self.plotToolbar.updatePointComboBox)
 
     def _parameterAdded(self, vObject, key):
         self.plotCanvas.plotVObject(vObject)
@@ -238,7 +243,7 @@ class PlotWidget(QW.QWidget):
                 xData = points.get_xdata()
                 yData = points.get_ydata()
                 ind = [event.ind[0]]
-                self.vCollection.points[selectedPoints].delete_point(
+                self.vCollection.points[selectedPoints].data.delete_point(
                     xData[ind], y=yData[ind])
         if mode is EditMode.Dynamic and event.mouseevent.button == 1:
             points = event.artist

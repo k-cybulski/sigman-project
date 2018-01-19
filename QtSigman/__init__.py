@@ -66,8 +66,12 @@ class QPoints(sm.Points, QDataObject):
         super().replace_slice(begin_time, end_time, points)
         self.changed.emit()
 
-    def add_points(self, x, y):
-        super().add_points(x, y)
+    def add_point(self, x, y):
+        super().add_point(x, y)
+        self.changed.emit()
+
+    def add_points(self, points, begin_time=0):
+        super().add_points(points, begin_time=begin_time)
         self.changed.emit()
 
     def delete_point(self, x, y=None):
