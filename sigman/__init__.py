@@ -47,10 +47,13 @@ class Wave():
         self.offset = offset
 
     @classmethod
-    def copy(cls, wave):
+    def fromWave(cls, wave):
         """Zwraca kopię danego Wave."""
         return cls(wave.data, wave.complete_length,
                    wave_type=wave.type, offset=wave.offset)
+
+    def copy(self):
+        return Wave.fromWave(self)
 
     def __len__(self):
         """Zwraca liczbę punktów zawartych w całym ciągu danych."""
@@ -196,9 +199,12 @@ class Points():
             raise EmptyPointsError
     
     @classmethod
-    def copy(cls, points):
+    def fromPoints(cls, points):
         return cls(points.data_x, points.data_y,
                    point_type = points.type)
+
+    def copy(self):
+        return Points.fromPoints(self)
 
     def __len__(self):
         return len(self.data_x)
@@ -341,12 +347,15 @@ class Parameter():
         self.values = np.array([])
 
     @classmethod
-    def copy(cls, parameter):
+    def fromParameter(cls, parameter):
         out = cls(parameter.type)
         out.begin_times = np.copy(parameter.begin_times)
         out.end_times = np.copy(parameter.end_times)
         out.values = np.copy(parameter.values)
         return out
+
+    def copy(self):
+        return Parameter.fromParameter(self)
 
     def __len__(self):
         return len(self.begin_times)
