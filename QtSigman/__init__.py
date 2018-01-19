@@ -336,13 +336,11 @@ class QtSigmanWindow(QW.QMainWindow):
         self.menuBar().addMenu(self.windowMenu)
 
         self.procedure_menu = QW.QMenu('Procedury', self)
- #      self.procedure_menu.addAction('Modyfikuj przebieg', lambda:
- #          DataActions.modifyWave(self.compositeDataWrapper))
- #      self.procedure_menu.addAction('Znajdź punkty', lambda:
- #          DataActions.findPoints(self.compositeDataWrapper))
- #      self.procedure_menu.addAction('Oblicz parametr // TODO', lambda:
- #          QW.QMessageBox.information(self, "Informacja",
- #                                    "Nie zaimplementowano"))
+        self.procedure_menu.addAction('Modyfikuj przebieg', self.modifyWave)
+        self.procedure_menu.addAction('Znajdź punkty', self.findPoints)
+        self.procedure_menu.addAction('Oblicz parametr // TODO', lambda:
+            QW.QMessageBox.information(self, "Informacja",
+                                      "Nie zaimplementowano"))
         self.menuBar().addMenu(self.procedure_menu)
 
         self.help_menu = QW.QMenu('Pomoc', self)
@@ -434,6 +432,22 @@ class QtSigmanWindow(QW.QMainWindow):
         try:
             compData = DataActions.loadCompositeData()
             self.compositeDataWrapper.replace(compData)
+        except ActionCancelledError:
+            pass
+
+    def modifyWave(self):
+        try:
+            DataActions.modifyWave(self.compositeDataWrapper)
+        except ActionCancelledError:
+            pass
+
+    def findPoints(self):
+        try:
+            points, key, color, axis = DataActions.findPoints(
+                self.compositeDataWrapper)
+            self.compositeDataWrapper.add_points(points, key)
+            self.plotTabWidget.currentWidget().vCollection.points[key].setSettings(
+                color, axis)
         except ActionCancelledError:
             pass
 

@@ -152,11 +152,10 @@ def modifyWave(compositeDataWrapper):
         modifiedWave = analyzer.modify_wave(originalWave, 
                                             beginTime, endTime, 
                                             procedure, arguments)
-        if status is DataActionStatus.Cancel:
-            return
         compositeDataWrapper.waves[waveKey].replace_slice(
             beginTime, endTime, modifiedWave)
-        compositeDataWrapper.waveChanged.emit()
+    else:
+        raise ActionCancelledError
 
 def findPoints(compositeDataWrapper):
     pr = DataActionWidgets.ProcedureDialog.getProcedure(
@@ -167,18 +166,14 @@ def findPoints(compositeDataWrapper):
             newPoints = analyzer.find_points(waveDict, pointsDict, 
                                              beginTime, endTime, 
                                              procedure, arguments)
-            nameBase = 'found_points'
-            nameNum = 0
-            name = nameBase + str(nameNum)
-            while name in compositeDataWrapper.points:
-                nameNum += 1
-                name = nameBase + str(nameNum)
             dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-                forbiddenNames = compositeDataWrapper.points.keys(),
+                forbiddenNames=compositeDataWrapper.points.keys(),
                 title=procedure.__name__)
             if status is DataActionStatus.Cancel:
-                return
-            compositeDataWrapper.add_points(newPoints, dictType, 
-                                            color=color, axis=axis)
+                raise ActionCancelledError
+            newPoints.move_in_time(offset)
+            return newPoints, dictType, color, axis
         except EmptyPointsError:
             QW.QMessageBox.warning(None, 'Błąd', 'Nie odnaleziono punktów')
+    else:
+        raise ActionCancelledError
