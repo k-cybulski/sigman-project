@@ -7,7 +7,7 @@ from sigman import analyzer, EmptyPointsError
 import sigman as sm
 
 import QtSigman
-from QtSigman import DataActionWidgets
+from QtSigman import DataActionWidgets, ImportModelflow, DefaultColors
 from QtSigman.DataActionWidgets import DataActionStatus
 from QtSigman.VisualObjects import VWave
 
@@ -60,6 +60,59 @@ def loadPoints(forbiddenNames):
         return points, dictType, color, axis
     else:
         raise ActionCancelledError
+
+def loadModelflow(compositeDataWrapper):
+    fileFilter = "(*.A00)"
+    fileDialog = QW.QFileDialog()
+    fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
+
+    path = fileDialog.getOpenFileName(filter=fileFilter)
+    if path[0] == "":
+        raise ActionCancelledError
+    title = path[0].split("/")[-1]
+
+    ex = DataActionWidgets.ModelflowImportDialog(path[0], compositeDataWrapper)
+    dataX = compositeDataWrapper.points[ex.SelectedPoints()].data_x
+    dataY = compositeDataWrapper.points[ex.SelectedPoints()].data_y
+    if ex.result() == 1:
+        ModelflowData = fm.import_data_from_modelflow(ex.PathModelflow())
+        if (ex.SelectedPointsType() == 0):
+            FitNumber = 0
+            HR = dataY
+        elif (ex.SelectedPointsType() == 1):
+            FitNumber = 1
+            HR = dataY
+        else:
+            FitNumber = 6
+            HR = ImportModelflow.DetermineHR(dataX)
+            wave = sm.Points(dataX, HR, 'wyznaczoneHRzR')
+            wave.offset = 0
+            wave.type = 'wyznaczoneHRzR'
+            compositeDataWrapper.add_points(wave, 'wyznaczoneHRzR', 
+                color=DefaultColors.getColor('wyznaczoneHRzR'), 
+                axis=Axis.Hidden)
+
+            ModelflowOffset = ImportModelflow.EstimateModelflowDataOffset(
+                    ModelflowData[1][FitNumber], HR)
+
+        # Jesli przesuniecie rowna sie 2 oznacza to 
+        # ze czas dane[2] ma się równać czasowi HR[0]
+        if ModelflowOffset > 0:
+            offset = dataX[0] - ModelflowData[0][ModelflowOffset]
+            for i in range(len(ModelflowData[0])):
+                ModelflowData[0][i] = ModelflowData[0][i] + offset
+
+        # Zbior zbiorow punktow
+        modelflowPoints = []
+        for i in range(len(ModelflowData[1])-1):
+            wave = sm.Points(ModelflowData[0], 
+                            ModelflowData[1][i],
+                            ModelflowData[2][i+1])
+            wave.offset = 0
+            wave.type = ModelflowData[2][i+1]
+            modelflowPoints.append(wave)
+
+        return modelflowPoints, ModelflowData
 
 def setVWaveSettings(vWave, key, allKeys):
     forbiddenKeys = list(allKeys)

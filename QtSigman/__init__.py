@@ -11,7 +11,7 @@ from PyQt5 import QtWidgets as QW
 from PyQt5 import QtCore as QC
 import sigman as sm
 
-from QtSigman import MplWidgets, DataActions, ListWidgets
+from QtSigman import MplWidgets, DataActions, ListWidgets, DefaultColors
 from QtSigman.DataActions import ActionCancelledError
 from QtSigman.VisualObjects import VCollection, VWave, VPoints
 
@@ -325,6 +325,8 @@ class QtSigmanWindow(QW.QMainWindow):
             QW.QMessageBox.information(self, "Informacja",
                                       "Nie zaimplementowano"))
         self.file_menu.addAction('Importuj punkty', self.importPoints)
+        self.file_menu.addAction('Wczytaj dane Modelflow',
+                self.importModelflow)        
         self.file_menu.addAction('Eksportuj punkty // TODO', lambda:
             QW.QMessageBox.information(self, "Informacja",
                                       "Nie zaimplementowano"))
@@ -425,7 +427,22 @@ class QtSigmanWindow(QW.QMainWindow):
                 color, axis)
         except ActionCancelledError:
             pass
-    
+   
+    def importModelflow(self):
+        try:
+            modelflowPoints, modelflowData = DataActions.importModelflow(
+                    self.compositeDataWrapper)
+            for i in range(len(modelflowPoints)):
+                wave = modelflowPoints[i]
+                key = modelflowData[1][i+1]
+                color = DefaultColors.getColor(key)
+                axis = -1
+                compositeDataWrapper.add_points(wave, key, color, axis)
+                self.plotTabWidget.currentWidget(
+                        ).vCollection.points[key].setSettings(color, axis)
+        except ActionCancelledError:
+            pass
+
     def saveCompositeData(self):
         try:
             DataActions.saveCompositeData(self.compositeDataWrapper)
