@@ -409,24 +409,28 @@ class QtSigmanWindow(QW.QMainWindow):
             self.plotTabWidget.setTabText(i, str(i))
         
     def importWave(self):
-        try:
-            wave, key, color, axis = DataActions.loadWave(
+        setOfWaves = DataActions.loadWave(
                 self.compositeDataWrapper.waves.keys())
-            self.compositeDataWrapper.add_wave(wave, key)
-            self.plotTabWidget.currentWidget().vCollection.waves[key].setSettings(
-                color, axis)
-        except ActionCancelledError:
-            pass
+        for waveTuple in setOfWaves:
+            try:
+                wave, key, color, axis = waveTuple
+                self.compositeDataWrapper.add_wave(wave, key)
+                self.plotTabWidget.currentWidget().vCollection.waves[
+                        key].setSettings(color, axis)
+            except ActionCancelledError:
+                pass
 
     def importPoints(self):
-        try:
-            points, key, color, axis = DataActions.loadPoints(
+        setOfPoints = DataActions.loadPoints(
                 self.compositeDataWrapper.points.keys())
-            self.compositeDataWrapper.add_points(points, key)
-            self.plotTabWidget.currentWidget().vCollection.points[key].setSettings(
-                color, axis)
-        except ActionCancelledError:
-            pass
+        for pointsTuple in setOfPoints:
+            try:
+                points, key, color, axis = pointsTuple
+                self.compositeDataWrapper.add_points(points, key)
+                self.plotTabWidget.currentWidget().vCollection.points[
+                        key].setSettings(color, axis)
+            except ActionCancelledError:
+                pass
    
     def importModelflow(self):
         try:
@@ -438,8 +442,8 @@ class QtSigmanWindow(QW.QMainWindow):
                 color = DefaultColors.getColor(key)
                 axis = -1
                 self.compositeDataWrapper.add_points(wave, key)
-                self.plotTabWidget.currentWidget(
-                        ).vCollection.points[key].setSettings(color, axis)
+                self.plotTabWidget.currentWidget().vCollection.points[
+                        key].setSettings(color, axis)
         except ActionCancelledError:
             pass
 

@@ -15,51 +15,64 @@ class ActionCancelledError(Exception):
     """Raised when an action is cancelled."""
 
 def loadWave(forbiddenNames):
-    """Imports an sm.Wave instance from a file and opens up a dialog
-    window with possible metainformaiton options.
+    """Imports an sm.Wave instances from files and opens up a dialog
+    window with possible metainformaiton options for each.
 
-    Returns the Wave, chosen dictType, color and axis.
+    Returns a list of tuples containg Wave, chosen dictType, color and axis.
     """
     fileFilter = "dat (*.dat)"
     fileDialog = QW.QFileDialog()
     fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
-    path = fileDialog.getOpenFileName(filter=fileFilter)
+    path = fileDialog.getOpenFileNames(filter=fileFilter)
+
     if path[0] == "":
         raise ActionCancelledError
-    title = path[0].split("/")[-1]
-    wave = fm.import_wave(path[0], 'default')
-    dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-        forbiddenNames=forbiddenNames,
-        title=title)
-    if status is DataActionStatus.Ok: 
-        wave.offset = offset
-        wave.type = dictType
-        return wave, dictType, color, axis
-    else:
-        raise ActionCancelledError
+
+    setOfWaves = []
+    for filename in path[0]:
+        title = filename.split("/")[-1]
+        title = title.split (".")[0]
+        wave = fm.import_wave(filename, 'default')
+        dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
+            forbiddenNames=forbiddenNames,
+            title=title)
+        if status is DataActionStatus.Ok:
+            wave.offset = offset
+            wave.type = dictType
+            setOfWaves.append((wave, dictType, color, axis))
+        else:
+            raise ActionCancelledError
+    return setOfWaves
 
 def loadPoints(forbiddenNames):
-    """Imports an sm.Points instance from a file and opens up a dialog
-    window with possible metainformaiton options.
+    """Imports an sm.Points instances from files and opens up a dialog
+    window with possible metainformaiton options for each.
 
-    Returns the Points, chosen dictType, color and axis.
+    Returns a list of tuples containing Points, chosen dictType, color and axis.
     """
     fileFilter = "dat (*.dat)"
     fileDialog = QW.QFileDialog()
     fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
-    path = fileDialog.getOpenFileName(filter=fileFilter)
+    path = fileDialog.getOpenFileNames(filter=fileFilter)
+
     if path[0] == "":
         raise ActionCancelledError
-    points = fm.import_points(path[0], 'default')
-    dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-        forbiddenNames=forbiddenNames,
-        title=path[0])
-    if status is DataActionStatus.Ok:
-        points.move_in_time(offset)
-        points.type = dictType
-        return points, dictType, color, axis
-    else:
-        raise ActionCancelledError
+
+    setOfPoints = []
+    for filename in path[0]:
+        title = filename.split("/")[-1]
+        title = title.split (".")[0]        
+        points = fm.import_points(filename, 'default')
+        dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
+            forbiddenNames=forbiddenNames,
+            title=title)
+        if status is DataActionStatus.Ok:
+            points.move_in_time(offset)
+            points.type = dictType
+            setOfPoints.append((points, dictType, color, axis))
+        else:
+            raise ActionCancelledError
+    return setOfPoints
 
 def loadModelflow(compositeDataWrapper):
     fileFilter = "(*.A00)"
