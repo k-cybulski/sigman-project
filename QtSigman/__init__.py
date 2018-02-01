@@ -430,14 +430,14 @@ class QtSigmanWindow(QW.QMainWindow):
    
     def importModelflow(self):
         try:
-            modelflowPoints, modelflowData = DataActions.importModelflow(
+            modelflowPoints, modelflowData = DataActions.loadModelflow(
                     self.compositeDataWrapper)
             for i in range(len(modelflowPoints)):
                 wave = modelflowPoints[i]
-                key = modelflowData[1][i+1]
+                key = modelflowData[2][i+1]
                 color = DefaultColors.getColor(key)
                 axis = -1
-                compositeDataWrapper.add_points(wave, key, color, axis)
+                self.compositeDataWrapper.add_points(wave, key)
                 self.plotTabWidget.currentWidget(
                         ).vCollection.points[key].setSettings(color, axis)
         except ActionCancelledError:

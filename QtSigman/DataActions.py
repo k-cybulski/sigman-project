@@ -92,8 +92,8 @@ def loadModelflow(compositeDataWrapper):
                 color=DefaultColors.getColor('wyznaczoneHRzR'), 
                 axis=Axis.Hidden)
 
-            ModelflowOffset = ImportModelflow.EstimateModelflowDataOffset(
-                    ModelflowData[1][FitNumber], HR)
+        ModelflowOffset = ImportModelflow.EstimateModelflowDataOffset(
+                ModelflowData[1][FitNumber], HR)
 
         # Jesli przesuniecie rowna sie 2 oznacza to 
         # ze czas dane[2] ma się równać czasowi HR[0]

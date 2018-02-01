@@ -10,7 +10,6 @@ import sigman as sm
 import QtSigman
 from QtSigman import DataActionWidgets
 from QtSigman.DataActionWidgets import DataActionStatus
-from QtSigman.MplWidgets import Axis
 
 from QtSigman import DefaultColors
 
