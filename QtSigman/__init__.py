@@ -10,313 +10,283 @@ względu na zgodność z biblioteką PyQt5.
 from PyQt5 import QtWidgets as QW
 from PyQt5 import QtCore as QC
 import sigman as sm
-from matplotlib import colors
 
-from QtSigman.DefaultColors import defaultColors
-from QtSigman import MplWidgets, DataActions, ListWidgets
-from QtSigman.MplWidgets import Axis
+from QtSigman import MplWidgets, DataActions, ListWidgets, DefaultColors
+from QtSigman.DataActions import ActionCancelledError
+from QtSigman.VisualObjects import VCollection, VWave, VPoints
 
-class VisualDataObject():
-    def __init__(self, data, color, axis):
-        self.color = color
-        self.axis = axis
-        self.mplObject = None
+class QDataObject(QC.QObject):
+    """Abstract class containing a self.changed signal to be emitted
+    whenever instances of its children classes changed, as well as a
+    toDelete and toSetKey signal to inform CompositeDataWrapper of
+    desired changes.
+    """
+    changed = QC.pyqtSignal()
+    toDelete = QC.pyqtSignal()
+    toSetKey = QC.pyqtSignal(str)
 
-    def plot(self, axis, beginTime, endTime,
-             keepMplObject=True, color=None):
-        """Metoda rysująca dane na wykresie matplotlib. Jeśli już są
-        narysowane to tylko je zmienia / odświeża.
-        
-        Argumenty:
-        keepMplObject - czy zachować narysowane figury geometryczne do
-                        późniejszego odświeżenia. Powinno być True
-                        jeśli rysujemy na wykresie głównego okna, oraz
-                        False w innych wypadkach.
-        color - kolor wykresu. Jeśli None, wykorzystany zostanie
-                self.color
-        """
-    
-    def removeMplObject(self):
-        if self.mplObject is not None:
-            self.mplObject.remove()
-            self.mplObject = None
+    def delete(self):
+        self.toDelete.emit()
 
-    def setMplColor(self, color):
-        if self.mplObject is not None:
-            self.mplObject.set_color(color)
+    def setDictKey(self, key):
+        self.toSetKey.emit(key)
 
-class VisualDataWave(VisualDataObject, sm.Wave):
-    def __init__(self, data, color, axis):
-        VisualDataObject.__init__(self, data, color, axis)
-        sm.Wave.__init__(self,
-                              data.data,
-                              data.complete_length,
-                              wave_type=data.type,
-                              offset=data.offset)
+class QWave(sm.Wave, QDataObject):
+    """Extends sm.Wave to emit a self.changed Qt signal whenever any
+    operation changes it.
+    """
 
-    def plot(self, axis, beginTime, endTime,
-             keepMplObject=True, color=None):
-        if color is None:
-            color = self.color
-        tempBeginTime = max(beginTime, self.offset)
-        tempEndTime = min(endTime, self.offset 
-                          + self.complete_length)
-        x, y = self.generate_coordinate_tables(
-            begin_time=tempBeginTime,
-            end_time=tempEndTime,
-            begin_x=tempBeginTime)
-        if keepMplObject:
-            if self.mplObject is None:
-                self.mplObject, = axis.plot(x, y, 
-                                            color=color, label=self.type)
-            else:
-                self.mplObject.set_xdata(x)
-                self.mplObject.set_ydata(y)
-        else:
-            axis.plot(x, y, color=color, label=self.type)
+    def __init__(self, data):
+        super().__init__(data.data,
+                         data.complete_length,
+                         data.type,
+                         offset=data.offset)
+        QDataObject.__init__(self)
 
-class VisualDataPoints(VisualDataObject, sm.Points):
-    def __init__(self, data, color, axis):
-        VisualDataObject.__init__(self, data, color, axis)
-        sm.Points.__init__(self,
-                                data.data_x,
-                                data.data_y,
-                                point_type=data.type)
+    def replace_slice(self, begin_time, end_time, wave):
+        super().replace_slice(begin_time, end_time, wave)
+        self.changed.emit()
 
-    def plot(self, axis, beginTime, endTime,
-             keepMplObject=True, color=None):
-        if color is None:
-            color = self.color
-        x, y = self.data_slice(beginTime, endTime)
-        if keepMplObject:
-            if self.mplObject is None:
-                self.mplObject, = axis.plot(x, y, color=color, marker='o',
-                                            linestyle='None', picker=5,
-                                            label=self.type)
-            else:
-                self.mplObject.set_xdata(x)
-                self.mplObject.set_ydata(y)
-        else:
-            axis.plot(x, y, color=color, marker='o', linestyle='None',
-                      picker=5, label=self.type)
+class QPoints(sm.Points, QDataObject):
+    """Extends sm.Points to emit a self.changed Qt signal whenever any
+    operation changes it.
+    """
 
-class VisualParameter(VisualDataObject, sm.Parameter):
-    def __init__(self, data, color, axis):
-        VisualDataObject.__init__(self, data, color, axis)
-        sm.Parameter.__init__(self,
-                              data.type)
-        self.begin_times = data.begin_times
-        self.end_times = data.end_times
-        self.values = data.values
-        self.mplObject = []
+    def __init__(self, data):
+        super().__init__(data.data_x,
+                         data.data_y,
+                         data.type)
+        QDataObject.__init__(self)
 
-    def plot(self, axis, beginTime, endTime,
-             keepMplObject=True, color=None):
-        if color is None:
-            color = self.color
-        waveTuples = self.generate_parameter_wave_tuples(
-            begin_time=beginTime, end_time=endTime)
-        if keepMplObject:
-            if self.mplObject is None: #TODO: Ten if powinien być niepotrzebny
-                self.mplObject = []
-            if len(self.mplObject) != len(waveTuples):
-                self.removeMplObject()
-            if self.mplObject == []:
-                for tup in waveTuples:
-                    mplLine, = axis.plot(tup[0], tup[1], 
-                                         color=color, label=self.type)
-                    self.mplObject.append(mplLine)
-            else:
-                for mplLine, tup in zip(self.mplObject, waveTuples):
-                    mplLine.set_xdata(tup[0])
-                    mplLine.set_ydata(tup[1])
-        else:
-            for tup in waveTuples:
-                axis.plot(tup[0], tup[1], color=color, label=self.type)
+    def delete_slice(self, begin_time, end_time):
+        super().delete_slice(begin_time, end_time)
+        self.changed.emit()
 
+    def replace_slice(self, begin_time, end_time, points):
+        super().replace_slice(begin_time, end_time, points)
+        self.changed.emit()
 
-    def removeMplObject(self):
-        for mplLine in self.mplObject:
-            mplLine.remove()
-        self.mplObject = []
+    def add_point(self, x, y):
+        super().add_point(x, y)
+        self.changed.emit()
 
-    def setMplColor(self, color):
-        for mplLine in mplObject:
-            mplLine.set_color(color)
+    def add_points(self, points, begin_time=0):
+        super().add_points(points, begin_time=begin_time)
+        self.changed.emit()
+
+    def delete_point(self, x, y=None):
+        super().delete_point(x, y=y)
+        self.changed.emit()
+
+    def move_point(self, x1, y1, x2, y2):
+        super().move_point(x1, y1, x2, y2)
+        self.changed.emit()
+
+    def align_to_line(self, line):
+        super().align_to_line(line)
+        self.changed.emit()
+
+    def move_in_time(self, time):
+        super().move_in_time(time)
+        self.changed.emit()
+
+class QParameter(sm.Parameter, QDataObject):
+    """Extends sm.Parameter to emit a self.changed Qt signal whenever
+    any operation changes it.
+    """
+
+    def __init__(self, parameter_type):
+        super().__init__(parameter_type)
+        QDataObject.__init__(self)
+
+    def add_value(self, begin_time, end_time, value):
+        super().add_value(begin_time, end_time, value)
+        self.changed.emit()
 
 class CompositeDataWrapper(sm.Composite_data, QC.QObject):
-    """Klasa rozszerzająca sm.Composite_data o zmienne i funkcje 
-    pozwalające na wykorzystanie go graficznie."""
-    
-    # Sygnały do pozostałych obiektów Qt
-    # informujące o dodawaniu i usuwaniu obiektów danych, np do list
-    waveNumberChanged = QC.pyqtSignal()
-    pointNumberChanged = QC.pyqtSignal()
-    parameterNumberChanged = QC.pyqtSignal()
-    # informujące o zmianach wewnątrz obiektów danych, np do rysowania
-    waveChanged = QC.pyqtSignal()
-    pointChanged = QC.pyqtSignal()
-    parameterChanged = QC.pyqtSignal()
+    """Class extending sm.Composite_data with Qt signals and methods
+    that allow for external editing (e.g. via functions from
+    QtSigman.DataActions).
+    """
+    waveAdded = QC.pyqtSignal(QWave, str)
+    waveKeyChanged = QC.pyqtSignal(str, str)
+    waveDeleted = QC.pyqtSignal(str)
+    pointsAdded = QC.pyqtSignal(QPoints, str)
+    pointsKeyChanged = QC.pyqtSignal(str, str)
+    pointsDeleted = QC.pyqtSignal(str)
+    parameterAdded = QC.pyqtSignal(QParameter, str)
+    parameterKeyChanged = QC.pyqtSignal(str, str)
+    parameterDeleted = QC.pyqtSignal(str)
 
     def __init__(self, **kwargs):
-        # Inicjalizujemy parents
-        sm.Composite_data.__init__(self, **kwargs)
+        super().__init__(**kwargs)
         QC.QObject.__init__(self)
 
         for key, item in self.waves.items():
-            self.waves[key] = VisualDataWave(
-                item, 
-                colors.to_hex(defaultColors[key]),
-                Axis.Hidden)
+            self.add_wave(item, key)
         for key, item in self.points.items():
-            self.points[key] = VisualDataPoints(
-                item, 
-                colors.to_hex(defaultColors[key]),
-                Axis.Hidden)
+            self.add_points(item, key)
         for key, item in self.parameters.items():
-            self.parameters[key] = VisualParameter(
-                item, 
-                colors.to_hex(defaultColors[key]),
-                Axis.Hidden)
-        self.dataDicts = [self.waves, self.points, self.parameters]
-
-    def replaceWithCompositeDataWrapper(self, compositeDataWrapper):
-        newDataDicts = [
-            compositeDataWrapper.waves,
-            compositeDataWrapper.points,
-            compositeDataWrapper.parameters]
-        for dataDict, newDataDict in zip(self.dataDicts, newDataDicts):
-            for key, item in dataDict.items():
-                item.removeMplObject()
-            # Oczyszczanie zapisanych danych graficznych
-            for key, item in newDataDict.items():
-                item.mplObject = None
-        self.waves = compositeDataWrapper.waves
-        self.points = compositeDataWrapper.points
-        self.parameters = compositeDataWrapper.parameters
-        self.dataDicts = [
-            self.waves,
-            self.points,
-            self.parameters]
-
-        self.waveNumberChanged.emit()
-        self.pointNumberChanged.emit()
-        self.parameterNumberChanged.emit()
-        self.waveChanged.emit()
-        self.pointChanged.emit()
-        self.parameterChanged.emit()
+            self.add_parameter(item, key)
 
     @classmethod
-    def fromSigmanCompositeData(cls, compositeData):
+    def fromCompositeData(cls, compositeData):
+        """Creates a CompositeDataWrapper instance from Composite_data."""
         return cls(
-            waves = compositeData.waves,
-            points = compositeData.points,
-            parameters = compositeData.parameters)
+            waves=compositeData.waves,
+            points=compositeData.points,
+            parameters=compositeData.parameters)
 
-    def add_wave(self, wave, dict_type, color=None, replace=False,
-                      axis=Axis.Hidden):
-        super(CompositeDataWrapper, self).add_wave(wave,
-                                                        dict_type,
-                                                        replace=replace)
-        if color is None:
-            color = defaultColors.getColor(dict_type)
-        self.waves[dict_type] = VisualDataWave(
-            self.waves[dict_type],
-            color,
-            axis)
-        self.waveNumberChanged.emit()
+    def replace(self, compData):
+        """Replaces all of the items in this CompositeDataWrapper with
+        those from an other Composite_data instance.
+        """
+        for dict_ in [self.waves,
+                      self.points,
+                      self.parameters]:
+            for key in list(dict_.keys()):
+                self._delete(dict_[key], key)
+        waves = compData.waves
+        points = compData.points
+        parameters = compData.parameters
+        for key, item in waves.items():
+            self.add_wave(item, key)
+        for key, item in points.items():
+            self.add_points(item, key)
+        for key, item in parameters.items():
+            self.add_parameter(item, key)
 
-    def editWaveSettings(self, dictType, newDictType, 
-                                color, axis, offset):
-        """Changes settings of a selected wave."""
-        wave = self.waves[dictType]
-        if wave.color != color:
-            wave.setMplColor(color)
-        if wave.axis != axis:
-            wave.axis = axis
-            wave.removeMplObject()
-        wave.offset = offset 
-        if dictType != newDictType:
-            wave.type = newDictType
-            wave.mplObject.set_label(wave.type)
-            self.waves[newDictType] = wave
-            self.waves.pop(dictType)
-            self.waveNumberChanged.emit()
-        self.waveChanged.emit()
+    def _delete(self, data, key):
+        if isinstance(data, QWave):
+            self.delete_wave(key)
+        elif isinstance(data, QPoints):
+            self.delete_points(key)
+        elif isinstance(data, QParameter):
+            self.delete_parameter(key)
+
+    def add_wave(self, wave, dict_type, replace=False):
+        """Adds a Wave as a QWave and emits waveNumberChanged signal.
+        
+        Overrides add_wave.
+        """
+        # super().add_wave checks if it's possible to add it
+        super().add_wave(wave, dict_type, replace=replace)
+        self.waves[dict_type] = QWave(wave)
+        self.waves[dict_type].toDelete.connect(
+            lambda: self.delete_wave(dict_type))
+        self.waves[dict_type].toSetKey.connect(
+            lambda key: self.setWaveKey(
+                dict_type, key))
+        self.waveAdded.emit(self.waves[dict_type], dict_type)
 
     def delete_wave(self, dict_type):
-        self.waves[dict_type].removeMplObject()
-        super(CompositeDataWrapper, self).delete_wave(dict_type)
-        self.waveNumberChanged.emit()
+        """Deletes a QWave with the given dict type and emits
+        waveNumberChanged signal.
 
-    def add_points(self, points, dict_type, color=None, join=False,
-                        axis=Axis.Hidden):
-        super(CompositeDataWrapper, self).add_points(points,
-                                                          dict_type,
-                                                          join=join)
-        if color is None:
-            color = defaultColors.getColor(dict_type)
-        self.points[dict_type] = VisualDataPoints(
-            self.points[dict_type],
-            color,
-            axis)
-        self.pointNumberChanged.emit()
+        Overrides delete_wave."""
+        self.waves[dict_type].changed.disconnect()
+        self.waves[dict_type].toDelete.disconnect()
+        self.waves[dict_type].toSetKey.disconnect()
+        super().delete_wave(dict_type)
+        self.waveDeleted.emit(dict_type)
 
-    def editPointsSettings(self, dictType, newDictType, 
-                                color, axis, offset):
-        """Changes settings of a selected set of points."""
-        points = self.points[dictType]
-        if points.color != color:
-            points.setMplColor(color)
-        if points.axis != axis:
-            points.axis = axis
-            points.removeMplObject()
-        points.move_in_time(offset)
-        if dictType != newDictType:
-            points.type = newDictType
-            points.mplObject.set_label(points.type)
-            self.points[newDictType] = points
-            self.points.pop(dictType)
-            self.pointNumberChanged.emit()
-        self.pointChanged.emit()
+    def setWaveKey(self, dictTypeFrom, dictTypeTo):
+        """Changes the dict key of a chosen wave from one to an other.
+        Reconnects the toDelete and toSetKey signals.
+        """
+        if dictTypeFrom == dictTypeTo:
+            return
+        self.waves[dictTypeTo] = self.waves[dictTypeFrom]
+        self.waves.pop(dictTypeFrom)
+        self.waves[dictTypeTo].toDelete.disconnect()
+        self.waves[dictTypeTo].toDelete.connect(
+            lambda: self.delete_wave(
+                dictTypeTo))
+        self.waves[dictTypeTo].toSetKey.disconnect()
+        self.waves[dictTypeTo].toSetKey.connect(
+            lambda key: self.setWaveKey(
+                dictTypeTo, key))
+        self.waveKeyChanged.emit(dictTypeFrom, dictTypeTo)
+
+    def add_points(self, points, dict_type, join=False):
+        """Adds a Points instance as a QPoints and emits
+        pointNumberChanged signal.
+        
+        Overrides add_points.
+        """
+        super().add_points(points, dict_type, join=join)
+        self.points[dict_type] = QPoints(points)
+        self.points[dict_type].toDelete.connect(
+            lambda: self.delete_points(dict_type))
+        self.points[dict_type].toSetKey.connect(
+            lambda key: self.setPointsKey(
+                dict_type, key))
+        self.pointsAdded.emit(self.points[dict_type], dict_type)
 
     def delete_points(self, dict_type):
-        self.points[dict_type].removeMplObject()
-        super(CompositeDataWrapper, self).delete_points(dict_type)
-        self.pointNumberChanged.emit()
+        """Deletes a QPoints with the given dict type and emits
+        pointNumberChanged signal.
+        
+        Overrides delete_points.
+        """
+        self.points[dict_type].changed.disconnect()
+        self.points[dict_type].toDelete.disconnect()
+        self.points[dict_type].toSetKey.disconnect()
+        super().delete_points(dict_type)
+        self.pointsDeleted.emit(dict_type)
 
-    def add_parameter(self, parameter, dict_type, color=None, replace=False,
-                      axis=Axis.Hidden):
-        super(CompositeDataWrapper, self).add_parameter(parameter,
-                                                        dict_type,
-                                                        replace=replace)
-        if color is None:
-            color = defaultColors.getColor(dict_type)
-        self.parameters[dict_type] = VisualParameter(
-            self.parameters[dict_type],
-            color,
-            axis)
-        self.parameterNumberChanged.emit()
+    def setPointsKey(self, dictTypeFrom, dictTypeTo):
+        """Changes the dict key of chosen points from one to an other."""
+        if dictTypeFrom == dictTypeTo:
+            return
+        self.points[dictTypeTo] = self.points[dictTypeFrom]
+        self.points.pop(dictTypeFrom)
+        self.points[dictTypeTo].toSetKey.disconnect()
+        self.points[dictTypeTo].toSetKey.connect(
+            lambda key: self.setPointsKey(
+                dictTypeTo, key))
+        self.pointsKeyChanged.emit(dictTypeFrom, dictTypeTo)
 
-    def editParameterSettings(self, dictType, newDictType, 
-                                color, axis):
-        """Changes settings of a selected parameter."""
-        parameter = self.parameters[dictType]
-        parameter.color = color
-        if parameter.axis != axis:
-            parameter.axis = axis
-            parameter.removeMplObject()
-        if dictType != newDictType:
-            self.parameters[newDictType] = parameter
-            self.parameters.pop(dictType)
-            self.parameterNumberChanged.emit()
-        self.parameterChanged.emit()
+    def add_parameter(self, parameter, dict_type, replace=False):
+        """Adds a Parameter as a QParameter and emits
+        parameterNumberChanged signal.
+        
+        Overrides add_parameter.
+        """
+        super().add_parameter(points, dict_type, replace=replace)
+        self.parameters[dict_type] = QParameter(parameter)
+        self.parameters[dict_type].toDelete.connect(
+            lambda: self.delete_parameter(dict_type))
+        self.parameters[dict_type].toSetKey.connect(
+            lambda key: self.setParameterKey(
+                dict_type, key))
+        self.parameterAdded.emit(self.parameters[dict_type], dict_type)
 
     def delete_parameter(self, dict_type):
-        self.parameters[dict_type].removeMplObject()
-        super(CompositeDataWrapper, self).delete_parameter(dict_type)
-        self.parameterNumberChanged.emit()
+        """Deletes a QParameter with the given dict type and emits
+        parameterNumberChanged signal.
 
+        Overrides delete_parameter.
+        """
+        self.parameters[dict_type].changed.disconnect()
+        self.parameters[dict_type].toDelete.disconnect()
+        self.parameters[dict_type].toSetKey.disconnect()
+        super().delete_parameter(dict_type)
+        self.parameterDeleted.emit(dict_type)
+
+    def setParameterKey(self, dictTypeFrom, dictTypeTo):
+        """Changes the dict key of a chosen parameter from one to an 
+        other.
+        """
+        if dictTypeFrom == dictTypeTo:
+            return
+        self.parameters[dictTypeTo] = self.parameters[dictTypeFrom]
+        self.parameters.pop(dictTypeFrom)
+        self.parameters[dictTypeTo].toSetKey.disconnect()
+        self.parameters[dictTypeTo].toSetKey.connect(
+            lambda key: self.setParameterKey(
+                dictTypeTo, key))
+        self.parameterKeyChanged.emit(dictTypeFrom, dictTypeTo)
 
 class QtSigmanWindow(QW.QMainWindow):
     """Klasa zawierająca główne okno programu."""
@@ -334,102 +304,46 @@ class QtSigmanWindow(QW.QMainWindow):
         mainLayout = QW.QHBoxLayout(self.mainWidget)
         self.setCentralWidget(self.mainWidget)
         # Po lewej
-        self.mplPlotWidget = MplWidgets.PlotWidget(self.compositeDataWrapper)
-        mainLayout.addWidget(self.mplPlotWidget)
-        # Podłączamy wszystkie możliwe sygnały qt wpływające na wykres do
-        # obiektu wykresu
-        self.compositeDataWrapper.waveNumberChanged.connect(self._refreshPlot)
-        self.compositeDataWrapper.pointNumberChanged.connect(self._refreshPlot)
-        self.compositeDataWrapper.parameterNumberChanged.connect(self._refreshPlot)
-        self.compositeDataWrapper.waveChanged.connect(self._refreshPlot)
-        self.compositeDataWrapper.pointChanged.connect(self._refreshPlot)
-        self.compositeDataWrapper.parameterChanged.connect(self._refreshPlot)
-        self.compositeDataWrapper.pointNumberChanged.connect(lambda:
-            self.mplPlotWidget.plotToolbar.updatePointComboBox(
-                self.compositeDataWrapper))
-        self.compositeDataWrapper.pointChanged.connect(lambda:
-            self.mplPlotWidget.plotToolbar.updatePointComboBox(
-                self.compositeDataWrapper))
+        self.plotWidgets = []
+        self.plotTabWidget = QW.QTabWidget(self.mainWidget)
+        mainLayout.addWidget(self.plotTabWidget)
 
         # Po prawej
         rightVBoxLayout = QW.QVBoxLayout()
-        waveListLabel = QW.QLabel()
-        waveListLabel.setText("Przebiegi")
-        waveList = ListWidgets.DataListWidget()
-#        waveList.itemClicked.connect(lambda listItemWidget:
-#            DataActions.inputWaveSettings(self.compositeDataWrapper, 
-#                waveList.itemWidget(listItemWidget).typeLabel.text()))
-        self.compositeDataWrapper.waveNumberChanged.connect(
-            lambda:
-            waveList.updateData(self.compositeDataWrapper, 'wave'))
-#        self.compositeDataReloaded.connect(
-#            lambda:
-#            waveList.updateData(self.compositeDataWrapper, 'wave'))
-        waveList.setSizePolicy(QW.QSizePolicy.Fixed,
-                               QW.QSizePolicy.Expanding)
-        rightVBoxLayout.addWidget(waveListLabel)
-        rightVBoxLayout.addWidget(waveList)
-        pointListLabel = QW.QLabel()
-        pointListLabel.setText("Punkty") 
-        pointList = ListWidgets.DataListWidget()
-#        pointList.itemClicked.connect(lambda listItemWidget:
-#            DataActions.inputPointSettings(self.compositeDataWrapper, 
-#                pointList.itemWidget(listItemWidget).typeLabel.text()))
-        self.compositeDataWrapper.pointNumberChanged.connect(
-            lambda:
-            pointList.updateData(self.compositeDataWrapper, 'point'))
-#        self.compositeDataReloaded.connect(
-#            lambda:
-#            pointList.updateData(self.compositeDataWrapper, 'point'))
-        pointList.setSizePolicy(QW.QSizePolicy.Fixed,
-                                QW.QSizePolicy.Expanding) 
-        rightVBoxLayout.addWidget(pointListLabel)
-        rightVBoxLayout.addWidget(pointList)
-        parameterListLabel = QW.QLabel() 
-        parameterListLabel.setText("Obliczone parametry")
-        self.compositeDataWrapper.parameterNumberChanged.connect(
-            lambda:
-            parameterList.updateData(self.compositeDataWrapper, 'parameter'))
-#        self.compositeDataReloaded.connect(
-#            lambda:
-#            parameterList.updateData(self.compositeDataWrapper, 'parameter'))
-        parameterList = ListWidgets.DataListWidget()
-        parameterList.setSizePolicy(QW.QSizePolicy.Fixed,
-                                    QW.QSizePolicy.Expanding) 
-        rightVBoxLayout.addWidget(parameterListLabel)
-        rightVBoxLayout.addWidget(parameterList)
-        mainLayout.addLayout(rightVBoxLayout)
+        self.listWidgets = []
+        self.stackedListWidget = QW.QStackedWidget(self)
+        self.stackedListWidget.setSizePolicy(QW.QSizePolicy.Fixed,
+                                             QW.QSizePolicy.Expanding)
+        self.plotTabWidget.currentChanged.connect(self._sortListWidgets)
+        mainLayout.addWidget(self.stackedListWidget)
+        self.addPlot()
 
         # Ustawienie paska menu
         self.file_menu = QW.QMenu('Plik', self)
-        self.file_menu.addAction('Importuj przebieg', lambda:
-            DataActions.importWave(self.compositeDataWrapper))
+        self.file_menu.addAction('Importuj przebieg', self.importWave)
         self.file_menu.addAction('Eksportuj przebieg // TODO', lambda:
             QW.QMessageBox.information(self, "Informacja",
                                       "Nie zaimplementowano"))
-        self.file_menu.addAction('Wczytaj dane Modelflow', lambda:
-            DataActions.importModelflow(self.compositeDataWrapper))
-        self.file_menu.addAction('Importuj punkty', lambda:
-            DataActions.importPoints(self.compositeDataWrapper))
+        self.file_menu.addAction('Importuj punkty', self.importPoints)
+        self.file_menu.addAction('Wczytaj dane Modelflow',
+                self.importModelflow)        
         self.file_menu.addAction('Eksportuj punkty // TODO', lambda:
             QW.QMessageBox.information(self, "Informacja",
                                       "Nie zaimplementowano"))
-        self.file_menu.addAction('Eksportuj parametr // TODO', lambda:
-            QW.QMessageBox.information(self, "Informacja",
-                                      "Nie zaimplementowano"))
-        self.file_menu.addAction('Wczytaj projekt', lambda:
-            self._replaceCompositeDataWrapper(
-                DataActions.loadCompositeData()))
-        self.file_menu.addAction('Zapisz projekt', lambda:
-            DataActions.saveCompositeData(self.compositeDataWrapper))
-        self.file_menu.addAction('Zamknij', self.fileQuit)
+        self.file_menu.addAction('Wczytaj projekt', self.loadCompositeData)
+        self.file_menu.addAction('Zapisz projekt', self.saveCompositeData)
+        self.file_menu.addAction('Zamknij', self.quit)
         self.menuBar().addMenu(self.file_menu)
 
+        self.windowMenu = QW.QMenu('Widok', self)
+        self.windowMenu.addAction('Dodaj wykres', self.addPlot)
+        self.menuBar().addMenu(self.windowMenu)
+        self.windowMenu.addAction('Usuń wykres', self.deletePlot)
+        self.menuBar().addMenu(self.windowMenu)
+
         self.procedure_menu = QW.QMenu('Procedury', self)
-        self.procedure_menu.addAction('Modyfikuj przebieg', lambda:
-            DataActions.modifyWave(self.compositeDataWrapper))
-        self.procedure_menu.addAction('Znajdź punkty', lambda:
-            DataActions.findPoints(self.compositeDataWrapper))
+        self.procedure_menu.addAction('Modyfikuj przebieg', self.modifyWave)
+        self.procedure_menu.addAction('Znajdź punkty', self.findPoints)
         self.procedure_menu.addAction('Oblicz parametr // TODO', lambda:
             QW.QMessageBox.information(self, "Informacja",
                                       "Nie zaimplementowano"))
@@ -440,18 +354,133 @@ class QtSigmanWindow(QW.QMainWindow):
         self.menuBar().addSeparator()
         self.menuBar().addMenu(self.help_menu)
 
-    def _refreshPlot(self):
-        self.mplPlotWidget.updateCompositeData(self.compositeDataWrapper)
-
     def _replaceCompositeDataWrapper(self, compositeDataWrapper):
         if compositeDataWrapper is not None:
-            self.compositeDataWrapper.replaceWithCompositeDataWrapper(compositeDataWrapper)
+            self.compositeDataWrapper.replaceWithCompositeDataWrapper(
+                compositeDataWrapper)
+            for plot in self.plotWidgets:
+                vCollection = VCollection.fromCompositeData(
+                    compositeDataWrapper)
+                plot.replaceVCollection(vCollection)
 
-    def fileQuit(self):
+    def _sortListWidgets(self):
+        self.stackedListWidget.setCurrentIndex(
+            self.plotTabWidget.currentIndex())
+
+    def addPlot(self):
+        """Adds a new PlotWidget to self.plotTabWidget based on the 
+        first PlotWidget, as well as a corresponding 
+        VCollectionListWidget to self.listWidgets. If it is the first
+        PlotWidget, it's instead directly based on self.compositeDataWrapper.
+        """
+        if len(self.plotWidgets) == 0:
+            self.plotWidgets.append(
+                MplWidgets.PlotWidget.fromCompositeDataWrapper(
+                    self.compositeDataWrapper))
+            self.plotTabWidget.addTab(
+                self.plotWidgets[0], "Main")
+        else:
+            self.plotWidgets.append(
+                MplWidgets.PlotWidget.fromVCollection(
+                    self.plotWidgets[0].vCollection,
+                    allHidden=True))
+            self.plotTabWidget.addTab(
+                self.plotWidgets[-1], str(len(self.plotWidgets)-1))
+        self.listWidgets.append(
+            ListWidgets.VCollectionListWidget(
+                self.plotWidgets[-1].vCollection))
+        self.stackedListWidget.addWidget(
+            self.listWidgets[-1])
+
+    def deletePlot(self):
+        """Deletes the currently selected plot. If the main plot is
+        selected, it does nothing.
+        """
+        index = self.plotTabWidget.currentIndex()
+        if index == 0:
+            return
+        self.plotWidgets[index].vCollection.delete()
+        self.plotTabWidget.removeTab(index)
+        self.stackedListWidget.removeWidget(
+            self.stackedListWidget.widget(index))
+        del self.plotWidgets[index]
+        del self.listWidgets[index]
+        for i in range(1, self.plotTabWidget.count()+1):
+            self.plotTabWidget.setTabText(i, str(i))
+        
+    def importWave(self):
+        setOfWaves = DataActions.loadWave(
+                self.compositeDataWrapper.waves.keys())
+        for waveTuple in setOfWaves:
+            try:
+                wave, key, color, axis = waveTuple
+                self.compositeDataWrapper.add_wave(wave, key)
+                self.plotTabWidget.currentWidget().vCollection.waves[
+                        key].setSettings(color, axis)
+            except ActionCancelledError:
+                pass
+
+    def importPoints(self):
+        setOfPoints = DataActions.loadPoints(
+                self.compositeDataWrapper.points.keys())
+        for pointsTuple in setOfPoints:
+            try:
+                points, key, color, axis = pointsTuple
+                self.compositeDataWrapper.add_points(points, key)
+                self.plotTabWidget.currentWidget().vCollection.points[
+                        key].setSettings(color, axis)
+            except ActionCancelledError:
+                pass
+   
+    def importModelflow(self):
+        try:
+            modelflowPoints, modelflowData = DataActions.loadModelflow(
+                    self.compositeDataWrapper)
+            for i in range(len(modelflowPoints)):
+                wave = modelflowPoints[i]
+                key = modelflowData[2][i+1]
+                color = DefaultColors.getColor(key)
+                axis = -1
+                self.compositeDataWrapper.add_points(wave, key)
+                self.plotTabWidget.currentWidget().vCollection.points[
+                        key].setSettings(color, axis)
+        except ActionCancelledError:
+            pass
+
+    def saveCompositeData(self):
+        try:
+            DataActions.saveCompositeData(self.compositeDataWrapper)
+        except ActionCancelledError:
+            pass
+
+    def loadCompositeData(self):
+        try:
+            compData = DataActions.loadCompositeData()
+            self.compositeDataWrapper.replace(compData)
+        except ActionCancelledError:
+            pass
+
+    def modifyWave(self):
+        try:
+            DataActions.modifyWave(self.compositeDataWrapper)
+        except ActionCancelledError:
+            pass
+
+    def findPoints(self):
+        try:
+            points, key, color, axis = DataActions.findPoints(
+                self.compositeDataWrapper)
+            self.compositeDataWrapper.add_points(points, key)
+            self.plotTabWidget.currentWidget().vCollection.points[key].setSettings(
+                color, axis)
+        except ActionCancelledError:
+            pass
+
+    def quit(self):
         self.close()
 
     def closeEvent(self, ce):
-        self.fileQuit()
+        self.quit()
 
     def about(self):
         QW.QMessageBox.about(self, "O programie",
