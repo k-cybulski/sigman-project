@@ -88,52 +88,23 @@ def loadModelflow(compositeDataWrapper):
     title = path[0].split("/")[-1]
     ex = DataActionWidgets.ModelflowImportDialog(path[0], compositeDataWrapper)
     try:
-        dataX = compositeDataWrapper.points[ex.SelectedPoints()].data_x
-        dataY = compositeDataWrapper.points[ex.SelectedPoints()].data_y
+        data_points = compositeDataWrapper.points[ex.SelectedPoints()]
     except:
         raise ActionCancelledError
-    modelflowPoints = None
-    HRfromR = None
+    modelflowPoints = []
     if ex.result() == 1:
-        modelflowData = fm.import_data_from_modelflow(ex.PathModelflow())
         if ex.SelectedPointsType() == 0:
-            FitNumber = 0
-            HR = dataY
+            reference_data_type = 'sbp'
         elif ex.SelectedPointsType() == 1:
-            FitNumber = 1
-            HR = dataY
+            reference_data_type = 'dbp'
         else:
-            FitNumber = 6
-            HR = ImportModelflow.DetermineHR(dataX)
-            wave = sm.Points(dataX, HR, 'wyznaczoneHRzR')
-            wave.offset = 0
-            wave.type = 'wyznaczoneHRzR'
-            HRfromR = (wave, 'wyznaczoneHRzR')
-
-        modelflowOffset = ImportModelflow.EstimateModelflowDataOffset(
-                modelflowData[1][FitNumber], HR)
-
-        # Jesli przesuniecie rowna sie 2 oznacza to 
-        # ze czas dane[2] ma się równać czasowi HR[0]
-        if modelflowOffset > 0:
-            offset = dataX[0] - modelflowData[0][modelflowOffset]
-            for i in range(len(modelflowData[0])):
-                modelflowData[0][i] = modelflowData[0][i] + offset
-
-        # Zbior zbiorow punktow
-        modelflowPoints = []
-        for i in range(len(modelflowData[1])-1):
-            wave = sm.Points(modelflowData[0], 
-                            modelflowData[1][i],
-                            modelflowData[2][i+1])
-            wave.offset = 0
-            wave.type = modelflowData[2][i+1]
-            modelflowPoints.append(wave)
-
-    if modelflowPoints is None:
+            reference_data_type = 'r'
+        out_points, out_names = fm.import_modelflow_data(
+            ex.PathModelflow(), data_points, reference_data_type)
+    else:
         raise ActionCancelledError
 
-    return (modelflowPoints, modelflowData, HRfromR)
+    return out_points, out_names
 
 def setVWaveSettings(vWave, key, allKeys):
     forbiddenKeys = list(allKeys)

@@ -434,20 +434,21 @@ class QtSigmanWindow(QW.QMainWindow):
    
     def importModelflow(self):
         try:
-            modelflowPoints, modelflowData, HRfromR = DataActions.loadModelflow(
+            modelflowPoints, modelflowData = DataActions.loadModelflow(
                     self.compositeDataWrapper)
-
-            self.compositeDataWrapper.add_points(HRfromR[0], HRfromR[1])
-            HRfromRcolor = DefaultColors.getColor(HRfromR[1])
-            self.plotTabWidget.currentWidget().vCollection.points[
-                    HRfromR[1]].setSettings(HRfromRcolor, -1)
 
             for i in range(len(modelflowPoints)):
                 wave = modelflowPoints[i]
-                key = modelflowData[2][i+1]
+                key = modelflowData[i]
                 color = DefaultColors.getColor(key)
                 axis = -1
-                self.compositeDataWrapper.add_points(wave, key)
+                try:
+                    self.compositeDataWrapper.add_points(wave, key)
+                except ValueError:
+                    QW.QMessageBox.warning(
+                        self, "Błąd", ("Nazwa "+key+" już zajęta. "
+                                       "Nie można zaimportować."))
+                    raise ActionCancelledError
                 self.plotTabWidget.currentWidget().vCollection.points[
                         key].setSettings(color, axis)
         except ActionCancelledError:

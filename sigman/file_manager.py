@@ -123,35 +123,106 @@ def export_points(file_name, points):
         raise ValueError("Nieodpowiedni format plików")
     export_func(file_name, points)
 
-def is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
-   
-def import_data_from_modelflow(file_name):
+def _estimate_points_offset(align_points, reference_points,
+                            cross_correlation=False):
+    """Estimates the offset between two sets of points that describe
+    the same data. Returns the time in seconds that the align_points
+    need to be moved by.
+    
+    align_points must be longer than reference_points
+    """
+    if len(align_points) < len(reference_points):
+        raise ValueError("Points to align must have more data than refrence.")
+    if not cross_correlation:
+        align_data = align_points.data_y
+        reference_data = reference_points.data_y
+        differences = []
+        difference = 0
+        for i in range(0, len(align_data) - len(reference_data)):
+            difference = 0
+            for j in range (0, len(reference_data)):
+                 difference += abs(align_data[i+j] - reference_data[j])     
+            differences.append(difference)
+        offset = np.argmin(differences)
+        offset = align_points.data_x[offset] - reference_points.data_x[0]
+    else:
+        index_offset = np.argmin(np.correlate(align_points.data_y,
+                                              reference_points.data_y))
+        offset = align_points.data_x[index_offset] - reference_points.data_x[0]
+        # We need to account for the fact align_points and reference_points
+        # are off by 2x the time of the first value in align_points
+        offset -= align_points.data_x[0]*2
+
+    return -offset
+
+def _hr_from_r(time):
+    HR = [0] * (len(time) - 1)
+    for i in range(len(time) - 1):
+        HR[i] = round(60 / (time[i+1] - time[i]))
+    return HR
+
+def import_modelflow_data(file_name, reference_points, reference_points_type):
+    """Imports and aligns Finapres Modeflow data to already existing 
+    points.
+    
+    Args:
+        base_data - sm.Points to align to
+        base_data_type - can be 'sbp', 'dbp' or 'r'
+    """
+    if reference_points_type not in ['sbp', 'dbp', 'r']:
+        raise ValueError("Invlaid reference data type")
     x = []
-    y = []
-    names = []
+    y = None
+    names = None
+    # Data retrieval
     with open(file_name) as f:
-       flag = False
-       for line in f:
-           if "END preamble" in line:
-              flag = True 
-           if flag:
-               pom = line.split()       
-               if len(pom) > 2:
-                   if is_number(pom[0]):
-                       x.append(float(pom[0]))  
-                       if len(y) < len(pom):
-                             y = [[0 for i in range(1)] for j in range(len(pom))]
-                             for i in range(1, len(pom)):
-                                 y[i-1][0] = float(pom[i])
-                       else:
-                           for i in range(1, len(pom)):
-                                y[i-1].append(float(pom[i]))
-                   else:
-                       if len(names) < 1:
-                           names = pom;
-    return x, y, names
+        data_section = False
+        for line in f:
+            if not data_section and "END preamble" in line:
+                data_section = True 
+                continue
+            if data_section:
+                data = line.split()
+                if len(data) > 2:
+                    if names is None:
+                        # trim " characters
+                        names = [name[1:-1] for name in data[1:]]
+                        continue
+                    try:
+                        x.append(float(data[0]))
+                        if y is None:
+                            y = [[float(str_)] for str_ in data[1:]]
+                        else:
+                            for i in range(1, len(data)):
+                                y[i-1].append(float(data[i]))
+                    except ValueError: # If values are strings
+                        continue
+    # Alignment and object initialization
+    # modelflow_data[0] -> fiSYS -> SBP
+    # modelflow_data[1] -> fiDIA -> DBP
+    # modelflow_data[6] -> HR -> can be calculated from R
+    points_list = []
+    hr_points = None
+    offset = 0
+    for y_vals, name in zip(y, names):
+        points = sm.Points(x, y_vals, name)
+        points_list.append(points)
+        if offset == 0:
+            if reference_points_type == 'sbp' and name =='fiSYS':
+                offset = _estimate_points_offset(points, reference_points)
+            elif reference_points_type == 'dbp' and name == 'fiDIA':
+                offset = _estimate_points_offset(points, reference_points)
+            elif reference_points_type == 'r' and name == 'HR':
+                hr_from_r = _hr_from_r(reference_points.data_x)
+                hr_points = sm.Points(reference_points.data_x, hr_from_r,
+                                      'wyznaczoneHRzR')
+                offset = _estimate_points_offset(points, hr_points)
+
+    for points in points_list:
+        points.move_in_time(offset)
+    
+    if hr_points is not None:
+        points_list.append(hr_points)
+        names.append('wyznaczoneHRzR')
+
+    return points_list, names
