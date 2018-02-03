@@ -220,5 +220,6 @@ def findPoints(compositeDataWrapper):
             return newPoints, dictType, color, axis
         except EmptyPointsError:
             QW.QMessageBox.warning(None, 'Błąd', 'Nie odnaleziono punktów')
+            raise ActionCancelledError
     else:
         raise ActionCancelledError
