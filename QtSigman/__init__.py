@@ -434,8 +434,14 @@ class QtSigmanWindow(QW.QMainWindow):
    
     def importModelflow(self):
         try:
-            modelflowPoints, modelflowData = DataActions.loadModelflow(
+            modelflowPoints, modelflowData, HRfromR = DataActions.loadModelflow(
                     self.compositeDataWrapper)
+
+            self.compositeDataWrapper.add_points(HRfromR[0], HRfromR[1])
+            HRfromRcolor = DefaultColors.getColor(HRfromR[1])
+            self.plotTabWidget.currentWidget().vCollection.points[
+                    HRfromR[1]].setSettings(HRfromRcolor, -1)
+
             for i in range(len(modelflowPoints)):
                 wave = modelflowPoints[i]
                 key = modelflowData[2][i+1]

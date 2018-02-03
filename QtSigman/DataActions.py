@@ -93,12 +93,13 @@ def loadModelflow(compositeDataWrapper):
     except:
         raise ActionCancelledError
     modelflowPoints = None
+    HRfromR = None
     if ex.result() == 1:
         modelflowData = fm.import_data_from_modelflow(ex.PathModelflow())
-        if (ex.SelectedPointsType() == 0):
+        if ex.SelectedPointsType() == 0:
             FitNumber = 0
             HR = dataY
-        elif (ex.SelectedPointsType() == 1):
+        elif ex.SelectedPointsType() == 1:
             FitNumber = 1
             HR = dataY
         else:
@@ -107,9 +108,7 @@ def loadModelflow(compositeDataWrapper):
             wave = sm.Points(dataX, HR, 'wyznaczoneHRzR')
             wave.offset = 0
             wave.type = 'wyznaczoneHRzR'
-            compositeDataWrapper.add_points(wave, 'wyznaczoneHRzR', 
-                color=DefaultColors.getColor('wyznaczoneHRzR'), 
-                axis=-1)
+            HRfromR = (wave, 'wyznaczoneHRzR')
 
         modelflowOffset = ImportModelflow.EstimateModelflowDataOffset(
                 modelflowData[1][FitNumber], HR)
@@ -133,7 +132,8 @@ def loadModelflow(compositeDataWrapper):
 
     if modelflowPoints is None:
         raise ActionCancelledError
-    return (modelflowPoints, modelflowData)
+
+    return (modelflowPoints, modelflowData, HRfromR)
 
 def setVWaveSettings(vWave, key, allKeys):
     forbiddenKeys = list(allKeys)
