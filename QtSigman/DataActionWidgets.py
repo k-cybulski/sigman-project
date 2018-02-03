@@ -624,4 +624,4 @@ class ModelflowImportDialog(QW.QDialog):
          fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
          newpath = fileDialog.getOpenFileName(filter = fileFilter)
          self.pathLabel.setText(newpath[0])
- 
+

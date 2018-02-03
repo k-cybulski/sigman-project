@@ -434,7 +434,8 @@ class QtSigmanWindow(QW.QMainWindow):
    
     def importModelflow(self):
         try:
-            modelflowPoints, modelflowData = DataActions.loadModelflow(self.compositeDataWrapper)
+            modelflowPoints, modelflowData = DataActions.loadModelflow(
+                    self.compositeDataWrapper)
             for i in range(len(modelflowPoints)):
                 wave = modelflowPoints[i]
                 key = modelflowData[2][i+1]

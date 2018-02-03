@@ -15,7 +15,7 @@ class ActionCancelledError(Exception):
     """Raised when an action is cancelled."""
 
 def loadWave(forbiddenNames):
-    """Imports an sm.Wave instances from files and opens up a dialog
+    """Imports sm.Wave instances from files and opens up a dialog
     window with possible metainformaiton options for each.
 
     Returns a list of tuples containg Wave, chosen dictType, color and axis.
@@ -45,7 +45,7 @@ def loadWave(forbiddenNames):
     return setOfWaves
 
 def loadPoints(forbiddenNames):
-    """Imports an sm.Points instances from files and opens up a dialog
+    """Imports sm.Points instances from files and opens up a dialog
     window with possible metainformaiton options for each.
 
     Returns a list of tuples containing Points, chosen dictType, color and axis.
@@ -75,6 +75,9 @@ def loadPoints(forbiddenNames):
     return setOfPoints
 
 def loadModelflow(compositeDataWrapper):
+    """Import modelflow data and returns tuple consisting of
+    modelflowPoints and modelflowData.
+    """
     fileFilter = "(*.A00)"
     fileDialog = QW.QFileDialog()
     fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
@@ -83,7 +86,6 @@ def loadModelflow(compositeDataWrapper):
     if path[0] == "":
         raise ActionCancelledError
     title = path[0].split("/")[-1]
-
     ex = DataActionWidgets.ModelflowImportDialog(path[0], compositeDataWrapper)
     try:
         dataX = compositeDataWrapper.points[ex.SelectedPoints()].data_x
@@ -92,7 +94,7 @@ def loadModelflow(compositeDataWrapper):
         raise ActionCancelledError
     modelflowPoints = None
     if ex.result() == 1:
-        ModelflowData = fm.import_data_from_modelflow(ex.PathModelflow())
+        modelflowData = fm.import_data_from_modelflow(ex.PathModelflow())
         if (ex.SelectedPointsType() == 0):
             FitNumber = 0
             HR = dataY
@@ -109,29 +111,29 @@ def loadModelflow(compositeDataWrapper):
                 color=DefaultColors.getColor('wyznaczoneHRzR'), 
                 axis=Axis.Hidden)
 
-        ModelflowOffset = ImportModelflow.EstimateModelflowDataOffset(
-                ModelflowData[1][FitNumber], HR)
+        modelflowOffset = ImportModelflow.EstimateModelflowDataOffset(
+                modelflowData[1][FitNumber], HR)
 
         # Jesli przesuniecie rowna sie 2 oznacza to 
         # ze czas dane[2] ma się równać czasowi HR[0]
-        if ModelflowOffset > 0:
-            offset = dataX[0] - ModelflowData[0][ModelflowOffset]
-            for i in range(len(ModelflowData[0])):
-                ModelflowData[0][i] = ModelflowData[0][i] + offset
+        if modelflowOffset > 0:
+            offset = dataX[0] - modelflowData[0][modelflowOffset]
+            for i in range(len(modelflowData[0])):
+                modelflowData[0][i] = modelflowData[0][i] + offset
 
         # Zbior zbiorow punktow
         modelflowPoints = []
-        for i in range(len(ModelflowData[1])-1):
-            wave = sm.Points(ModelflowData[0], 
-                            ModelflowData[1][i],
-                            ModelflowData[2][i+1])
+        for i in range(len(modelflowData[1])-1):
+            wave = sm.Points(modelflowData[0], 
+                            modelflowData[1][i],
+                            modelflowData[2][i+1])
             wave.offset = 0
-            wave.type = ModelflowData[2][i+1]
+            wave.type = modelflowData[2][i+1]
             modelflowPoints.append(wave)
 
     if modelflowPoints is None:
         raise ActionCancelledError
-    return (modelflowPoints, ModelflowData)
+    return (modelflowPoints, modelflowData)
 
 def setVWaveSettings(vWave, key, allKeys):
     forbiddenKeys = list(allKeys)
