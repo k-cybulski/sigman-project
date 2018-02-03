@@ -1,12 +1,12 @@
 from enum import Enum
 import glob
+import re
 
 from PyQt5 import QtWidgets as QW
 from PyQt5.QtWidgets import QMessageBox as QMsgBox
 from matplotlib import colors
 from sigman import analyzer
 
-from QtSigman.MplWidgets import Axis
 from QtSigman.DefaultColors import defaultColors
 
 def _getColorString(inputColor):
@@ -23,7 +23,7 @@ class DataActionStatus(Enum):
 
 class DataSettingsDialog(QW.QDialog):
     def __init__(self, title="", dictType="default", color="#1f77b4", 
-                 forbiddenNames=[], parent=None, axis=Axis.Left, 
+                 forbiddenNames=[], parent=None, axis=-1,
                  offset='0', askDelete=False):
         super(DataSettingsDialog, self).__init__(parent = parent)
         
@@ -56,13 +56,16 @@ class DataSettingsDialog(QW.QDialog):
         self.axisLabel = QW.QLabel("Oś:")
         gridLayout.addWidget(self.axisLabel,3,1)
         self.axisComboBox = QW.QComboBox()
-        axisItems = [] # Bardzo niechlujny hack ustawiający opcje w kolejności
-        if axis == Axis.Left:
-            axisItems = ['Lewa','Prawa','Żadna (Ukryj)']
-        elif axis == Axis.Right:
-            axisItems = ['Prawa','Lewa','Żadna (Ukryj)']
-        else:
-            axisItems = ['Żadna (Ukryj)','Lewa','Prawa']
+        axisItems = list(map(str, range(-1,2))) # Bardzo niechlujny hack ustawiający opcje w kolejności
+        axisItems.remove(str(axis))
+        axisItems.insert(0, str(axis))
+        for i in range(len(axisItems)):
+            if axisItems[i] == "-1":
+                axisItems[i] = "-1 - Ukryta"
+            elif axisItems[i] == "0":
+                axisItems[i] = "0 - Lewa"
+            elif axisItems[i] == "1":
+                axisItems[i] = "1 - Prawa"
         self.axisComboBox.addItems(axisItems)
         gridLayout.addWidget(self.axisComboBox,3,2)
 
@@ -124,13 +127,8 @@ class DataSettingsDialog(QW.QDialog):
         if self.dataActionStatus is DataActionStatus.Ok:
             dictType = self.typeLineEdit.text().strip()
             color = self.colorLineEdit.text()
-            tempAxis = self.axisComboBox.currentText()
-            if tempAxis == 'Lewa':
-                axis = Axis.Left
-            elif tempAxis == 'Prawa':
-                axis = Axis.Right
-            else:
-                axis = Axis.Hidden
+            axis = int(re.findall("^[-0-9][0-9]*", 
+                                  self.axisComboBox.currentText())[0])
             if self.offset is not None:
                 offset = float(self.offsetLineEdit.text())
                 return dictType, color, axis, offset
@@ -195,6 +193,7 @@ class ProcedureArgumentsWidget(QW.QWidget):
         for key, item in self.argumentLineEdits.items():
             arguments[key] = item.text()
         return arguments
+
 class DataArgumentWidget(QW.QWidget):
     """Widget służący do wybierania przebiegów/punktów. Zawiera QLabel
     informujący o typie wymaganych danych a także QComboBox z możliwymi
@@ -551,8 +550,8 @@ class ProcedureDialog(QW.QDialog):
         values.append(procedureWidget.dataActionStatus)
         return tuple(values)
 
-class ModelflowImportDialog (QW.QDialog):
-    
+class ModelflowImportDialog(QW.QDialog):
+    """Dialog for importing modelflow data""" 
     
     def __init__(self, path,compositeDataWrapper):
         super().__init__()
@@ -587,8 +586,8 @@ class ModelflowImportDialog (QW.QDialog):
 
         self.listPoints = QW.QComboBox()
 
-        for nazwa in compositeDataWrapper.points.keys():
-            self.listPoints.addItem(nazwa)
+        for name in compositeDataWrapper.points.keys():
+            self.listPoints.addItem(name)
         self.listPoints.setCurrentIndex(0)
         gridLayout.addWidget(self.listPoints,6,1)
 
@@ -625,4 +624,4 @@ class ModelflowImportDialog (QW.QDialog):
          fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
          newpath = fileDialog.getOpenFileName(filter = fileFilter)
          self.pathLabel.setText(newpath[0])
- 
+
