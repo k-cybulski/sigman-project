@@ -125,7 +125,7 @@ def loadModelflow(compositeDataWrapper):
             wave.type = ModelflowData[2][i+1]
             modelflowPoints.append(wave)
 
-        return modelflowPoints, ModelflowData
+        return (modelflowPoints, ModelflowData)
 
 def setVWaveSettings(vWave, key, allKeys):
     forbiddenKeys = list(allKeys)

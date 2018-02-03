@@ -193,6 +193,7 @@ class ProcedureArgumentsWidget(QW.QWidget):
         for key, item in self.argumentLineEdits.items():
             arguments[key] = item.text()
         return arguments
+
 class DataArgumentWidget(QW.QWidget):
     """Widget służący do wybierania przebiegów/punktów. Zawiera QLabel
     informujący o typie wymaganych danych a także QComboBox z możliwymi
@@ -549,8 +550,8 @@ class ProcedureDialog(QW.QDialog):
         values.append(procedureWidget.dataActionStatus)
         return tuple(values)
 
-class ModelflowImportDialog (QW.QDialog):
-    
+class ModelflowImportDialog(QW.QDialog):
+    """Dialog for importing modelflow data""" 
     
     def __init__(self, path,compositeDataWrapper):
         super().__init__()

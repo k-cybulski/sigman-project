@@ -409,33 +409,38 @@ class QtSigmanWindow(QW.QMainWindow):
             self.plotTabWidget.setTabText(i, str(i))
         
     def importWave(self):
-        setOfWaves = DataActions.loadWave(
-                self.compositeDataWrapper.waves.keys())
-        for waveTuple in setOfWaves:
-            try:
-                wave, key, color, axis = waveTuple
-                self.compositeDataWrapper.add_wave(wave, key)
-                self.plotTabWidget.currentWidget().vCollection.waves[
-                        key].setSettings(color, axis)
-            except ActionCancelledError:
-                pass
+        try:
+            setOfWaves = DataActions.loadWave(
+                    self.compositeDataWrapper.waves.keys())
+            for waveTuple in setOfWaves:
+                try:
+                    wave, key, color, axis = waveTuple
+                    self.compositeDataWrapper.add_wave(wave, key)
+                    self.plotTabWidget.currentWidget().vCollection.waves[
+                            key].setSettings(color, axis)
+                except ActionCancelledError:
+                    pass
+        except ActionCancelledError:
+            pass
 
     def importPoints(self):
-        setOfPoints = DataActions.loadPoints(
-                self.compositeDataWrapper.points.keys())
-        for pointsTuple in setOfPoints:
-            try:
-                points, key, color, axis = pointsTuple
-                self.compositeDataWrapper.add_points(points, key)
-                self.plotTabWidget.currentWidget().vCollection.points[
-                        key].setSettings(color, axis)
-            except ActionCancelledError:
-                pass
+        try:
+            setOfPoints = DataActions.loadPoints(
+                    self.compositeDataWrapper.points.keys())
+            for pointsTuple in setOfPoints:
+                try:
+                    points, key, color, axis = pointsTuple
+                    self.compositeDataWrapper.add_points(points, key)
+                    self.plotTabWidget.currentWidget().vCollection.points[
+                            key].setSettings(color, axis)
+                except ActionCancelledError:
+                    pass
+        except ActionCancelledError:
+            pass
    
     def importModelflow(self):
         try:
-            modelflowPoints, modelflowData = DataActions.loadModelflow(
-                    self.compositeDataWrapper)
+            modelflowPoints, modelflowData = DataActions.loadModelflow(self.compositeDataWrapper)
             for i in range(len(modelflowPoints)):
                 wave = modelflowPoints[i]
                 key = modelflowData[2][i+1]
