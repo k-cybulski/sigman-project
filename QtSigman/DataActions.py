@@ -109,7 +109,7 @@ def loadModelflow(compositeDataWrapper):
             wave.type = 'wyznaczoneHRzR'
             compositeDataWrapper.add_points(wave, 'wyznaczoneHRzR', 
                 color=DefaultColors.getColor('wyznaczoneHRzR'), 
-                axis=Axis.Hidden)
+                axis=-1)
 
         modelflowOffset = ImportModelflow.EstimateModelflowDataOffset(
                 modelflowData[1][FitNumber], HR)
