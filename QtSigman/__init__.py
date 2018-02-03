@@ -413,13 +413,10 @@ class QtSigmanWindow(QW.QMainWindow):
             setOfWaves = DataActions.loadWave(
                     self.compositeDataWrapper.waves.keys())
             for waveTuple in setOfWaves:
-                try:
-                    wave, key, color, axis = waveTuple
-                    self.compositeDataWrapper.add_wave(wave, key)
-                    self.plotTabWidget.currentWidget().vCollection.waves[
-                            key].setSettings(color, axis)
-                except ActionCancelledError:
-                    pass
+                wave, key, color, axis = waveTuple
+                self.compositeDataWrapper.add_wave(wave, key)
+                self.plotTabWidget.currentWidget().vCollection.waves[
+                        key].setSettings(color, axis)
         except ActionCancelledError:
             pass
 
@@ -428,13 +425,10 @@ class QtSigmanWindow(QW.QMainWindow):
             setOfPoints = DataActions.loadPoints(
                     self.compositeDataWrapper.points.keys())
             for pointsTuple in setOfPoints:
-                try:
-                    points, key, color, axis = pointsTuple
-                    self.compositeDataWrapper.add_points(points, key)
-                    self.plotTabWidget.currentWidget().vCollection.points[
-                            key].setSettings(color, axis)
-                except ActionCancelledError:
-                    pass
+                points, key, color, axis = pointsTuple
+                self.compositeDataWrapper.add_points(points, key)
+                self.plotTabWidget.currentWidget().vCollection.points[
+                        key].setSettings(color, axis)
         except ActionCancelledError:
             pass
    

@@ -85,8 +85,12 @@ def loadModelflow(compositeDataWrapper):
     title = path[0].split("/")[-1]
 
     ex = DataActionWidgets.ModelflowImportDialog(path[0], compositeDataWrapper)
-    dataX = compositeDataWrapper.points[ex.SelectedPoints()].data_x
-    dataY = compositeDataWrapper.points[ex.SelectedPoints()].data_y
+    try:
+        dataX = compositeDataWrapper.points[ex.SelectedPoints()].data_x
+        dataY = compositeDataWrapper.points[ex.SelectedPoints()].data_y
+    except:
+        raise ActionCancelledError
+    modelflowPoints = None
     if ex.result() == 1:
         ModelflowData = fm.import_data_from_modelflow(ex.PathModelflow())
         if (ex.SelectedPointsType() == 0):
@@ -125,7 +129,9 @@ def loadModelflow(compositeDataWrapper):
             wave.type = ModelflowData[2][i+1]
             modelflowPoints.append(wave)
 
-        return (modelflowPoints, ModelflowData)
+    if modelflowPoints is None:
+        raise ActionCancelledError
+    return (modelflowPoints, ModelflowData)
 
 def setVWaveSettings(vWave, key, allKeys):
     forbiddenKeys = list(allKeys)

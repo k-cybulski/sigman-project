@@ -586,8 +586,8 @@ class ModelflowImportDialog(QW.QDialog):
 
         self.listPoints = QW.QComboBox()
 
-        for nazwa in compositeDataWrapper.points.keys():
-            self.listPoints.addItem(nazwa)
+        for name in compositeDataWrapper.points.keys():
+            self.listPoints.addItem(name)
         self.listPoints.setCurrentIndex(0)
         gridLayout.addWidget(self.listPoints,6,1)
 
