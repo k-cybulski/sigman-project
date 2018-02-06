@@ -1,12 +1,12 @@
 from enum import Enum
 import glob
+import re
 
 from PyQt5 import QtWidgets as QW
 from PyQt5.QtWidgets import QMessageBox as QMsgBox
 from matplotlib import colors
 from sigman import analyzer
 
-from QtSigman.MplWidgets import Axis
 from QtSigman.DefaultColors import defaultColors
 
 def _getColorString(inputColor):
@@ -23,7 +23,7 @@ class DataActionStatus(Enum):
 
 class DataSettingsDialog(QW.QDialog):
     def __init__(self, title="", dictType="default", color="#1f77b4", 
-                 forbiddenNames=[], parent=None, axis=Axis.Left, 
+                 forbiddenNames=[], parent=None, axis=-1,
                  offset='0', askDelete=False):
         super(DataSettingsDialog, self).__init__(parent = parent)
         
@@ -56,13 +56,16 @@ class DataSettingsDialog(QW.QDialog):
         self.axisLabel = QW.QLabel("Oś:")
         gridLayout.addWidget(self.axisLabel,3,1)
         self.axisComboBox = QW.QComboBox()
-        axisItems = [] # Bardzo niechlujny hack ustawiający opcje w kolejności
-        if axis == Axis.Left:
-            axisItems = ['Lewa','Prawa','Żadna (Ukryj)']
-        elif axis == Axis.Right:
-            axisItems = ['Prawa','Lewa','Żadna (Ukryj)']
-        else:
-            axisItems = ['Żadna (Ukryj)','Lewa','Prawa']
+        axisItems = list(map(str, range(-1,2))) # Bardzo niechlujny hack ustawiający opcje w kolejności
+        axisItems.remove(str(axis))
+        axisItems.insert(0, str(axis))
+        for i in range(len(axisItems)):
+            if axisItems[i] == "-1":
+                axisItems[i] = "-1 - Ukryta"
+            elif axisItems[i] == "0":
+                axisItems[i] = "0 - Lewa"
+            elif axisItems[i] == "1":
+                axisItems[i] = "1 - Prawa"
         self.axisComboBox.addItems(axisItems)
         gridLayout.addWidget(self.axisComboBox,3,2)
 
@@ -124,13 +127,8 @@ class DataSettingsDialog(QW.QDialog):
         if self.dataActionStatus is DataActionStatus.Ok:
             dictType = self.typeLineEdit.text().strip()
             color = self.colorLineEdit.text()
-            tempAxis = self.axisComboBox.currentText()
-            if tempAxis == 'Lewa':
-                axis = Axis.Left
-            elif tempAxis == 'Prawa':
-                axis = Axis.Right
-            else:
-                axis = Axis.Hidden
+            axis = int(re.findall("^[-0-9][0-9]*", 
+                                  self.axisComboBox.currentText())[0])
             if self.offset is not None:
                 offset = float(self.offsetLineEdit.text())
                 return dictType, color, axis, offset
@@ -195,6 +193,7 @@ class ProcedureArgumentsWidget(QW.QWidget):
         for key, item in self.argumentLineEdits.items():
             arguments[key] = item.text()
         return arguments
+
 class DataArgumentWidget(QW.QWidget):
     """Widget służący do wybierania przebiegów/punktów. Zawiera QLabel
     informujący o typie wymaganych danych a także QComboBox z możliwymi
@@ -550,3 +549,79 @@ class ProcedureDialog(QW.QDialog):
         values = list(procedureWidget.getValues())
         values.append(procedureWidget.dataActionStatus)
         return tuple(values)
+
+class ModelflowImportDialog(QW.QDialog):
+    """Dialog for importing modelflow data""" 
+    
+    def __init__(self, path,compositeDataWrapper):
+        super().__init__()
+        self.title = "Wczytaj dane"
+        self.setWindowTitle(self.title)
+        gridLayout = QW.QGridLayout()
+        self.setLayout(gridLayout)
+       
+        self.typeLabel = QW.QLabel("Scieżka do danych modelflow:")
+        gridLayout.addWidget(self.typeLabel,1,1)
+
+        self.pathLabel = QW.QLabel(path)
+        gridLayout.addWidget(self.pathLabel,2,1)
+        
+        self.changeButton = QW.QPushButton("Zmień")
+        self.changeButton.clicked.connect(self.Change)
+        gridLayout.addWidget(self.changeButton,2,2)
+
+
+        self.matchLabel = QW.QLabel("Wybierz rodzaj użytych punktów do dopasowania:")
+        gridLayout.addWidget(self.matchLabel,3,1)
+
+        self.matchList = QW.QComboBox()
+        
+        axisItems = ['SBP','DBP','R']
+        self.matchList.addItems(axisItems)
+        self.matchList.setCurrentIndex(0)
+        gridLayout.addWidget(self.matchList,4,1)
+
+        self.selectLabel = QW.QLabel("Wybierz punkty (Posłużą do dopasowania danych)")
+        gridLayout.addWidget(self.selectLabel,5,1)
+
+        self.listPoints = QW.QComboBox()
+
+        for name in compositeDataWrapper.points.keys():
+            self.listPoints.addItem(name)
+        self.listPoints.setCurrentIndex(0)
+        gridLayout.addWidget(self.listPoints,6,1)
+
+        self.confirmButton = QW.QPushButton("Potwierdź")
+        self.confirmButton.setDefault(True)
+        self.confirmButton.clicked.connect(self.Confirm)
+        gridLayout.addWidget(self.confirmButton,7,2)
+
+        self.abortButton = QW.QPushButton("Anuluj")
+        self.abortButton.clicked.connect(self.reject)
+        gridLayout.addWidget(self.abortButton,7,1)
+        self.setGeometry(300, 300, 290, 150)
+
+        self.exec()
+        self.show()
+
+    def Confirm(self): 
+        self.accept()
+        return DataActionStatus.Ok 
+        self.close()
+
+    def PathModelflow(self):
+        return self.pathLabel.text()
+
+    def SelectedPointsType(self):
+        return self.matchList.currentIndex()
+
+    def SelectedPoints(self):
+        return self.listPoints.currentText()
+
+    def Change(self):
+         fileFilter = "(*.A00)"
+         fileDialog = QW.QFileDialog()
+         fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
+         newpath = fileDialog.getOpenFileName(filter = fileFilter)
+         self.pathLabel.setText(newpath[0])
+
