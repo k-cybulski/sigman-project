@@ -12,7 +12,9 @@ from QtSigman.DataActionWidgets import DataActionStatus
 from QtSigman.MplWidgets import Axis
 
 def importModelflow (compositeDataWrapper):
-    fileFilter = "(*.A00)"
+    fileFilter = ('all_supported_files (*.csv *.A00);; '
+            'BeatScope (*.A00);; Finapres Nova (*.csv);; '
+            'all_files (*)')
     fileDialog = QW.QFileDialog()
     fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
     
@@ -24,24 +26,37 @@ def importModelflow (compositeDataWrapper):
         status = ex.result()
         if status == 1:
             ModelflowData = fm.import_data_from_modelflow(ex.PathModelflow())
+            if '.A00' in ex.PathModelflow():
+                if (ex.SelectedPointsType() == 0):
+                    FitNumber = 0
+                    HR = compositeDataWrapper.points[ex.SelectedPoints()].data_y
+                elif (ex.SelectedPointsType() == 1):
+                    FitNumber = 1
+                    HR = compositeDataWrapper.points[ex.SelectedPoints()].data_y
+                else:
+                    FitNumber = 6
+                    HR = ImportModelflow.DetermineHR(compositeDataWrapper.points[ex.SelectedPoints()].data_x)
+                    wave = sm.Points(compositeDataWrapper.points[ex.SelectedPoints()].data_x,HR,'wyznaczoneHRzR')
+                    wave.offset = 0
+                    wave.type = 'wyznaczoneHRzR'
+                    compositeDataWrapper.add_points(wave, 'wyznaczoneHRzR', 
+                        color=DefaultColors.getColor('wyznaczoneHRzR'), 
+                        axis=Axis.Hidden)
 
-            if (ex.SelectedPointsType() == 0):
-                FitNumber = 0
-                HR = compositeDataWrapper.points[ex.SelectedPoints()].data_y
-            elif (ex.SelectedPointsType() == 1):
-                FitNumber = 1
-                HR = compositeDataWrapper.points[ex.SelectedPoints()].data_y
+                ModelflowOffset = ImportModelflow.EstimateModelflowDataOffset (ModelflowData[1][FitNumber],HR)
             else:
-                FitNumber = 6
-                HR = ImportModelflow.DetermineHR(compositeDataWrapper.points[ex.SelectedPoints()].data_x)
-                wave = sm.Points(compositeDataWrapper.points[ex.SelectedPoints()].data_x,HR,'wyznaczoneHRzR')
-                wave.offset = 0
-                wave.type = 'wyznaczoneHRzR'
-                compositeDataWrapper.add_points(wave, 'wyznaczoneHRzR', 
-                    color=DefaultColors.getColor('wyznaczoneHRzR'), 
-                    axis=Axis.Hidden)
+                 HR = ImportModelflow.DetermineHR(compositeDataWrapper.points[ex.SelectedPoints()].data_x)
+                 wave = sm.Points(compositeDataWrapper.points[ex.SelectedPoints()].data_x,HR,'wyznaczoneHRzR')
+                 wave.offset = 0
+                 wave.type = 'wyznaczoneHRzR'
+                 compositeDataWrapper.add_points(wave, 'wyznaczoneHRzR', 
+                        color=DefaultColors.getColor('wyznaczoneHRzR'), 
+                        axis=Axis.Hidden)
 
-            ModelflowOffset = ImportModelflow.EstimateModelflowDataOffset (ModelflowData[1][FitNumber],HR)
+                 ImportFileHR = ImportModelflow.DetermineHR(ModelflowData[0])
+                 ModelflowData[1].append(ImportFileHR)
+                 ModelflowData[2].append('HR_Modelflow')
+                 ModelflowOffset = ImportModelflow.EstimateModelflowDataOffset (ImportFileHR,HR)
 
             #jesli przesuniecie rowna sie 2 oznacza to ze czas dane[2] ma się równać czasowi HR[0]
             if (ModelflowOffset>0):
@@ -49,7 +64,7 @@ def importModelflow (compositeDataWrapper):
                 for i in range(len(ModelflowData[0])):
                     ModelflowData[0][i] = ModelflowData[0][i]+offset
 
-            for i in range(len(ModelflowData[1])-1):
+            for i in range(len(ModelflowData[2])-1):
                 wave = sm.Points(ModelflowData[0],ModelflowData[1][i], ModelflowData[2][i+1])
                 wave.offset = 0
                 wave.type = ModelflowData[2][i+1]

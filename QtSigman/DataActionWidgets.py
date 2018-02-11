@@ -620,7 +620,10 @@ class ModelflowImportDialog (QW.QDialog):
         return self.listPoints.currentText()
 
     def Change(self):
-         fileFilter = "(*.A00)"
+         fileFilter = ('all_supported_files (*.csv *.A00);; '
+            'BeatScope (*.A00);; Finapres Nova (*.csv);; '
+            'all_files (*)')
+
          fileDialog = QW.QFileDialog()
          fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
          newpath = fileDialog.getOpenFileName(filter = fileFilter)

@@ -135,23 +135,55 @@ def import_data_from_modelflow(file_name):
     y = []
     names = []
     with open(file_name) as f:
-       flag = False
-       for line in f:
-           if "END preamble" in line:
-              flag = True        
-           if flag:
-               pom = line.split()              
-               if len(pom) > 2:
-                   if is_number(pom[0]):
-                       x.append(float(pom[0]))  
-                       if (len(y)<len(pom)):
-                             y = [[0 for i in range(1)] for j in range(len(pom))]
-                             for i in range(1, len(pom)):
-                                 y[i-1][0]=(float(pom[i]))                                          
+       if '.A00' in file_name:
+           flag = False
+           for line in f:
+               if "END preamble" in line:
+                  flag = True        
+               if flag:
+                   pom = line.split()              
+                   if len(pom) > 2:
+                       if is_number(pom[0]):
+                           x.append(float(pom[0]))  
+                           if (len(y)<len(pom)):
+                                 y = [[0 for i in range(1)] for j in range(len(pom))]
+                                 for i in range(1, len(pom)):
+                                     y[i-1][0]=(float(pom[i]))                                          
+                           else:
+                               for i in range(1, len(pom)):
+                                    y[i-1].append(float(pom[i]))
                        else:
-                           for i in range(1, len(pom)):
-                                y[i-1].append(float(pom[i]))
-                   else:
-                       if len (names)<1:
-                           names = pom;
+                           if len (names)<1:
+                               names = pom
+       else:
+           i = 0
+           for line in f:
+               i = i + 1
+               if i == 8:
+                   pom = line.split(';')
+                   if '\n' in pom:
+                       del pom[pom.index('\n')]
+                   names = pom
+               if i > 8:
+                   pom = line.split(';') 
+                   if '\n' in pom:
+                       del pom[pom.index('\n')]
+                   if len(pom) > 2:
+                       if is_number(pom[0]):
+                           x.append(float(pom[0]))  
+                           if (len(y)<len(pom)):#W pierwszej iteracji tablica jest tworzona
+                                 y = [[0 for k in range(1)] for j in range(len(pom))]
+                                 for k in range(1, len(pom)):
+                                     if (is_number(pom[k])):
+                                         y[k-1][0]=(float(pom[k]))   
+                                     else:
+                                         y[k-1][0] = 0
+                           else:#W kolejnych uzupełniana
+                               for k in range(1, len(pom)):
+                                    if (is_number(pom[k])):
+                                         y[k-1].append(float(pom[k]))   
+                                    else:
+                                         y[k-1].append (0)
+       if len(y[len(y)-1])< len(y[1]):
+           del y[len(y)-1]
     return x, y, names

@@ -435,6 +435,7 @@ class QtSigmanWindow(QW.QMainWindow):
                                       "Nie zaimplementowano"))
         self.menuBar().addMenu(self.procedure_menu)
 
+
         self.help_menu = QW.QMenu('Pomoc', self)
         self.help_menu.addAction('O programie', self.about)
         self.menuBar().addSeparator()
