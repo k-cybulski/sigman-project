@@ -18,20 +18,20 @@ from math import isclose
 
 import numpy as np
 
-class Wave():
+class Wave:
     """Class describing a signal waveform. 
     
-    It may be offset in time and not begin at t=0. In such a case all 
-    references to its value at a certain time will include such an 
-    offset. For example if the Wave is offset by -0.5s and a request is
-    made for its value at 0s, the value returned would be 0.5s after the
-    beginning of the waveform.
+    It may be offset in time and not begin at t=0. In such a case all
+    methods that reference its value at a given time will take that
+    into consideration. For example if the `Wave` is offset by -0.5s and
+    `value_at(5)` is called, the returned value would be 5.5s into the
+    waveform.
     
     Attributes:
-        Wave.data               - list of values of the signal
+        Wave.data               - numpy array of values of the signal
         Wave.complete_length    - length of the signal in seconds
         Wave.sample_length      - length of a sample in seconds
-        Wave.sample_rate        - samlping rate in Hz
+        Wave.sample_rate        - sampling rate in Hz
         Wave.type               - string describing the type of data, 
                                   e.g. 'ecg' or 'bp'
         Wave.offset             - time offset
@@ -55,11 +55,12 @@ class Wave():
 
     @classmethod
     def fromWave(cls, wave):
-        """Returns a new Wave exactly like the one given."""
+        """Returns a new `Wave` exactly like the one given."""
         return cls(wave.data, wave.complete_length,
                    wave_type=wave.type, offset=wave.offset)
 
     def copy(self):
+        """Returns a copy of this `Wave` instance."""
         return Wave.fromWave(self)
 
     def __len__(self):
@@ -78,7 +79,7 @@ class Wave():
     
     def value_at(self, time):
         """Returns the value of the waveform at a given time in seconds 
-        calculated using linear approximation of surrounding samples.
+        calculated using linear interpolation of surrounding samples.
         """
         approx_index = (time-self.offset) / self.sample_length
         interp_index = int(approx_index)
@@ -92,19 +93,23 @@ class Wave():
     
     def data_slice(self, begin_time, end_time, 
                    value_every=0, value_count=None):
-        """Returns an array of values from a time range.
+        """Returns a numpy array of values from a time range.
 
-        If value_every is set and not equal to self.sample_rate, the 
-        output array values will be the result of linear interpolation
-        like with Wave.value_at.
+        The returned values may have a different sampling rate than
+        the `Wave` instance if `value_every` or `value_count` are
+        set.
+
+        If `value_every` is set and not equal to `self.sample_rate`, 
+        the output array values will be the result of linear 
+        interpolation like with `Wave.value_at`.
 
         Arguments:
             begin_time  - beginning of the time range
             end_time    - end of the time range
             value_every - time between values (i.e. frequency) of the
                           returned array
-            value_count - number of values to return. If value_every is
-                          also set, value_count supersedes it.
+            value_count - number of values to return. If `value_every` 
+                          is also set, `value_count` supersedes it.
         """
         begin_i = self.sample_at(begin_time)
         end_i = self.sample_at(end_time)
@@ -120,15 +125,16 @@ class Wave():
         return interpolated_table
 
     def replace_slice(self, begin_time, end_time, wave):
-        """Replaces the values of this Wave in a given time range with
-        those of a given Wave.
+        """Replaces the values of this `Wave` instance in a given time 
+        range with those of a given `Wave`.
 
-        The given Wave must have the same sample_rate as this one.
+        The given `Wave` must have the same sample_rate as the base
+        instance.
 
         Arguments:
             begin_time - beginning of the time range
             end_time   - end of the time range
-            wave       - the given Wave
+            wave       - the given `Wave`
         """
         if not isclose(self.sample_length,
                        wave.sample_length, rel_tol=0.0001):
@@ -163,26 +169,28 @@ class Wave():
         output_y = np.array(output_y)
         return output_x, output_y
 
+# TODO: Unnecessary
 class EmptyPointsError(Exception):
     """Raised when an empty Points class is initialized."""
 
-class Points():
+class Points:
     """Class describing points, i.e. events in time with a value.
 
-    It keeps them in two arrays of x and y values sorted by x.
+    The points are kept in the form of two arrays, of x and y values,
+    sorted by x.
 
     Attributes:
-        Points.data_x - array of x coordinates
-        Points.data_y - array of y coordinates
+        Points.data_x - numpy array of x coordinates
+        Points.data_y - numpy array of y coordinates
         Points.type   - type of points, e.g. 'r' or 'sbp'
     """
     # TODO: rename data_x and data_y into x and y (?may be less clear)
     def __init__(self, data_x, data_y, point_type):
-        """Initializes Points.
+        """Initializes a `Points` instance.
 
         Arguments:
-            data_x - array of x coordinates of points
-            data_y - array of y coordinates of points
+            data_x - list of x coordinates of points
+            data_y - list of y coordinates of points
             point_type - type of points, e.g. 'r' or 'sbp'
         """
         if len(data_x) > 0:
@@ -195,19 +203,21 @@ class Points():
     
     @classmethod
     def fromPoints(cls, points):
-        """Initializes a new Points just like the given one."""
+        """Initializes a new `Points` with the same data and type as
+        the given one."""
         return cls(points.data_x, points.data_y,
-                   point_type = points.type)
+                   point_type=points.type)
 
     def copy(self):
+        """Returns a copy of this `Points` instance."""
         return Points.fromPoints(self)
 
     def __len__(self):
-        """Returns number of points."""
+        """Returns number of points contained in this instance."""
         return len(self.data_x)
 
     def slice_range(self, begin_time, end_time):
-        """Returns a list of indices of points in a given time range.
+        """Returns a list of indices of points from a given time range.
 
         Arguments:
             begin_time - beginning of the time range
@@ -241,12 +251,28 @@ class Points():
         return self.data_x[begin_i:end_i], self.data_y[begin_i:end_i]
 
     def delete_slice(self, begin_time, end_time):
+        """Deletes points contained in this instance from a time
+        range and returns a list of the indices of removed points.
+
+        Arguments:
+            begin_time  - beginning of the time range
+            end_time    - end of the time range
+        """
         temp_range = self.slice_range(begin_time, end_time)
         self.data_x = np.delete(self.data_x, temp_range)
         self.data_y = np.delete(self.data_y, temp_range)
         return temp_range[0]
 
     def replace_slice(self, begin_time, end_time, points):
+        """Replaces points within a time range with those from a
+        different `Points` instance.
+
+        Arguments:
+            begin_time  - beginning of the time range
+            end_time    - end of the time range
+            points      - `Points` instance with which to replace this
+                          instance's points
+        """
         begin_i = self.delete_slice(begin_time, end_time)
         j = 0
         while (j < len(points) and 
@@ -255,15 +281,22 @@ class Points():
             np.insert(self.data_y, begin_i+j, points.data_y[j])
     
     def add_point(self, x, y):
+        """Adds a point with a given x and y coordinates to this
+        `Points` instance.
+        """
         i = np.searchsorted(self.data_x, x)
         self.data_x=np.insert(self.data_x, i, x)
         self.data_y=np.insert(self.data_y, i, y)
         
     def add_points(self, points, begin_time=0):
+        """Adds points from a given `Points` instance to this instance."""
         for x, y in zip(points.data_x, points.data_y):
             self.add_point(x+begin_time, y)
 
     def delete_point(self, x, y=None):
+        """Deletes a point closest to the given x and y coordinates.
+        If y is not given, then only the x axis is considered.
+        """
         if y is not None:
             closest_id = self.closest_point_id(x, y)
         else:
@@ -272,11 +305,14 @@ class Points():
         self.data_y = np.delete(self.data_y, closest_id)
     
     def move_point(self, x1, y1, x2, y2):
+        """Moves a point with the given x and y coordinates to a
+        new position.
+        """
         closest_id = self.closest_point_id(x1, y1)
         if not (isclose(self.data_x[closest_id], x1) and
                 isclose(self.data_y[closest_id], y1)):
-            # TRAANSLATE THIS
-            raise ValueError('Nie ma punktu o takich x1 i y1')
+            raise ValueError(('A point with the given x1 and y1 coordinates'
+                              'does not exist: {}, {}').format(x1, y1))
         self.data_x = np.delete(self.data_x, closest_id)
         self.data_y = np.delete(self.data_y, closest_id)
         i = np.searchsorted(self.data_x, x2)
@@ -284,20 +320,43 @@ class Points():
         self.data_y=np.insert(self.data_y, i, y2)
 
     def closest_point_id(self, x, y):
+        """Returns the index of the closest point to the point with
+        given x and y coordinates.
+        """
         points = np.vstack((self.data_x, self.data_y))
         point = np.array([[x,y]])
         comparison_distances = np.sum((points - point)**2, axis=1)
         return np.argmin(comparison_distances) 
 
     def align_to_line(self, wave):
+        """Aligns all points' y values to the value of a `Wave` at the
+        same x.
+        """
         for i in range(len(self)):
             self.data_y[i] = wave.value_at(self.data_x[i])
 
     def move_in_time(self, time):
+        """Offsets all points' x coordinates."""
         for i in range(len(self)):
             self.data_x[i] += time
 
-class Parameter():
+class Parameter:
+    """Class denoting a parameter calculated over time ranges.
+
+    Attributes:
+        Parameter.type          - string describing the type of the
+                                  parameter, e.g. 'hr'
+        Parameter.begin_times   - numpy array of the beginnings of time
+                                  ranges over which the parameter was
+                                  calculated
+        Parameter.end_times     - numpy array of the endings of time
+                                  ranges over which the parameter was
+                                  calculated
+        Parameter.values        - numpy array of the calculated values
+                                  of the parameter, corresponding to the
+                                  above time ranges
+    """
+    # The architecture of the Parameter class should probably be reconsidered
     def __init__(self, parameter_type):
         self.type = parameter_type
         self.begin_times = np.array([])
@@ -361,6 +420,11 @@ class Parameter():
         return line_tuples
 
 class Composite_data:
+    """Class denoting a collection of data that can be easily
+    analyzed together.
+
+    It contains three `dict`s, each containing a different type of data.
+    """
     def __init__(self, waves=None, points=None, parameters=None):
         self.waves = {}
         self.points = {}
@@ -373,6 +437,9 @@ class Composite_data:
             self.parameters = parameters
 
     def calculate_complete_time_span(self):
+        """Calculates the entire time range in which the 
+        `Composite_data` contains any data.
+        """
         begin_time = None
         end_time = None
         for key, wave in self.waves.items():
@@ -400,6 +467,9 @@ class Composite_data:
         return begin_time, end_time
 
     def calculate_time_range(self, required_waves):
+        """Calculates the timme range in which the required `Wave`
+        instances' data overlaps.
+        """
         begin_time = None
         end_time = None
         for required_wave in required_waves:
@@ -416,49 +486,55 @@ class Composite_data:
         return begin_time, end_time
 
     def add_wave(self, wave, dict_type, replace=False):
+        """Adds a `Wave` to the `Composite_data`."""
         if dict_type is None:
             dict_type = wave.type
             if dict_type is None:
-                # TRANSLATE THIS
-                raise ValueError('Etykieta (dictionary key; tutaj dict_type) '
-                                 'linii danych nie może być pusta')
+                raise ValueError(('dict_type may not be None if `type` of '
+                                  'instance is None'))
         if dict_type in self.waves and not replace:
-            # TRANSLATE THIS
-            raise ValueError('Etykieta %s w waves jest już zajęta.' 
-                             % dict_type)
+            raise ValueError(('Key {} in waves dict is already taken').format(
+                dict_type)))
         self.waves[dict_type] = wave
 
     def delete_wave(self, dict_type):
+        """Deletes a `Wave` with the given dict key from the
+        `Composite_data`."""
         self.waves.pop(dict_type)
 
     def add_points(self, points, dict_type, join=False):
+        """Adds a `Points` to the `Composite_data`."""
         if dict_type is None:
             dict_type = points.type
+            if dict_type is None:
+                raise ValueError(('dict_type may not be None if `type` of '
+                                  'instance is None'))
         if dict_type in self.points:
             if join:
                 self.points[dict_type].add_points(points)
             else:
-                # TRANSLATE THIS
-                raise ValueError('Etykieta %s w points jest już zajęta.'
-                                 % dict_type)
+                raise ValueError(('Key {} in points dict is already taken'
+                                 ).format(dict_type)))
         else:
             self.points[dict_type] = points
 
     def delete_points(self, dict_type):
+        """Deletes a `Points` with the given dict key from the
+        `Composite_data`."""
         self.points.pop(dict_type)
 
     def add_parameter(self, parameter, dict_type, replace=False):
+        """Adds a `Parameter` to the `Composite_data`."""
         if dict_type is None:
             dict_type = parameter.type
             if dict_type is None:
-                # TRANSLATE THIS
-                raise ValueError('Etykieta (dictionary key; tutaj dict_type) '
-                                 'parametru nie może być pusta')
+                raise ValueError(('dict_type may not be None if `type` of '
+                                  'instance is None'))
         if dict_type in self.parameters and not replace:
-            # TRANSLATE THIS
-            raise ValueError('Etykieta %s w parameters już zajęta.' 
-                             % dict_type)
+            raise ValueError(('Key {} in parameters dict is already taken'
+                             ).format(dict_type)))
         self.parameters[dict_type] = parameter
 
     def delete_parameter(self, dict_type):
+        """Deletes a `Parameter` from the `Composite_data`."""
         self.parameters.pop(dict_type)
