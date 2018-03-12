@@ -209,11 +209,14 @@ class Points():
     def __len__(self):
         return len(self.data_x)
 
-#   def __getitem__(self, key):
-#       x = self.data_x[key]
-#       y = self.data_y[key]
-#       points = np.vstack((x,y))
-#       return points
+    def __getitem__(self, key):
+        x = self.data_x[key]
+        y = self.data_y[key]
+        if isinstance(key, slice):
+            points = list(zip(*(x,y)))
+        else:
+            points = (x, y)
+        return points
 
     def slice_range(self, begin_time, end_time):
         """Zwraca range indeksów punktów, które znajdują się w danym
