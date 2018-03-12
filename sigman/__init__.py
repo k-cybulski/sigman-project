@@ -84,13 +84,15 @@ class Wave():
         """
         approx_index = (time-self.offset) / self.sample_length
         interp_index = int(approx_index)
-        if interp_index < 0 or interp_index >= len(self)-1:
+        if time == self.complete_length: # correction for last value
+            return self[-1]
+        if interp_index < 0 or interp_index > len(self):
             raise ValueError('Punkt o żądanym czasie %s wystaje poza zakres '
                              'czasowy danych' % time)
         approx_value = np.interp(
             approx_index, [interp_index, interp_index+1], 
             [self.data[interp_index],  self.data[interp_index+1]])
-        return self.data[self.sample_at(time)]
+        return approx_value
     
     def data_slice(self, begin_time, end_time, 
                    value_every=0, value_count=None):
