@@ -326,10 +326,14 @@ class Points():
         for i in range(len(self)):
             self.data_y[i] = wave.value_at(self.data_x[i])
 
-    def move_in_time(self, time):
+    def offset(self, time):
         """Przesuwa punkty w czasie."""
         for i in range(len(self)):
             self.data_x[i] += time
+    
+    def move_in_time(self, time):
+        # DEPRECATED
+        self.offset(time)
 
 class Parameter():
     """Parameter jest klasą odpowiadającą za przechowywanie kilku 
