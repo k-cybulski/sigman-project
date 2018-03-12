@@ -59,6 +59,9 @@ class Wave():
         """Zwraca liczbę punktów zawartych w całym ciągu danych."""
         return len(self.data)
 
+    def __getitem__(self, key):
+        return self.data[key]
+
     def sample_at(self, time):
         """Zwraca index najbliższego punktu do podanego czasu.  
         Jeśli index wystaje poza ramy czasowe danych to metoda 
