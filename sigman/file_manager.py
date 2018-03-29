@@ -45,10 +45,10 @@ def _import_wave_dat(file_name, wave_type, offset=0):
     zwraca odpowiadający mu sm.Wave.
     """
     x, y = _import_dat(file_name)
-    complete_len = x[-1]
-    return sm.Wave(y, complete_len, 
-                        wave_type = wave_type, 
-                        offset = offset)
+    sample_rate = len(x)/(x[-1]-x[0])
+    return sm.Wave(y, sample_rate, 
+                      wave_type=wave_type, 
+                      offset=offset)
     
 def _import_point_dat(file_name, point_type):
     """Importuje współrzędne punktów z pliku .dat i zwraca odpowiadający
@@ -69,8 +69,8 @@ def import_wave(file_name, wave_type, offset=0):
         raise ValueError("Nieodpowiedni format plików")
     return import_func(
         file_name, 
-        wave_type = wave_type, 
-        offset = offset)
+        wave_type=wave_type, 
+        offset=offset)
 
 def import_points(file_name, point_type):
     """Importuje punkty z danego pliku, przy czym wybiera odpowiednią

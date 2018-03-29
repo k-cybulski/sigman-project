@@ -3,6 +3,7 @@
 # it can be run by simply using `pytest` in the `sigman-project` directory
 
 import os
+from math import isclose
 
 import numpy as np
 import pytest
@@ -20,8 +21,17 @@ def bp_wave():
 
 @pytest.fixture
 def sine_wave():
-    sine = np.sin(np.linspace(0, 2*np.pi, num=100))
-    return sm.Wave(sine, 2, 'sine')
+    sine = np.sin(np.linspace(0, 2*np.pi, num=101))
+    sample_rate = 100/2.
+    return sm.Wave(sine, sample_rate, 'sine')
+
+@pytest.fixture
+def simple_values():
+    return [0, 1, 0, -1]
+
+@pytest.fixture
+def simple_wave(simple_values):
+    return sm.Wave(simple_values, 2, 'simple')
 
 @pytest.fixture
 def r_points():
@@ -35,11 +45,11 @@ def butterworth():
 
 def test_import_wave_dat():
     bp_wave = fm.import_wave('example_data/BP.dat', 'bp')
-    assert bp_wave.value_at(2) == 134.75
+    assert round(bp_wave.value_at(2)*100)/100 == 135.04
 
 def test_wave_offset(bp_wave):
     bp_wave.offset = -2
-    assert bp_wave.value_at(0) == 134.75
+    assert round(bp_wave.value_at(0)*100)/100 == 135.04
 
 def test_wave_copy(bp_wave):
     t_wave = bp_wave.copy()
@@ -49,13 +59,13 @@ def test_wave_copy(bp_wave):
 def test_wave_sample_at(bp_wave):
     assert bp_wave.sample_at(0) == 0
     assert bp_wave.sample_at(bp_wave.complete_length) == len(bp_wave) - 1
-    assert bp_wave.sample_at(200) == round(200*bp_wave.sample_rate)
+    assert bp_wave.sample_at(200) == int(200*bp_wave.sample_rate)
 
 def test_value_at(bp_wave, sine_wave):
     assert bp_wave.value_at(bp_wave.complete_length) == bp_wave[-1]
     assert bp_wave.value_at(0) == bp_wave[0]
     assert bp_wave.value_at(bp_wave.sample_length*200) == bp_wave[200]
-    assert sine_wave.value_at(1) == 0
+    assert isclose(sine_wave.value_at(1), 0, abs_tol=0.001)
 
 def test_import_points_dat():
     r_points = fm.import_points('example_data/R.dat', 'r')
@@ -100,19 +110,32 @@ def test_deprecated_modify_procedure(bp_wave, butterworth):
     arguments['Wn'] = 30
     filtered_wave = analyzer.modify_wave(bp_wave, 60, 70, butterworth,
                                          arguments)
-    assert filtered_wave.value_at(5) == 90.118839599334365
+    assert filtered_wave.value_at(5) == 90.11883959933436
     assert filtered_wave.complete_length == 10
-    assert bp_wave.value_at(65) == 89.75
+    assert bp_wave.value_at(65) == 89.90841097350858
     bp_wave.replace_slice(60, 70, filtered_wave)
-    assert bp_wave.value_at(65) == 90.118839599334365
+    assert bp_wave.value_at(65) == 90.11883959933436
 
 ### FIXME: Will pass after issue #20
 def test_modify_procedure(bp_wave, butterworth):
     filtered_wave = analyzer.modify_wave(bp_wave, 60, 70, butterworth, 
                                          N=3, Wn=30)
     assert 90.118839599334365 == filtered_wave.value_at(5)
-    assert filtered_wave.value_at(5) == 90.118839599334365
+    assert filtered_wave.value_at(5) == 90.0603374794706
     assert filtered_wave.complete_length == 10
     assert bp_wave.value_at(65) == 89.75
     bp_wave.replace_slice(60, 70, filtered_wave)
-    assert bp_wave.value_at(65) == 90.118839599334365
+    assert bp_wave.value_at(65) == 90.0603374794706
+
+def test_wave_value_exactness(simple_values, simple_wave):
+    for true, assumed in zip(simple_values, 
+            simple_wave.data_slice(0, simple_wave.complete_length)):
+        assert true == assumed
+    for true, assumed in zip(simple_values[0:2],
+                             simple_wave.data_slice(0, 1.5)):
+        assert true == assumed
+    for true, assumed in zip(simple_values[0:2],
+                             simple_wave.data_slice(0, 1.75)):
+        assert true == assumed
+    assert 0.5 == simple_wave.value_at(0.25)
+    assert -0.5 == simple_wave.value_at(1.25)

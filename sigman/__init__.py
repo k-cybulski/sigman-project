@@ -32,16 +32,16 @@ class Wave():
         Wave.offset - przesunięcie w czasie w Composite_data
     """
 
-    def __init__(self, data, complete_length, wave_type, offset=0):
+    def __init__(self, data, sample_rate, wave_type, offset=0):
         """Inicjalizuje Wave. Przyjmuje tablicę danych wartości
         sygnału oraz jego długość, a także typ (np. 'bp').
         """
-        # Okres nagranych danych; odległość w czasie między
-        # punktami przebiegu.
-        self.sample_length = complete_length/len(data)
-        # Częstotliwość danych.
-        self.sample_rate = 1/self.sample_length        
-        self.complete_length = complete_length 
+        if sample_rate <= 0:
+            raise ValueError(("Sample rate must be greater than 0, is "
+                              "{}").format(sample_rate))
+        self.sample_rate = sample_rate
+        self.sample_length = 1/sample_rate
+        self.complete_length = len(data) * self.sample_length
         self.type = wave_type 
         self.data = np.array(data) 
         self.offset = offset
@@ -49,7 +49,7 @@ class Wave():
     @classmethod
     def fromWave(cls, wave):
         """Zwraca kopię danego Wave."""
-        return cls(wave.data, wave.complete_length,
+        return cls(wave.data, wave.sample_rate,
                    wave_type=wave.type, offset=wave.offset)
 
     def copy(self):
@@ -63,11 +63,11 @@ class Wave():
         return self.data[key]
 
     def sample_at(self, time):
-        """Zwraca index najbliższego punktu do podanego czasu.  
+        """Zwraca index najpóźniejszego punktu przed podanym czasem.  
         Jeśli index wystaje poza ramy czasowe danych to metoda 
         powoduje ValueError.
         """
-        index = round((time-self.offset) / self.sample_length)
+        index = int((time-self.offset) / self.sample_length)
         # Poprawka na ostatni punkt wykresu
         if index == len(self):
             index -= 1
