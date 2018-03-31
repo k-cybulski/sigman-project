@@ -1,6 +1,6 @@
 """
-W tym pliku definiowane są proste funkcje służące do szybkiego wizualizowania
-danych.
+This module contains functions for quick and dirty data visualization
+using simple matplotlib windows.
 """
 
 
@@ -16,10 +16,6 @@ type_colors={'ecg':'C0', 'bp':'C1',
 
 def visualize_composite_data(comp_data, begin_time=None, end_time=None, 
     title="", wanted_waves=None, wanted_points=None, wanted_parameters=None):
-    """Szybka i nieestetyczna funkcja do wizualizacji danych zawartych
-    w Composite_data. Pokazuje okno matplotlib uwzględniające wszystkie
-    wymagane przebiegi i punkty.
-    """
     # Ustalamy zakres czasu, który chcemy pokazać
     # jeśli wanted_waves są ustawione, to ograniczymy zakres tylko do nich
     # jeśli nie są, to pokażemy wszystkie dane które mamy
