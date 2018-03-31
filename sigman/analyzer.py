@@ -112,7 +112,9 @@ def validate_procedure_compatibility(procedure_module):
     return True, ""
     
 def import_procedure(name):
-    """Zwraca moduł procedury o danej nazwie z folderu procedures."""
+    """Returns a module of a procedure with a given name from 
+    `proedures` directory.
+    """
     procedure = importlib.import_module("procedures."+name)
     valid, error_message = validate_procedure_compatibility(procedure)
     if not valid:
