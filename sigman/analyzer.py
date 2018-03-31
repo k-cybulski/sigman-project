@@ -63,9 +63,17 @@ Sample usage:
     complete_data.waves['bp'].replace_slice(60, 70, filtered_wave)
 """
 
-import importlib
+import importlib.util
+import glob
+import os
 
 import sigman as sm
+
+try:
+    SIGMAN_ROOT = os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))) + "/"
+except:
+    SIGMAN_ROOT = ""
 
 class InvalidArgumentError(Exception):
     """Raised when the procedure receives an invalid argument."""
@@ -73,9 +81,11 @@ class InvalidArgumentError(Exception):
 class InvalidProcedureError(Exception):
     """Raised when a procedure doesn't fulfill API requirements."""
 
+### ~~~ Imports & validation ~~~ ###
+
 def validate_procedure_compatibility(procedure_module):
     """Returns a boolean whether a given module fulfills API 
-    requirements and an error message string, if it doesn't.
+    requirements and an error message string if it doesn't.
     
     The error message string is an empty string if the module
     does fulfill requirements.
@@ -110,16 +120,73 @@ def validate_procedure_compatibility(procedure_module):
             return False, ("Attribute {} has not been declared in the "
                            "procedure module".format(attribute))
     return True, ""
+
+def list_procedures(type_filter="", 
+                    procedure_directory=SIGMAN_ROOT+'procedures/'):
+    """Returns a list of absolute paths to procedure files within a
+    directory.
     
-def import_procedure(name):
-    """Returns a module of a procedure with a given name from 
-    `proedures` directory.
+    By default, that directory is `SIGMAN_ROOT/procedures/`.
+    `SIGMAN_ROOT` is defined at the top of this module as the directory
+    where sigman package is contained.
     """
-    procedure = importlib.import_module("procedures."+name)
+    filter_ = procedure_directory+type_filter+"*.py"
+    files = glob.glob(filter_)
+    procedure_file_paths = [os.path.abspath(file_) for file_ in files]
+    return procedure_file_paths
+
+def _get_module_from_path(path):
+    return os.path.splitext(os.path.basename(path))[0]
+
+def dictify_procedures(type_filter="", 
+                       procedure_directory=SIGMAN_ROOT+'procedures/'):
+    """Returns a dict of `<module_name>:<path>` pairs for procedures
+    of wanted type found in `procedure_directory`.
+    """
+    list_ = list_procedures(type_filter, procedure_directory=procedure_directory)
+    return {_get_module_from_path(path): path for path in list_}
+
+def _import_module_from_path(path, package_prefix):
+    """Imports a module from a file with the given path."""
+    module_name = _get_module_from_path(path)
+    spec = importlib.util.spec_from_file_location(package_prefix+module_name,
+                                                  path)
+    if spec is None:
+        raise FileNotFoundError("Module file {} not found".format(path))
+    procedure = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(procedure)
+    procedure = importlib.import_module(package_prefix+module_name)
+    return procedure
+
+def import_procedure(procedure_name, package_prefix='procedures.',
+                     procedure_directory=SIGMAN_ROOT+"procedures/"):
+    """Imports a procedure from a file given its module name or path.
+
+    It will attempt to use the string as if it were a path, and if that
+    fails it will fall back to scanning all possible procedure modules
+    within `procedure_directory` to find one with a corresponding module
+    name. If no file is found `FileNotFoundError` is raised.
+    
+    Once a file is found it will be imported like any ordinary python
+    module and then validated whether or not it is compatible with our
+    API. If not, `InvalidProcedureError` will be raised.
+    """
+    try:
+        procedure = _import_module_from_path(procedure_name, package_prefix)
+    except FileNotFoundError:
+        procedure_dict = dictify_procedures(
+            procedure_directory=procedure_directory)
+        procedure_path = procedure_dict.get(procedure_name)
+        if procedure_path is None:
+            raise FileNotFoundError(
+                "Procedure {} not found".format(procedure_name))
+        procedure = _import_module_from_path(procedure_path, package_prefix)
     valid, error_message = validate_procedure_compatibility(procedure)
     if not valid:
         raise InvalidProcedureError(error_message)
     return procedure
+
+### ~~~ Execution ~~~ ###
 
 def modify_wave(wave, begin_time, end_time, 
                 procedure, arguments, 
