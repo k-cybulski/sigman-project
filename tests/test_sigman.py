@@ -2,11 +2,13 @@
 # This script tests functions & methods of the `sigman` library
 # it can be run by simply using `pytest` in the `sigman-project` directory
 
-# hack to make the imports work as if it were in the root directory
 import sys
 import os
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_script_path = os.path.abspath(__file__)
+_script_directory = os.path.dirname(_script_path)
+_sigman_root_directory = os.path.dirname(_script_directory)
+os.chdir(_script_directory)
+sys.path.append(_sigman_root_directory)
 
 from math import isclose
 
