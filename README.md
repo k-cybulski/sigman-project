@@ -17,6 +17,13 @@ sudo apt install python3-pip
 pip3 install PyQt5 numpy scipy matplotlib
 ```
 
+## Tests
+To run tests use [pytest](https://docs.pytest.org/en/latest/). After it is installed
+simply run:
+```
+pytest
+```
+
 ## Usage
 ### QtSigman
 Run `run_qtsigman.py`.
