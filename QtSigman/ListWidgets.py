@@ -11,7 +11,7 @@ class DataListItemWidget(QW.QWidget):
         self.mainHBoxLayout.addWidget(self.typeLabel)
 
         self.editMetaButton = QW.QPushButton()
-        self.editMetaButton.setText("Zmień metainformacje")
+        self.editMetaButton.setText("Change metadata")
         self.mainHBoxLayout.addWidget(self.editMetaButton)
 
         self.setLayout(self.mainHBoxLayout)
@@ -79,7 +79,7 @@ class VCollectionListWidget(QW.QWidget):
         vBoxLayout = QW.QVBoxLayout(self)
         self.setLayout(vBoxLayout)
 
-        wavesLabel = QW.QLabel("Przebiegi")
+        wavesLabel = QW.QLabel("Waveforms")
         vBoxLayout.addWidget(wavesLabel)
         self.waveList = DataListWidget(
             DataActions.setVWaveSettings, vCollection.waves)
@@ -90,7 +90,7 @@ class VCollectionListWidget(QW.QWidget):
         vCollection.waveKeyChanged.connect(updateWavesList)
         vCollection.waveDeleted.connect(updateWavesList)
 
-        pointsLabel = QW.QLabel("Punkty")
+        pointsLabel = QW.QLabel("Points")
         vBoxLayout.addWidget(pointsLabel)
         self.pointsList = DataListWidget(
             DataActions.setVPointsSettings, vCollection.points)
@@ -101,7 +101,7 @@ class VCollectionListWidget(QW.QWidget):
         vCollection.pointsKeyChanged.connect(updatePointsList)
         vCollection.pointsDeleted.connect(updatePointsList)
 
-        parametersLabel = QW.QLabel("Parametry")
+        parametersLabel = QW.QLabel("Parameters")
         vBoxLayout.addWidget(parametersLabel)
         _parameterFunctionPlaceholder = lambda x, y: x+y # Unfinished
         self.parameterList = DataListWidget(

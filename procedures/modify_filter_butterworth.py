@@ -4,94 +4,63 @@ import numpy as np
 from sigman.analyzer import InvalidArgumentError
 
 procedure_type = 'modify'
-description = """Procedura aplikująca filtr Butterwortha z biblioteki SciPy.
-Dokładna dokumentacja na
+description = """Procedure applying the Butterworth filter from SciPy.
+Exact documentation here:
 https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.butter.html"""
 author = 'kcybulski'
 arguments = {
-    'N':"Rząd filtru; liczba naturalna",
-    'Wn':("Częstotliwość graniczna w Hz. Żadna wartość Wn nie może przekroczyć "
-    "częstotliwości Nyquista (połowy częstotliwości samplowania przebiegu); "
-    "liczba rzeczywista lub, jeśli btype wynosi bandpass lub bandstop, dwie "
-    "liczby rzeczywiste przedzielone przecinkiem"),
-    'btype':"""Typ filtru.
-    lowpass - dolnoprzepustowy
-    highpass - górnoprzepustowy
-    bandpass - środkowoprzepustowy
-    bandstop - środkowozaporowy"""
+    'N':"Order of the filter; natural number",
+    'Wn':("Cutoff frequency in Hz. Wn may not be greater than the Nyquist "
+          "frequency; real number or, if btype is bandpass or bandstop, two "
+          "real numbers split with a comma."),
+    'btype':"Type of filter; lowpass, highpass, bandpass or bandstop"
 }
 default_arguments = {'N':'','Wn':'','btype':'lowpass'}
 
-def validate_arguments(wave, arguments):
-    "Sprawdza, czy podane argumenty są poprawne."
+def interpret_arguments(wave, arguments):
+    # N
+    try:
+        N = int(arguments['N'])
+        if N < 0:
+            raise ValueError
+    except:
+        raise InvalidArgumentError("Invalid filter order "
+                                   "{}".format(arguments['N']))
     # btype
     if (arguments['btype'] not in [
             'lowpass', 'highpass', 'bandpass', 'bandstop']):
-        return False, "Niewłaściwy typ filtru."
-    # N
-    try:
-        value = int(arguments['N'])
-        if value < 0:
-            return False, "Za mały rząd filtru."
-    except:
-        return False, "Niewłaściwy rząd filtru."
-    # Wn
-    if arguments['btype'] in ['bandpass', 'bandstop']:
-        try:
-            vals = arguments['Wn'].split(',')
-            if len(vals) != 2:
-                return False, ("Niewłaściwa liczba częstotliwości "
-                               "granicznych.")
-            for val in vals:
-                value = float(val)
-                if value > wave.sample_rate/2:
-                    return False, ("Zbyt duża częśtotliwość graniczna. "
-                        "Maksymalnie może wynosić połowę częstotliwości "
-                        "przebiegu.")
-                if value < 0:
-                    return False, "Zbyt mała częstotliwość graniczna."
-        except:
-            return False, "Niewłaściwe częstotliwości graniczne."
-    else:
-        try:
-            value = float(arguments['Wn'])
-            if value > wave.sample_rate/2:
-                return False, ("Zbyt duża częśtotliwość graniczna. "
-                     "Maksymalnie może wynosić połowę częstotliwości "
-                     "przebiegu.")
-            if value < 0:
-                return False, "Zbyt mała częstotliwość graniczna."
-        except:
-            return False, "Niewłaściwa częstotliwość graniczna."
-    return True, ""
-
-def interpret_arguments(arguments):
-    "Konwertuje argumenty tekstowe w liczby/inne wymagane typy."
-    N = int(arguments['N'])
+        raise InvalidArgumentError("Invalid filter type "
+                                   "{}".format(arguments['btype']))
     btype = arguments['btype']
-    Wn = []
-    if btype in ['bandpass', 'bandstop']:
-        Wn_strings = arguments['Wn'].split(',')
-        for string in Wn_strings:
-            Wn.append(float(string))
-        Wn = np.array(Wn)
+    # Wn
+    try:
+        Wn = []
+        if btype in ['bandpass', 'bandstop']:
+            Wn_strings = arguments['Wn'].split(',')
+            Wn = np.array([float(string) for string in Wn_strings])
+        else:
+            Wn = float(arguments['Wn'])
+    except:
+        raise InvalidArgumentError("Invalid cutoff frequency for this type"
+                                   "{}".format(arguments['Wn']))
+    if type(Wn) == float:
+        _testvals = [Wn]
     else:
-        Wn = float(arguments['Wn'])
+        _testvals = Wn
+    if any(val > wave.sample_rate/2 for val in _testvals):
+        raise InvalidArgumentError("Cutoff frequency may not be greater than "
+                                   "half of waveform's sample rate.")
     return {
         'N':N,
         'Wn':Wn,
         'btype':btype}
 
 def procedure(wave, begin_time, end_time, arguments):
-    wn = 2*arguments['Wn'] / wave.sample_rate # funkcja butter(...) przyjmuje częstotliwość graniczną od 0 do 1, gdzie 1 to częstotliwość nyquista sygnału; tutaj zachodzi konwersja z hz na argument dla filtru
+    wn = 2*arguments['Wn'] / wave.sample_rate 
     b, a = butter(arguments['N'], wn, btype=arguments['btype'])
     data = wave.data_slice(begin_time, end_time)
     return filtfilt(b, a, data)
 
 def execute(wave, begin_time, end_time, arguments):
-    "Sprawdza poprawność argumentów i wykonuje procedurę."
-    valid, error_message = validate_arguments(wave, arguments)
-    if not valid:
-        raise InvalidArgumentError(error_message)
-    arguments = interpret_arguments(arguments)
+    arguments = interpret_arguments(wave, arguments)
     return procedure(wave, begin_time, end_time, arguments)
