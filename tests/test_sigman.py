@@ -5,6 +5,7 @@
 # hack to make the imports work as if it were in the root directory
 import sys
 import os
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from math import isclose
