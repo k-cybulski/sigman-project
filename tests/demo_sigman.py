@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+### To all English readers - this script is so unimportant I missed it as I was
+# translating it. It should be fairly straightforward nonetheless.
+# Sorry ~ k-cybulski
+
 # W tym skrypcie zademonstrowane są wszystkie główne metody biblioteki sigman
 
 import sys
@@ -16,7 +21,7 @@ from sigman import visualizer as vis
 
 print(">Próba importu próbych .dat")
 bp_wave = fm.import_wave('example_data/BP.dat', 'bp')
-ecg_wave = fm.import_wave('example_data/EKG.dat', 'ecg')
+ecg_wave = fm.import_wave('example_data/ECG.dat', 'ecg')
 r_points = fm.import_points('example_data/R.dat', 'r') 
 
 print(">Próba połączenia danych w Composite_data")
@@ -55,14 +60,14 @@ vis.show(complete_data, begin_time=60, end_time=80, title="Wycinek dwudziestosek
 print(">Próba zapisania composite_data")
 fm.save_composite_data("example_data/example_composite_data.pickle",complete_data)
 
-print(">Proba wczytania innego, bardzo chaotycznego sygnału EKG i przefiltrowania go a następnie pokazania tuż obok nieprzefiltrowanego")
-ecg_wave = fm.import_wave('example_data/EKG_messy.dat', 'ecg')
+print(">Proba wczytania innego, bardzo chaotycznego sygnału ECG i przefiltrowania go a następnie pokazania tuż obok nieprzefiltrowanego")
+ecg_wave = fm.import_wave('example_data/ECG_messy.dat', 'ecg')
 arguments['N'] = 3
 arguments['Wn'] = 20
 modified_ecg = analyzer.modify_wave(ecg_wave, 0, ecg_wave.complete_length,
                                     butterworth, arguments)
 complete_data = sm.Composite_data(waves={'ecg_messy':ecg_wave,'ecg_clean':modified_ecg})
-vis.show(complete_data, begin_time=10,end_time=15,title="EKG wejściowe (mocno zaburzone) oraz przefiltrowane filtrem 20 Hz")
+vis.show(complete_data, begin_time=10,end_time=15,title="ECG wejściowe (mocno zaburzone) oraz przefiltrowane filtrem 20 Hz")
 
 print(">Próba ponownego wczytania wcześniej zapisanego composite_data")
 complete_data = fm.load_composite_data('example_data/example_composite_data.pickle')

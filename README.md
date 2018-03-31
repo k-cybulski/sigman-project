@@ -212,7 +212,7 @@ composite_data.add_parameter(hr, 'hr')
 vis.visualize_composite_data(composite_data)
 ```
 
-Examples of various sigman functions may be found in the file `test_sigman.py`
+Examples of various sigman functions may be found in the file `tests/demo_sigman.py`
 
 ## Contributing
 If you wish to contribute check out [CONTRIBUTING.md](https://github.com/k-cybulski/sigman-project/blob/master/CONTRIBUTING.md)
