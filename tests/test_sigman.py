@@ -2,7 +2,11 @@
 # This script tests functions & methods of the `sigman` library
 # it can be run by simply using `pytest` in the `sigman-project` directory
 
+# hack to make the imports work as if it were in the root directory
+import sys
 import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from math import isclose
 
 import numpy as np
@@ -12,8 +16,6 @@ import sigman as sm
 from sigman import file_manager as fm
 from sigman import analyzer
 from sigman import visualizer as vis
-
-os.path.dirname(os.path.abspath(__file__))
 
 @pytest.fixture
 def bp_wave():
