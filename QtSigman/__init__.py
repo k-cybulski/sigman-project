@@ -318,8 +318,8 @@ class QtSigmanWindow(QW.QMainWindow):
         self.file_menu.addAction('Import points', self.importPoints)
         self.file_menu.addAction('Load Modelflow data',
                 self.importModelflow)        
-        self.file_menu.addAction('Load a project', self.loadCompositeData)
-        self.file_menu.addAction('Save a project', self.saveCompositeData)
+        self.file_menu.addAction('Load project', self.loadCompositeData)
+        self.file_menu.addAction('Save project', self.saveCompositeData)
         self.file_menu.addAction('Quit', self.quit)
         self.menuBar().addMenu(self.file_menu)
 
