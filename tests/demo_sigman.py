@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 # W tym skrypcie zademonstrowane są wszystkie główne metody biblioteki sigman
 
+import pathlib
+import sys
+import os
+script_path = os.path.abspath(__file__)
+script_directory = os.path.dirname(script_path)
+sigman_root_directory = os.path.dirname(script_directory)
+os.chdir(script_directory)
+sys.path.append(sigman_root_directory)
+
 import sigman as sm
 from sigman import file_manager as fm
 from sigman import analyzer
 from sigman import visualizer as vis
-import os
-
-os.path.dirname(os.path.abspath(__file__))
 
 print(">Próba importu próbych .dat")
 bp_wave = fm.import_wave('example_data/BP.dat', 'bp')
