@@ -9,11 +9,11 @@ _script_directory = os.path.dirname(_script_path)
 _sigman_root_directory = os.path.dirname(_script_directory)
 os.chdir(_script_directory)
 sys.path.append(_sigman_root_directory)
+import pytest
 
 from math import isclose
 
 import numpy as np
-import pytest
 
 import sigman as sm
 from sigman import file_manager as fm
