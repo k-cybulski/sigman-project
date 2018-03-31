@@ -108,7 +108,7 @@ def test_procedure_import():
     butterworth = analyzer.import_procedure("modify_filter_butterworth")
     assert butterworth.author == 'kcybulski'
 
-### FIXME: Should be removed after issue #20
+### FIXME: Should be changed after issue #20
 def test_deprecated_modify_procedure(bp_wave, butterworth):
     arguments = butterworth.default_arguments
     arguments['N'] = 3
@@ -118,16 +118,6 @@ def test_deprecated_modify_procedure(bp_wave, butterworth):
     assert isclose(filtered_wave.value_at(5), 90.11, rel_tol=0.001)
     assert filtered_wave.complete_length == 10
     assert bp_wave.value_at(65) == 89.90841097350858
-    bp_wave.replace_slice(60, 70, filtered_wave)
-    assert isclose(bp_wave.value_at(65), 90.11, rel_tol=0.001)
-
-### FIXME: Will pass after issue #20
-def test_modify_procedure(bp_wave, butterworth):
-    filtered_wave = analyzer.modify_wave(bp_wave, 60, 70, butterworth, 
-                                         N=3, Wn=30)
-    assert isclose(filtered_wave.value_at(5), 90.11, rel_tol=0.001)
-    assert filtered_wave.complete_length == 10
-    assert bp_wave.value_at(65) == 89.75
     bp_wave.replace_slice(60, 70, filtered_wave)
     assert isclose(bp_wave.value_at(65), 90.11, rel_tol=0.001)
 
