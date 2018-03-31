@@ -6,6 +6,7 @@ from PyQt5 import QtWidgets as QW
 from PyQt5.QtWidgets import QMessageBox as QMsgBox
 from matplotlib import colors
 from sigman import analyzer
+from sigman.analyzer import InvalidArgumentError
 
 from QtSigman.DefaultColors import defaultColors
 
@@ -305,7 +306,7 @@ class ProcedureWidget(QW.QWidget):
         self.vBoxLayout.addWidget(self.procedureArgumentsWidget)
 
         bottomHBoxLayout = QW.QHBoxLayout()
-        self.confirmButton = QW.QPushButton("Execute")
+        self.confirmButton = QW.QPushButton("Confirm")
         bottomHBoxLayout.addWidget(self.confirmButton)
         self.rejectButton = QW.QPushButton("Cancel")
         bottomHBoxLayout.addWidget(self.rejectButton)
@@ -362,19 +363,27 @@ class ProcedureWidget(QW.QWidget):
                     "Not all required points given")
                 return False
         arguments = self.procedureArgumentsWidget.getArguments()
-        if self.procedure.procedure_type == 'modify':
-            wave = self.getSelectedWaves()['Waveform']
-            valid, message = self.procedure.validate_arguments(
-                wave, arguments)
-        else:
-            waves = self.getSelectedWaves()
-            points = self.getSelectedPoints()
-            valid, message = self.procedure.validate_arguments(
-                waves, points, arguments)
-        if not valid:
-            QW.QMessageBox.warning(self, "Błąd argumentów",
-                                   message)
-            return False
+        if len(self.procedure.arguments) > 0:
+            if self.procedure.procedure_type == 'modify':
+                wave = self.getSelectedWaves()['Waveform']
+                try:
+                    self.procedure.interpret_arguments(
+                        wave, arguments)
+                except InvalidArgumentError as e:
+                    QW.QMessageBox.warning(self, "Invalid arguments",
+                                           e.args[0])
+                    return False
+
+            else:
+                waves = self.getSelectedWaves()
+                points = self.getSelectedPoints()
+                try:
+                    self.procedure.interpret_arguments(
+                        waves, points, arguments)
+                except InvalidArgumentError as e:
+                    QW.QMessageBox.warning(self, "Invalid arguments",
+                                           e.args[0])
+                    return False
         return True
 
     def getSelectedWaveKeys(self):

@@ -94,7 +94,6 @@ def validate_procedure_compatibility(procedure_module):
         "author",
         "arguments",
         "default_arguments",
-        "validate_arguments",
         "procedure",
         "execute"]
     if procedure_type in ['points', 'parameter']:
@@ -102,12 +101,14 @@ def validate_procedure_compatibility(procedure_module):
             "required_waves",
             "required_points",
             "output_type"])
+    if len(procedure_module.arguments) > 0:
+        required_attributes.extend([
+            "interpret_arguments"])
     
     for attribute in required_attributes:
         if attribute not in procedure_module.__dict__:
-            error_message = "atrybut "+attribute+(" nie został "
-                "zadeklarowany w module procedury")
-            return False, error_message
+            return False, ("Attribute {} has not been declared in the "
+                           "procedure module".format(attribute))
     return True, ""
     
 def import_procedure(name):
