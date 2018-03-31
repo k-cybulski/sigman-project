@@ -456,15 +456,10 @@ class ProcedureDialog(QW.QDialog):
 
         # Generate a list of all procedures
         self.procedureType = procedureType
-        procedureFilter = "procedures/"+procedureType+"_*"
-        self.procedureFiles = glob.glob(procedureFilter)
-        cutoutLength = len(procedureFilter)-1
-        self.procedureNames = [proc[cutoutLength:-3] for
-            proc in self.procedureFiles]
-        self.procedures = []
-        for proc in self.procedureNames:
-            self.procedures.append(
-                analyzer.import_procedure(self.getModuleName(proc)))
+        typeFilter = procedureType+"_"
+        self.procedures = analyzer.import_procedures(type_filter=typeFilter)
+        self.procedureNames = [procedure.__name__.split(typeFilter)[-1] for procedure in
+                               self.procedures]
         if len(self.procedures) == 0:
             QW.QMessageBox.warning(self, "Error",
                                    "Procedures not found in `procedures/` "

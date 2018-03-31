@@ -186,6 +186,29 @@ def import_procedure(procedure_name, package_prefix='procedures.',
         raise InvalidProcedureError(error_message)
     return procedure
 
+def import_procedures(type_filter="", package_prefix='procedures.',
+                      procedure_directory=SIGMAN_ROOT+"procedures/",
+                      safe=False):
+    """Runs `import_procedure` on the output of `list_procedures` and
+    returns a list of imported procedures.
+    
+    If `safe` is False `InvalidProcedureError` exceptions will be
+    skipped.
+    """
+    list_ = list_procedures(type_filter=type_filter,
+                            procedure_directory=procedure_directory)
+    procedure_list = []
+    for procedure_path in list_:
+        try:
+            procedure_list.append(import_procedure(
+                procedure_path,
+                package_prefix=package_prefix,
+                procedure_directory=procedure_directory))
+        except InvalidProcedureError:
+            if safe:
+                raise
+    return procedure_list
+
 ### ~~~ Execution ~~~ ###
 
 def modify_wave(wave, begin_time, end_time, 
