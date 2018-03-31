@@ -1,5 +1,5 @@
 """
-Moduł zajmujący się widgetem wizualizującym wykres.
+Module responsible for data visualization itself.
 """
 from enum import Enum
 
@@ -65,23 +65,23 @@ class PlotCanvas(FigureCanvas):
 
 class PlotToolbar(NavigationToolbar2QT):
     toolitems = [t for t in NavigationToolbar2QT.toolitems if
-                 t[0] in ('Pan', 'Zoom', 'Save')] # 'Home' do skorygowania
+                 t[0] in ('Pan', 'Zoom', 'Save')] # 'Home'should be fixed
     
     def __init__(self, canvas, parent):
         NavigationToolbar2QT.__init__(self, canvas, parent)
 
         self.parent = parent # we assume it has a vCollection
 
-        self.editCheckBox = QW.QCheckBox("Tryb edycji")
+        self.editCheckBox = QW.QCheckBox("Edit mode")
         self.addWidget(self.editCheckBox)
 
-        editTypes = ["Dodaj LPM/Usuń PPM",
-                    "Przesuń"]
+        editTypes = ["Add LMB/Delete RMB",
+                    "Move"]
         self.editTypeComboBox = QW.QComboBox()
         self.editTypeComboBox.addItems(editTypes)
         self.addWidget(self.editTypeComboBox)
 
-        self.selectedLabel = QW.QLabel("Wybrane punkty:")
+        self.selectedLabel = QW.QLabel("Chosen points:")
         self.addWidget(self.selectedLabel)
         
         self.selectedPointsComboBox = QW.QComboBox()
@@ -116,7 +116,7 @@ class PlotToolbar(NavigationToolbar2QT):
 
 
 class PlotWidget(QW.QWidget):
-    """Widget przedstawiający wykres wraz z paskiem nawigacji."""
+    """Widget showing the graph with the navigation toolbar."""
 
     def __init__(self, vCollection, parent=None):     
         super(PlotWidget, self).__init__(parent)
