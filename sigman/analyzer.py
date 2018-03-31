@@ -125,7 +125,8 @@ def modify_wave(wave, begin_time, end_time,
     if wave_type is None:
         wave_type = wave.type
     modified_data = procedure.execute(wave, begin_time, end_time, arguments)
-    return sm.Wave(modified_data, end_time-begin_time, wave_type)
+    return sm.Wave(modified_data, 
+                   len(modified_data)/(end_time-begin_time), wave_type)
     
 def find_points(waves, points, begin_time, end_time, 
                 procedure, arguments):

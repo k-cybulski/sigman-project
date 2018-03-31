@@ -37,18 +37,21 @@ class Wave:
         Wave.offset             - time offset
     """
 
-    def __init__(self, data, complete_length, wave_type, offset=0):
+    def __init__(self, data, sample_rate, wave_type, offset=0):
         """Initializes a Wave object.
         
         Arguments:
             data            - list of values of the signal
-            complete_length - length of the signal in seconds
+            sample_rate     - sample rate of the signal in Hz
             type            - string describing the type of data,
                               e.g. 'ecg' or 'bp'
         """
-        self.sample_length = complete_length/len(data)
-        self.sample_rate = 1/self.sample_length        
-        self.complete_length = complete_length 
+        if sample_rate <= 0:
+            raise ValueError(("Sample rate must be greater than 0, is "
+                              "{}").format(sample_rate))
+        self.sample_rate = sample_rate
+        self.sample_length = 1/sample_rate
+        self.complete_length = len(data) * self.sample_length
         self.type = wave_type 
         self.data = np.array(data) 
         self.offset = offset
@@ -56,7 +59,7 @@ class Wave:
     @classmethod
     def fromWave(cls, wave):
         """Returns a new `Wave` exactly like the one given."""
-        return cls(wave.data, wave.complete_length,
+        return cls(wave.data, wave.sample_rate,
                    wave_type=wave.type, offset=wave.offset)
 
     def copy(self):
@@ -67,9 +70,12 @@ class Wave:
         """Returns the total number of samples."""
         return len(self.data)
 
+    def __getitem__(self, key):
+        return self.data[key]
+
     def sample_at(self, time):
         """Returns the index of the sample at a given time in seconds."""
-        index = round((time-self.offset) / self.sample_length)
+        index = int((time-self.offset) / self.sample_length)
         if index == len(self):
             index -= 1
         if index < 0 or index > len(self):
@@ -83,13 +89,15 @@ class Wave:
         """
         approx_index = (time-self.offset) / self.sample_length
         interp_index = int(approx_index)
-        if interp_index < 0 or interp_index >= len(self)-1:
+        if time == self.complete_length: # correction for last value
+            return self[-1]
+        if interp_index < 0 or interp_index > len(self):
             raise ValueError('Point at %s is outside the range of Wave'
                              % time)
         approx_value = np.interp(
             approx_index, [interp_index, interp_index+1], 
             [self.data[interp_index],  self.data[interp_index+1]])
-        return self.data[self.sample_at(time)]
+        return approx_value
     
     def data_slice(self, begin_time, end_time, 
                    value_every=0, value_count=None):
@@ -216,6 +224,15 @@ class Points:
         """Returns number of points contained in this instance."""
         return len(self.data_x)
 
+    def __getitem__(self, key):
+        x = self.data_x[key]
+        y = self.data_y[key]
+        if isinstance(key, slice):
+            points = list(zip(*(x,y)))
+        else:
+            points = (x, y)
+        return points
+
     def slice_range(self, begin_time, end_time):
         """Returns a list of indices of points from a given time range.
 
@@ -335,10 +352,14 @@ class Points:
         for i in range(len(self)):
             self.data_y[i] = wave.value_at(self.data_x[i])
 
-    def move_in_time(self, time):
+    def offset(self, time):
         """Offsets all points' x coordinates."""
         for i in range(len(self)):
             self.data_x[i] += time
+    
+    def move_in_time(self, time):
+        # DEPRECATED
+        self.offset(time)
 
 class Parameter:
     """Class denoting a parameter calculated over time ranges.

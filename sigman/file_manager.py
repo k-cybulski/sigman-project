@@ -41,10 +41,10 @@ def _import_wave_dat(file_name, wave_type, offset=0):
     """Imports a waveform of constant frequency from a .dat file and
     returns a corresponding `Wave`."""
     x, y = _import_dat(file_name)
-    complete_len = x[-1]
-    return sm.Wave(y, complete_len, 
-                        wave_type = wave_type, 
-                        offset = offset)
+    sample_rate = len(x)/(x[-1]-x[0])
+    return sm.Wave(y, sample_rate, 
+                      wave_type=wave_type, 
+                      offset=offset)
     
 def _import_point_dat(file_name, point_type):
     """Imports coordinates from a .dat file and returns a corresponding
@@ -62,8 +62,8 @@ def import_wave(file_name, wave_type, offset=0):
         raise ValueError("Invalid file format")
     return import_func(
         file_name, 
-        wave_type = wave_type, 
-        offset = offset)
+        wave_type=wave_type, 
+        offset=offset)
 
 def import_points(file_name, point_type):
     """Imports a `Points` instance from a given file."""
