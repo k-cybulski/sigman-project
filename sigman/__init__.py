@@ -3,7 +3,7 @@ sigman
 ======
 Digital signal processing library. It operates on two basic types of 
 data: signal waveforms and points that describe events in time (i.e. R
-points of QRS complexes on an ECG signal).
+points within QRS complexes on an ECG signal).
 
 This file defines the following classes:
     Wave            - signal waveform
@@ -494,7 +494,7 @@ class Composite_data:
                                   'instance is None'))
         if dict_type in self.waves and not replace:
             raise ValueError(('Key {} in waves dict is already taken').format(
-                dict_type)))
+                dict_type))
         self.waves[dict_type] = wave
 
     def delete_wave(self, dict_type):
@@ -514,7 +514,7 @@ class Composite_data:
                 self.points[dict_type].add_points(points)
             else:
                 raise ValueError(('Key {} in points dict is already taken'
-                                 ).format(dict_type)))
+                                 ).format(dict_type))
         else:
             self.points[dict_type] = points
 
@@ -532,7 +532,7 @@ class Composite_data:
                                   'instance is None'))
         if dict_type in self.parameters and not replace:
             raise ValueError(('Key {} in parameters dict is already taken'
-                             ).format(dict_type)))
+                             ).format(dict_type))
         self.parameters[dict_type] = parameter
 
     def delete_parameter(self, dict_type):
