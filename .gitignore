@@ -1,6 +1,12 @@
 ﻿# Visual Studio Code
 /.vs
 
+# IntelliJ
+.idea
+
 # Byte code
 __pycache__/
 *.py[cod]
+
+# pytest
+.pytest_cache/
