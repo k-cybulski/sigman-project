@@ -34,7 +34,7 @@ class QWave(sm.Wave, QDataObject):
 
     def __init__(self, data):
         super().__init__(data.data,
-                         data.complete_length,
+                         data.sample_rate,
                          data.type,
                          offset=data.offset)
         QDataObject.__init__(self)
