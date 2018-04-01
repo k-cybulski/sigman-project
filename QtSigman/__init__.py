@@ -479,7 +479,7 @@ class QtSigmanWindow(QW.QMainWindow):
                                     """QtSigman
 GUI for the digital signal library sigman.
 Alpha version
-                                                                Krzysztof Cybulski 2017""")
+                                                                Krzysztof Cybulski 2018""")
 
         
 

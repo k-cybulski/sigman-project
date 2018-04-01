@@ -43,7 +43,7 @@ def procedure(waves, points, begin_time, end_time, arguments):
     data = wave.data_slice(begin_time, end_time)
     data = np.array(data)
 
-    derivative = [0] * 2 # 
+    derivative = [0] * 2
     for i in range(2,len(data)-2):
         derivative.append(
             (1/8) * (-data[i-2]-2*data[i-1]+2*data[i+1]+data[i+2]))

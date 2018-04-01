@@ -47,7 +47,7 @@ return specific results:
                   <float> begin_time, <float> end_time,
                   <dict> arguments)
         Procedure must return two lists of x and y values of points.
-    `paramteter`
+    `parameter`
         procedure(<dict> waves, <dict> points,
                   <float> begin_time, <float> end_time,
                   <dict> arguments)
