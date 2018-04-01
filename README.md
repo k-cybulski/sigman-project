@@ -34,11 +34,12 @@ Below examples assume importing `sigman` as `sm`, `sigman.file_manager` as `fm` 
 #### sigman.Wave
 The most basic type of data in the sigman library is a signal waveform `sigman.Wave`. Its most important attributes are a list of values `Wave.data` and length in seconds `Wave.complete_length`. From these sample rate `Wave.sample_rate` as well as sample length `Wave.sample_length` are calculated. Type of the signal `Wave.type` (e.g. `ecg` or `bp`) will also be useful for further analysis.
 
-`sigman.Wave` example containing the values of the sine function from 0 to 4pi in a 10 second range.
+`sigman.Wave` example containing 100 values of the sine function from 0 to 4pi with a
+frequency of 10 Hz.
 ```python
 import sigman as sm
 import numpy as np
-sine = np.sin(np.linspace(0, 4*np.pi))
+sine = np.sin(np.linspace(0, 4*np.pi, num=100))
 sine_wave = sm.Wave(sine, 10, 'sine')
 ```
 
