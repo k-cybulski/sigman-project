@@ -4,18 +4,14 @@ import numpy as np
 from sigman.analyzer import InvalidArgumentError
 
 procedure_type = 'parameter'
-description = """Procedura obliczająca częstotliwość bicia serca na 
-minutę w oparciu o punkty R.
-"""
+description = """Procedure calculating the heart rate based on the 
+frequency of recurrence of points of a given type."""
 author = 'kcybulski'
 arguments = {}
 default_arguments = {}
 output_type = 'hr'
 required_waves = []
 required_points = ['r']
-
-def validate_arguments(waves, points, arguments):
-    return True, "" # nie ma argumentów
 
 def procedure(waves, points, begin_time, end_time, arguments):
     r_x, r_y = points['r'].data_slice(begin_time, end_time)

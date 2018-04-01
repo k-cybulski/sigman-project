@@ -1,11 +1,7 @@
 """
 QtSigman
-======
-Biblioteka tworząca GUI w PyQt5 do bezpośredniej współpracy z 
-biblioteką sigman.
-
-Tutaj utrzymujemy nazewnictwo camelCase na tyle na ile to możliwe ze
-względu na zgodność z biblioteką PyQt5.
+========
+PyQt5 application providing a GUI to the `sigman` library.
 """
 from PyQt5 import QtWidgets as QW
 from PyQt5 import QtCore as QC
@@ -38,7 +34,7 @@ class QWave(sm.Wave, QDataObject):
 
     def __init__(self, data):
         super().__init__(data.data,
-                         data.complete_length,
+                         data.sample_rate,
                          data.type,
                          offset=data.offset)
         QDataObject.__init__(self)
@@ -289,26 +285,24 @@ class CompositeDataWrapper(sm.Composite_data, QC.QObject):
         self.parameterKeyChanged.emit(dictTypeFrom, dictTypeTo)
 
 class QtSigmanWindow(QW.QMainWindow):
-    """Klasa zawierająca główne okno programu."""
+    """Class containing the main window of the application."""
     def __init__(self):
         QW.QMainWindow.__init__(self)
         self.setAttribute(QC.Qt.WA_DeleteOnClose)
         self.setWindowTitle("QtSigman")
 
-        # Inicjalizacja biblioteki sigman i utworzenie pustego
-        # CompositeDataWrapper
         self.compositeDataWrapper = CompositeDataWrapper()
 
-        # Ustawienie elementów okna
+        # Setting up the main layout
         self.mainWidget = QW.QWidget(self)
         mainLayout = QW.QHBoxLayout(self.mainWidget)
         self.setCentralWidget(self.mainWidget)
-        # Po lewej
+        # Elements on the left
         self.plotWidgets = []
         self.plotTabWidget = QW.QTabWidget(self.mainWidget)
         mainLayout.addWidget(self.plotTabWidget)
 
-        # Po prawej
+        # Elements on the right
         rightVBoxLayout = QW.QVBoxLayout()
         self.listWidgets = []
         self.stackedListWidget = QW.QStackedWidget(self)
@@ -318,39 +312,30 @@ class QtSigmanWindow(QW.QMainWindow):
         mainLayout.addWidget(self.stackedListWidget)
         self.addPlot()
 
-        # Ustawienie paska menu
-        self.file_menu = QW.QMenu('Plik', self)
-        self.file_menu.addAction('Importuj przebieg', self.importWave)
-        self.file_menu.addAction('Eksportuj przebieg // TODO', lambda:
-            QW.QMessageBox.information(self, "Informacja",
-                                      "Nie zaimplementowano"))
-        self.file_menu.addAction('Importuj punkty', self.importPoints)
-        self.file_menu.addAction('Wczytaj dane Modelflow',
+        # Menu bar
+        self.file_menu = QW.QMenu('File', self)
+        self.file_menu.addAction('Import waveform', self.importWave)
+        self.file_menu.addAction('Import points', self.importPoints)
+        self.file_menu.addAction('Load Modelflow data',
                 self.importModelflow)        
-        self.file_menu.addAction('Eksportuj punkty // TODO', lambda:
-            QW.QMessageBox.information(self, "Informacja",
-                                      "Nie zaimplementowano"))
-        self.file_menu.addAction('Wczytaj projekt', self.loadCompositeData)
-        self.file_menu.addAction('Zapisz projekt', self.saveCompositeData)
-        self.file_menu.addAction('Zamknij', self.quit)
+        self.file_menu.addAction('Load project', self.loadCompositeData)
+        self.file_menu.addAction('Save project', self.saveCompositeData)
+        self.file_menu.addAction('Quit', self.quit)
         self.menuBar().addMenu(self.file_menu)
 
-        self.windowMenu = QW.QMenu('Widok', self)
-        self.windowMenu.addAction('Dodaj wykres', self.addPlot)
+        self.windowMenu = QW.QMenu('View', self)
+        self.windowMenu.addAction('Add a plot', self.addPlot)
         self.menuBar().addMenu(self.windowMenu)
-        self.windowMenu.addAction('Usuń wykres', self.deletePlot)
+        self.windowMenu.addAction('Remove a plot', self.deletePlot)
         self.menuBar().addMenu(self.windowMenu)
 
-        self.procedure_menu = QW.QMenu('Procedury', self)
-        self.procedure_menu.addAction('Modyfikuj przebieg', self.modifyWave)
-        self.procedure_menu.addAction('Znajdź punkty', self.findPoints)
-        self.procedure_menu.addAction('Oblicz parametr // TODO', lambda:
-            QW.QMessageBox.information(self, "Informacja",
-                                      "Nie zaimplementowano"))
+        self.procedure_menu = QW.QMenu('Procedures', self)
+        self.procedure_menu.addAction('Modify waveform', self.modifyWave)
+        self.procedure_menu.addAction('Find points', self.findPoints)
         self.menuBar().addMenu(self.procedure_menu)
 
-        self.help_menu = QW.QMenu('Pomoc', self)
-        self.help_menu.addAction('O programie', self.about)
+        self.help_menu = QW.QMenu('Help', self)
+        self.help_menu.addAction('About', self.about)
         self.menuBar().addSeparator()
         self.menuBar().addMenu(self.help_menu)
 
@@ -446,8 +431,8 @@ class QtSigmanWindow(QW.QMainWindow):
                     self.compositeDataWrapper.add_points(wave, key)
                 except ValueError:
                     QW.QMessageBox.warning(
-                        self, "Błąd", ("Nazwa "+key+" już zajęta. "
-                                       "Nie można zaimportować."))
+                        self, "Error", ("Key "+key+" already taken. "
+                                        "Cannot import."))
                     raise ActionCancelledError
                 self.plotTabWidget.currentWidget().vCollection.points[
                         key].setSettings(color, axis)
@@ -490,18 +475,17 @@ class QtSigmanWindow(QW.QMainWindow):
         self.quit()
 
     def about(self):
-        QW.QMessageBox.about(self, "O programie",
+        QW.QMessageBox.about(self, "About",
                                     """QtSigman
-Program zapewniający GUI do bezpośredniej obsługi biblioteki sigman do 
-analizy danych.
-Wersja pre-beta
-                                                                Krzysztof Cybulski 2017""")
+GUI for the digital signal library sigman.
+Alpha version
+                                                                Krzysztof Cybulski 2018""")
 
         
 
 
 def initialize():
-    """Uruchamia aplikację."""
+    """Initializes the application."""
     app = QW.QApplication([])
     qtSigmanWindow = QtSigmanWindow()
     qtSigmanWindow.show()

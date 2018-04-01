@@ -146,9 +146,10 @@ def setVPointsSettings(vPoints, key, allKeys):
         vPoints.delete()
 
 class _PickledCompositeDataWrapper:
-    """Obiekt zawierający wszystkie kluczowe informacje zawarte w 
-    CompositeDataWrapper, lecz bez sygnałów Qt oraz informacji
-    graficznych które uniemożliwiają użycie na nim pickle."""
+    """Object containing all important information from 
+    CompositeDataWrapper, but without any Qt signals and graphical 
+    information which would make it otherwise unpickle-able.
+    """
     def __init__(self, compositeDataWrapper):
         self.waves = {}
         self.points = {}
@@ -175,7 +176,7 @@ def loadCompositeData():
                 isinstance(compositeData, _PickledCompositeDataWrapper)):
             return compositeData
         else:
-            QW.QMessageBox.warning(None, 'Błąd', 'Niewłaściwy plik')
+            QW.QMessageBox.warning(None, 'Error', 'Invalid file')
 
 def saveCompositeData(compositeData):
     fileDialog = QW.QFileDialog()
@@ -219,7 +220,7 @@ def findPoints(compositeDataWrapper):
             newPoints.move_in_time(offset)
             return newPoints, dictType, color, axis
         except EmptyPointsError:
-            QW.QMessageBox.warning(None, 'Błąd', 'Nie odnaleziono punktów')
+            QW.QMessageBox.warning(None, 'Error', 'Points not found')
             raise ActionCancelledError
     else:
         raise ActionCancelledError

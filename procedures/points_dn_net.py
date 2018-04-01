@@ -6,26 +6,25 @@ from sigman.analyzer import InvalidArgumentError
 
 procedure_type = 'points'
 description = (
-"""Procedura przeszukująca wykresy BP i EKG za pomocą wytrenowanej sieci
-neuronowej w celu odnalezienia wcięć dykrotycznych. 
+"""
+Procedure searching for dicrotic notches based on BP and ECG signals
+by using a trained neural network.
 
-Wykorzystuje punkty SBP do zawężenia poszukiwania.
+It also makes use of SBP points to narrow the searching area.
 """)
 author = 'kcybulski'
 arguments = {
-    'net':"Scieżka i nazwa pliku sieci neuronowej",
-    'focus_range':("Zakres czasu od punktu SBP po którym szukany jest "
-                   "DN. Zapisany w formie dwóch wartości "
-                   "przedzielonych przecinkiem."),
-    'test_every':"Odstęp między badanymi punktami w focus_range"}
+    'net':"Path to the pickled neural network file",
+    'focus_range':("Time range from an SBP point in which DNs are searched "
+                   "for; two numbers separated by a comma."),
+    'test_every':("Distance between points tested within focus_range. "
+                  "The less the more accurate.")}
 default_arguments = {'net':'procedures/default_dn_net.pickle',
                      'focus_range':'0.1,0.5', 'test_every':0.005}
 output_type = 'dn'
 required_waves = ['bp','ecg']
 required_points = ['sbp']
 
-# Poniższa klasa zostanie usunięta w przyszłości
-# Na razie służy tylko do tego by umożliwic korzystanie z pickle na pre-uczonych sieciach neuronowych
 class Temp_Network():
     def __init__(self,network):
         self.input_point_count = network.shape[0]
@@ -41,34 +40,24 @@ class Temp_Network():
             a = self.activation(z)
         return a
 
-def validate_arguments(waves, points, arguments):
-    """Sprawdza, czy podane argumenty są poprawne."""
+def interpret_arguments(waves, points, arguments):
     # net
     try:
-        with open(arguments['net'], 'rb') as net:
-            pickle.load(net)
+        net = pickle.load(open(arguments['net'], 'rb'))
     except:
-        return False, "Niewłaściwy plik sieci neuronowej"
+        raise InvalidArgumentError("Invalid neural net file")
     # focus_range
     try:
-        vals = arguments['focus_range'].split(',')
-        if len(vals) != 2:
-            return False, "Niewłaściwy focus_range"
+        focus_range = [float(string) for string in
+                       arguments['focus_range'].split(',')]
     except:
-        return False, "Niewłaściwy focus_range"
-    # test_every 
+        raise InvalidArgumentError("Invalid focus range")
+    if len(focus_range) != 2:
+        raise InvalidArgumentError("Invalid number of focus range values")
     try:
-        float(arguments['test_every'])
+        test_every = float(arguments['test_every'])
     except:
-        return False, "Niewłaściwy test_every"
-    return True, ""
-
-def interpret_arguments(arguments):
-    net = pickle.load(open(arguments['net'], 'rb'))
-    focus_range = []
-    for string in arguments['focus_range'].split(','):
-        focus_range.append(float(string))
-    test_every = float(arguments['test_every'])
+        raise InvalidArgumentError("Invalid `test_every` value")
     return {
         'net':net,
         'focus_range':focus_range,
@@ -76,16 +65,14 @@ def interpret_arguments(arguments):
 
 def _generate_input_data_sample(bp_line, ecg_line, test_point, sample_length, 
                                detection_point_offset, input_point_count):
-    """Generuje pojedyncze dane wejsciowe z wycinka wykresu EKG i BP
-    do sprawdzenia siecią neuronową.
-    """
+    """Generates a single set of input data to analyse with the neural net."""
     begin_time = test_point - detection_point_offset
     end_time = begin_time + sample_length
     bp_data = bp_line.data_slice(begin_time, end_time, 
                                  value_count = int(input_point_count/2))
     ecg_data = ecg_line.data_slice(begin_time, end_time, 
                                    value_count = int(input_point_count/2))
-    # Normalizujemy dane dla sieci do zakresu <-1; 1>
+    # Normalisation
     bp_data-=np.min(bp_data)
     bp_data/=np.max(bp_data)
     bp_data*=2
@@ -94,7 +81,6 @@ def _generate_input_data_sample(bp_line, ecg_line, test_point, sample_length,
     ecg_data/=np.max(ecg_data)
     ecg_data*=2
     ecg_data-=1
-    # Łączymy wycinek BP i EKG
     input_data = np.concatenate((bp_data,ecg_data))
     return input_data
 
@@ -138,9 +124,5 @@ def procedure(waves, points, begin_time, end_time, arguments):
     return dn_x, dn_y
 
 def execute(waves, points, begin_time, end_time, arguments):
-    """Sprawdza poprawność argumentów i wykonuje procedurę."""
-    valid, error_message = validate_arguments(waves, points, arguments)
-    if not valid:
-        raise InvalidArgumentError(error_message)
-    arguments = interpret_arguments(arguments)
+    arguments = interpret_arguments(waves, points, arguments)
     return procedure(waves, points, begin_time, end_time, arguments)

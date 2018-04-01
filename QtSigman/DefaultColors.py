@@ -1,6 +1,3 @@
-"""Ten moduł zawiera listę podstawowych powiązań różnych rodzajów danych z
-kolorami.
-"""
 import random
 
 defaultColors={'ecg':'C0', 'bp':'C1', 
@@ -9,14 +6,14 @@ defaultColors={'ecg':'C0', 'bp':'C1',
              'hr':'C2'}
 
 def generateColor(text):
-    """Deterministycznie generuje kolor dla danego tekstu."""
+    """Deterministically generates a colour for a given text."""
     random.seed(text)
     return ('#%06X' % random.randint(0,0xFFFFFF))
 
 def getColor(text):
-    """Zwraca kolor dla danego tekstu. Jeśli jest on w dict
-    defaultColors, zwraca odpowiadającą mu wartość. Jeśli nie, to 
-    deterministycznie generuje kolor w oparciu o tekst.
+    """Returns a colour for a given text. If it is in `defaultColors`,
+    returns its corresponding value. If not, returns the output of 
+    `generateColor`.
     """
     if text in defaultColors:
         return defaultColors[text]
