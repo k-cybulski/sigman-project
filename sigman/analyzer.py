@@ -124,13 +124,13 @@ def import_procedure(name):
         raise InvalidProcedureError(error_message)
     return procedure
 
-def modify_wave(wave, begin_time, end_time, 
+def modify_wave(wave, points, begin_time, end_time, 
                 procedure, arguments, 
                 wave_type=None):
     """Filtruje Wave podaną procedurą filtracji."""
     if wave_type is None:
         wave_type = wave.type
-    modified_data = procedure.execute(wave, begin_time, end_time, arguments)
+    modified_data = procedure.execute(wave, points, begin_time, end_time, arguments)
     return sm.Wave(modified_data, end_time-begin_time, wave_type)
     
 def find_points(waves, points, begin_time, end_time, 

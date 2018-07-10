@@ -9,9 +9,12 @@ względu na zgodność z biblioteką PyQt5.
 """
 from PyQt5 import QtWidgets as QW
 from PyQt5 import QtCore as QC
+import os
 import sigman as sm
+import array
 from matplotlib import colors
 
+from functools import partial
 from QtSigman.DefaultColors import defaultColors
 from QtSigman import MplWidgets, DataActions, ListWidgets
 from QtSigman.MplWidgets import Axis
@@ -404,19 +407,19 @@ class QtSigmanWindow(QW.QMainWindow):
         self.file_menu = QW.QMenu('Plik', self)
         self.file_menu.addAction('Importuj przebieg', lambda:
             DataActions.importWave(self.compositeDataWrapper))
-        self.file_menu.addAction('Eksportuj przebieg // TODO', lambda:
-            QW.QMessageBox.information(self, "Informacja",
-                                      "Nie zaimplementowano"))
+        #self.file_menu.addAction('Eksportuj przebieg // TODO', lambda:
+        #    QW.QMessageBox.information(self, "Informacja",
+        #                              "Nie zaimplementowano"))
         self.file_menu.addAction('Wczytaj dane Modelflow', lambda:
             DataActions.importModelflow(self.compositeDataWrapper))
         self.file_menu.addAction('Importuj punkty', lambda:
             DataActions.importPoints(self.compositeDataWrapper))
-        self.file_menu.addAction('Eksportuj punkty // TODO', lambda:
-            QW.QMessageBox.information(self, "Informacja",
-                                      "Nie zaimplementowano"))
-        self.file_menu.addAction('Eksportuj parametr // TODO', lambda:
-            QW.QMessageBox.information(self, "Informacja",
-                                      "Nie zaimplementowano"))
+        #self.file_menu.addAction('Eksportuj punkty // TODO', lambda:
+        #    QW.QMessageBox.information(self, "Informacja",
+        #                              "Nie zaimplementowano"))
+        #self.file_menu.addAction('Eksportuj parametr // TODO', lambda:
+        #    QW.QMessageBox.information(self, "Informacja",
+        #                              "Nie zaimplementowano"))
         self.file_menu.addAction('Wczytaj projekt', lambda:
             self._replaceCompositeDataWrapper(
                 DataActions.loadCompositeData()))
@@ -430,11 +433,20 @@ class QtSigmanWindow(QW.QMainWindow):
             DataActions.modifyWave(self.compositeDataWrapper))
         self.procedure_menu.addAction('Znajdź punkty', lambda:
             DataActions.findPoints(self.compositeDataWrapper))
-        self.procedure_menu.addAction('Oblicz parametr // TODO', lambda:
-            QW.QMessageBox.information(self, "Informacja",
-                                      "Nie zaimplementowano"))
+        #self.procedure_menu.addAction('Oblicz parametr // TODO', lambda:
+        #    QW.QMessageBox.information(self, "Informacja",
+        #                              "Nie zaimplementowano"))
         self.menuBar().addMenu(self.procedure_menu)
 
+
+        self.analize_menu = QW.QMenu('Makra/narzędzia do analizy', self)
+
+        path = "macros"    
+        analize_List = os.listdir(path);
+        for i in range (0,len(analize_List)):
+            self.analize_menu.addAction(analize_List[i],partial(DataActions.executeMacro,self.compositeDataWrapper,analize_List[i]))
+             
+        self.menuBar().addMenu(self.analize_menu)
 
         self.help_menu = QW.QMenu('Pomoc', self)
         self.help_menu.addAction('O programie', self.about)
@@ -443,6 +455,8 @@ class QtSigmanWindow(QW.QMainWindow):
 
     def _refreshPlot(self):
         self.mplPlotWidget.updateCompositeData(self.compositeDataWrapper)
+    
+    
 
     def _replaceCompositeDataWrapper(self, compositeDataWrapper):
         if compositeDataWrapper is not None:

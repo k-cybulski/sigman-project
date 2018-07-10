@@ -22,14 +22,24 @@ import numpy as np
 def EstimateModelflowDataOffset (ModelflowData, Points):
     differences = []
     difference = 0
+    if (len(ModelflowData)>len(Points)):
+        for i in range(0,len(ModelflowData)-len(Points)):
+            difference = 0
+            for j in range (0,len(Points)):
+                 difference = difference + abs((ModelflowData[i+j]-Points[j]))     
+            differences.append(difference)
 
-    for i in range(0,len(ModelflowData)-len(Points)):
-        difference = 0
-        for j in range (0,len(Points)):
-             difference = difference + abs((ModelflowData[i+j]-Points[j]))     
-        differences.append(difference)
+        offset = (np.argmin(differences))
+    else:
+        for i in range(0,len(Points)-len(ModelflowData)):
+            difference = 0
+            for j in range (0,len(Points)):
+                 if (i+j>= len(ModelflowData)):
+                     break
+                 difference = difference + abs((ModelflowData[i+j]-Points[j]))     
+            differences.append(difference)
 
-    offset = (np.argmin(differences))
+        offset = (np.argmin(differences))*(-1)
     return offset
 
 def DetermineHR (czas):

@@ -65,9 +65,17 @@ class Wave():
         # Poprawka na ostatni punkt wykresu
         if index == len(self):
             index -= 1
-        if index < 0 or index > len(self):
-            raise ValueError('Punkt o żądanym czasie %s wystaje poza zakres '
-                             'czasowy danych' % time)
+        if index < 0:
+           index = 0
+           print ('Punkt o żądanym czasie %s wystaje poza zakres '
+                            'czasowy danych' % time)
+        if index > len(self):
+            index = len(self)-1
+            print ('Punkt o żądanym czasie %s wystaje poza zakres '
+                            'czasowy danych' % time)
+            #raise ValueError('Punkt o żądanym czasie %s wystaje poza zakres '
+             #                'czasowy danych' % time)
+            #Krash aplikacji to złe rozwiązanie problemu MZ
         return int(index)
     
     def value_at(self, time):
@@ -134,10 +142,10 @@ class Wave():
         """
         # TODO: Dodać możliwość przyjmowania danych o innej częstotliwości
         # zmieniając je tak by pasowały?
-        if not isclose(self.sample_length,
-                       wave.sample_length, rel_tol=0.0001):
-            raise ValueError('Fragment do wklejenia ma częstotliwość danych '
-                             'niezgodną z częstotliwością danych całości')
+        #if not isclose(self.sample_length,
+         #              wave.sample_length, rel_tol=0.0001):
+          #  raise ValueError('Fragment do wklejenia ma częstotliwość danych '
+           #                  'niezgodną z częstotliwością danych całości')
         if end_time - begin_time > wave.complete_length:
             raise ValueError('Dany Wave krótszy niż zakres czasu danych '
                              'do zastąpienia')

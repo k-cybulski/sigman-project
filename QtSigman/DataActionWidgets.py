@@ -23,14 +23,16 @@ class DataActionStatus(Enum):
 
 class DataSettingsDialog(QW.QDialog):
     def __init__(self, title="", dictType="default", color="#1f77b4", 
-                 forbiddenNames=[], parent=None, axis=Axis.Left, 
+                 forbiddenNames=[], parent=None, axis=Axis.Hidden, 
                  offset='0', askDelete=False):
         super(DataSettingsDialog, self).__init__(parent = parent)
         
         self.forbiddenNames = forbiddenNames
         self.dataActionStatus = DataActionStatus.Ok
-
-        self.setWindowTitle(title)
+        if (isinstance (title, str)):
+            self.setWindowTitle(title)
+        else:
+            self.setWindowTitle(title[0])
         gridLayout = QW.QGridLayout()
         self.setLayout(gridLayout)
 
@@ -271,12 +273,21 @@ class ProcedureWidget(QW.QWidget):
         self.descriptionWidget.setMinimumWidth(480)
         self.vBoxLayout.addWidget(self.descriptionWidget)
         
-        if procedure.procedure_type == 'modify':
-            requiredWaves = ["Przebieg"]
-            requiredPoints = []
+
+      
+        if hasattr(procedure, 'required_waves'):
+            requiredWaves = procedure.required_waves        
         else:
-            requiredWaves = procedure.required_waves
+            if procedure.procedure_type == 'modify':
+                requiredWaves = ["Przebieg"]
+            else:
+                requiredWaves = []
+
+        if hasattr(procedure, 'required_points'):
             requiredPoints = procedure.required_points
+        else:
+            requiredPoints = []
+
 
         self.waveArgumentWidgets = {}
         self.pointArgumentWidgets = {}
@@ -527,9 +538,14 @@ class ProcedureDialog(QW.QDialog):
                 beginTime, endTime = selectedProcedureWidget.getTimeRange()
                 procedure = selectedProcedureWidget.procedure
                 arguments = selectedProcedureWidget.getArguments()
-                return wave, beginTime, endTime, procedure, arguments
+
+                if hasattr(procedure, 'required_points'):
+                    pointsDict = selectedProcedureWidget.getSelectedPoints()
+                else:
+                    pointsDict = []
+                return wave, pointsDict, beginTime, endTime, procedure, arguments 
             else:
-                return None, None, None, None, None
+                return None, None, None, None, None, None
         else:
             if self.dataActionStatus is DataActionStatus.Ok:
                 selectedProcedureWidget = self.procedureWidgetDict[self.selectedProcedureName]

@@ -29,7 +29,7 @@ def _import_dat(file_name):
     y = []
     with open(file_name) as csv_file:
         reader = csv.reader(csv_file, delimiter=' ')
-        for row in reader:
+        for row in reader:              
             x.append(float(row[0]))
             # Niektóre pliki .dat mają dwie spacje zamiast jednej.
             # W takim wypadku to row[1] będzie pusty
@@ -186,4 +186,38 @@ def import_data_from_modelflow(file_name):
                                          y[k-1].append (0)
        if len(y[len(y)-1])< len(y[1]):
            del y[len(y)-1]
+    return x, y, names
+
+
+def import_signal_from_signal_express_file (file_name):
+    x = []
+    y = []
+    names = []
+    dt = 0
+    with open(file_name,encoding="CP1250") as f:
+        i = 1
+        for line in f:
+            if (i == 1):
+                if 'channel names:' not in line:
+                    break;
+            if (i == 2):
+                pom = line.split ('	')
+                for name in pom:
+                    names.append (name[(name.rfind('-')+2):].replace('\n',''))
+            if (i == 6):
+                dt = float(line.replace (',','.'))
+            if (i > 7):
+                signals_value = line.split ('	')
+                nr = 0
+                if len(y) == 0:
+                    y = [[0 for k in range(1)] for j in range(len(pom))]
+                for value in signals_value:
+                    if (i == 8):
+                        y[nr][0]=(float(value.replace (',','.')))
+                    else:
+                        y[nr].append(float(value.replace (',','.')))
+                    nr = nr + 1
+            i= i + 1
+    for i in range(0,len(y[0])):
+        x.append (i*dt)
     return x, y, names

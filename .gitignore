@@ -6,12 +6,3 @@
 /procedures/__pycache__
 /QtSigman/__pycache__
 /sigman/__pycache__
-/procedures/points_X_ICG.py
-/procedures/points_SV_ICG_Kubicek_formula.py
-/procedures/points_pulse_detection.py
-/procedures/points_mean_value_in_cardiac_cycle.py
-/procedures/points_max_after_r.py
-/procedures/points_B_ICG_Lozaano_Equation.py
-/procedures/points_B_ICG_first_min_befor_max.py
-/procedures/points_B_ICG_cross_0.py
-/procedures/points_B_ICG_15%max.py

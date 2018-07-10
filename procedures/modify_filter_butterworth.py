@@ -88,7 +88,7 @@ def procedure(wave, begin_time, end_time, arguments):
     data = wave.data_slice(begin_time, end_time)
     return filtfilt(b, a, data)
 
-def execute(wave, begin_time, end_time, arguments):
+def execute(wave,  points,begin_time, end_time, arguments):
     "Sprawdza poprawność argumentów i wykonuje procedurę."
     valid, error_message = validate_arguments(wave, arguments)
     if not valid:

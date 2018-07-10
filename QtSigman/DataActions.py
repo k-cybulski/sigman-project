@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets as QW
 from sigman import file_manager as fm
 from sigman import analyzer, EmptyPointsError
 import sigman as sm
-
+import importlib
 import QtSigman
 from QtSigman import DataActionWidgets, ImportModelflow, DefaultColors
 from QtSigman.DataActionWidgets import DataActionStatus
@@ -68,6 +68,7 @@ def importModelflow (compositeDataWrapper):
                 wave = sm.Points(ModelflowData[0],ModelflowData[1][i], ModelflowData[2][i+1])
                 wave.offset = 0
                 wave.type = ModelflowData[2][i+1]
+                #TODO: dodać sprawdzenie czy etykieta nie została zajęta
                 compositeDataWrapper.add_points(wave, ModelflowData[2][i+1], 
                     color=DefaultColors.getColor(ModelflowData[2][i+1]), 
                     axis=Axis.Hidden)
@@ -78,24 +79,34 @@ def importModelflow (compositeDataWrapper):
 
 
 def importWave(compositeDataWrapper):
-    fileFilter = "dat (*.dat)"
+    fileFilter = ('dat (*.dat);;'
+                  'Signal express export(*)')
     fileDialog = QW.QFileDialog()
     fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
     try:
         path = fileDialog.getOpenFileNames(filter = fileFilter)
         assert path[0] != ""
 
-        
-        j = 0;
-        for s in path[0]:
-         title = s.split("/")[-1]
-         title = title.split (".")[0]
-         wave = fm.import_wave(s, 'default')
-         wave.offset = 0
-         wave.type = title
-         compositeDataWrapper.add_wave(wave, title, 
-             color=DefaultColors.getColor(title), axis=Axis.Hidden)
-         j = j + 1
+        if (path[1]== 'dat (*.dat)'):
+            for s in path[0]:
+                title = s.split("/")[-1]
+                title = title.split (".")[0]
+                wave = fm.import_wave(s, 'default')
+                wave.offset = 0
+                wave.type = title
+                compositeDataWrapper.add_wave(wave, title, 
+                    color=DefaultColors.getColor(title), axis=Axis.Hidden)
+        else:
+            for s in path[0]:
+                x,y, name = fm.import_signal_from_signal_express_file(s)
+                for i in range(len(name)):
+                    wave = sm.Wave(y[i], x[-1],name[i],0)
+                    wave.offset = 0
+                    wave.type = name[i]
+                #TODO: dodać sprawdzenie czy etykieta nie została zajęta
+                    compositeDataWrapper.add_wave(wave, name[i], 
+                        color=DefaultColors.getColor(name[i]), 
+                        axis=Axis.Hidden)
 
     # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się
     # nie stało i nic nie zmieniamy
@@ -107,19 +118,51 @@ def importPoints(compositeDataWrapper):
     fileDialog = QW.QFileDialog()
     fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
     try:
-        path = fileDialog.getOpenFileName(filter = fileFilter)
+        path = fileDialog.getOpenFileNames(filter = fileFilter)
         assert path[0] != ""
-        points = fm.import_points(path[0], 'default')
-        dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-            forbiddenNames = compositeDataWrapper.points.keys(),
-            title = path[0])
-        if status is DataActionStatus.Ok:
-            points.move_in_time(offset)
-            points.type = dictType
-            compositeDataWrapper.add_points(points, dictType, 
-                                            color=color, axis=axis)
+        for s in path[0]:
+            name = s.split("/")[-1]
+            name = name.split (".")[0]
+            points = fm.import_points(s, name)
+            if name in compositeDataWrapper.points.keys():
+                dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
+                    forbiddenNames = compositeDataWrapper.points.keys(),
+                    dictType=name,
+                    title = path[0],
+                    color=DefaultColors.getColor(name))
+                if status is DataActionStatus.Ok:
+                    points.move_in_time(offset)
+                    points.type = dictType
+                    compositeDataWrapper.add_points(points, dictType, 
+                                                    color=color, axis=axis)
+            else:
+                compositeDataWrapper.add_points(points, name, 
+                                                    color=DefaultColors.getColor(name), axis=Axis.Hidden)
     # W wypadku, gdy plik nie zostanie wybrany, po prostu udajemy że nic się
     # nie stało i nic nie zmieniamy
+    except AssertionError:
+        pass
+
+def saveData (data_x, data_y, key = ''):
+    fileDialog = QW.QFileDialog()
+    fileDialog.setFileMode(QW.QFileDialog.AnyFile)
+    fileDialog.setDefaultSuffix('.dat')
+
+    try:
+        path = fileDialog.getSaveFileName(directory = key+'.dat' )
+        assert path[0] != ""
+        dataLen = 0;
+        if (len(data_x)>len(data_y)):
+            dataLen = len(data_y)
+        else:
+            dataLen = len(data_x)
+        with open(path[0],'w') as file:
+            for i in range (0,dataLen):
+                file.write(str(data_x[i]))
+                file.write ('  ')
+                file.write(str(data_y[i]))
+                file.write('\n')
+        file.close()
     except AssertionError:
         pass
 
@@ -233,10 +276,10 @@ def saveCompositeData(compositeData):
 def modifyWave(compositeDataWrapper):
     pr = DataActionWidgets.ProcedureDialog.getProcedure(
         'modify', compositeDataWrapper)
-    waveKey, beginTime, endTime, procedure, arguments, status = pr
+    waveKey, pointsDict, beginTime, endTime, procedure, arguments, status = pr
     if status is DataActionStatus.Ok:
         originalWave = compositeDataWrapper.waves[waveKey]
-        modifiedWave = analyzer.modify_wave(originalWave, 
+        modifiedWave = analyzer.modify_wave(originalWave, pointsDict,
                                             beginTime, endTime, 
                                             procedure, arguments)
         if status is DataActionStatus.Cancel:
@@ -269,3 +312,30 @@ def findPoints(compositeDataWrapper):
                                             color=color, axis=axis)
         except EmptyPointsError:
             QW.QMessageBox.warning(None, 'Błąd', 'Nie odnaleziono punktów')
+
+
+
+def executeMacro (compositeDataWraper, value):
+    path = "macros"
+    macro = (importlib.import_module (path+'.'+value+'.start'))
+    [points, wave] = macro.execute(compositeDataWraper)
+    if (len(points)>0):
+        for p in points:
+            newPoints = sm.Points(p[0],p[1], p[2])
+            if (p[2] in compositeDataWraper.points.keys()):            
+                dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
+                        forbiddenNames = compositeDataWraper.points.keys(),
+                        title=p[2])
+                if status is DataActionStatus.Cancel:
+                    return
+            else:
+                dictType = p[2]
+                color=DefaultColors.getColor(p[2])
+                axis=Axis.Hidden 
+            compositeDataWraper.add_points(newPoints, dictType, 
+                                                color=color, axis=axis)
+    if (len(wave)>0):
+        for w in wave:
+            compositeDataWraper.add_wave(w, w.type, 
+                        color=DefaultColors.getColor(w.type), 
+                        axis=Axis.Hidden)
