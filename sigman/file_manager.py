@@ -92,7 +92,7 @@ def _export_point_dat(file_name, points):
     """Exports `Points` to a .dat file."""
     _export_dat(file_name, points.data_x, points.data_y)
 
-def export_line(file_name, wave):
+def export_wave(file_name, wave):
     """Exports `Wave` into a file with the format depending on
     the extension.
     """
@@ -113,6 +113,15 @@ def export_points(file_name, points):
     else:
         raise ValueError("Invalid file format")
     export_func(file_name, points)
+
+def export(file_name, object):
+    """Exports `Points` or `Wave` into a file with the format depending
+    on the extension.
+    """
+    if isinstance(object, sm.Points):
+        export_points(file_name, object)
+    elif isinstance(object, sm.Wave):
+        export_wave(file_name, object)
 
 def _estimate_points_offset(align_points, reference_points,
                             cross_correlation=False):
