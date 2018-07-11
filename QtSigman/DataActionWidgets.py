@@ -266,7 +266,7 @@ class ProcedureWidget(QW.QWidget):
 
         if hasattr(procedure, 'required_waves'):
             requiredWaves = procedure.required_waves        
-        else:
+        elif procedure.procedure_type != 'modify':
             requiredWaves = []
 
         if hasattr(procedure, 'required_points'):
