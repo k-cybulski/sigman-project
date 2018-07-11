@@ -1,9 +1,6 @@
 """
-W tym pliku zawarte są funkcje służące do zapisywania i wczytywania
-danych do analizy.
+This file contains functions allowing the import and export of data.
 """
-# TODO: save_composite_data oraz open_composie_data nie powinny korzystać z pickle; jest wolny, może kreować masywne pliki przy wielkich ilościach danych oraz jest niebezpieczny - pozwala na uruchamianie kodu bez wiedzy podczas włączania
-
 
 import csv
 import os.path
@@ -14,25 +11,25 @@ import numpy as np
 import sigman as sm 
 
 def save_composite_data(file_name, composite_data):
-    """Zapisuje dany Composite_data w pliku .pickle."""
+    """Saves the given `Composite_data` in a pickle file."""
     with open(file_name, 'wb') as pickle_file:
         pickle.dump(composite_data, pickle_file)
 
 def load_composite_data(file_name):
-    """Wczytuje zapisany w .pickle Composite_data."""
+    """Loads `Composite_data` from a given pickle file."""
     with open(file_name, 'rb') as pickle_file:
         return pickle.load(pickle_file)
 
 def _import_dat(file_name):
-    """Importuje dwie tablice współrzędnych z pliku .dat."""
+    """Imports two tables of coordinates from a .dat file."""
     x = []
     y = []
     with open(file_name) as csv_file:
         reader = csv.reader(csv_file, delimiter=' ')
         for row in reader:              
             x.append(float(row[0]))
-            # Niektóre pliki .dat mają dwie spacje zamiast jednej.
-            # W takim wypadku to row[1] będzie pusty
+            # Some .dat files have two spaces instead of one, in which case
+            # row[1] is empty
             if row[1]=="": 
                 y.append(float(row[2]))
             else:
@@ -41,183 +38,182 @@ def _import_dat(file_name):
 
 
 def _import_wave_dat(file_name, wave_type, offset=0):
-    """Importuje przebieg o stałej częstotliwości z pliku .dat i
-    zwraca odpowiadający mu sm.Wave.
-    """
+    """Imports a waveform of constant frequency from a .dat file and
+    returns a corresponding `Wave`."""
     x, y = _import_dat(file_name)
-    complete_len = x[-1]
-    return sm.Wave(y, complete_len, 
-                        wave_type = wave_type, 
-                        offset = offset)
+    sample_rate = len(x)/(x[-1]-x[0])
+    return sm.Wave(y, sample_rate, 
+                      wave_type=wave_type, 
+                      offset=offset)
     
 def _import_point_dat(file_name, point_type):
-    """Importuje współrzędne punktów z pliku .dat i zwraca odpowiadający
-    im sm.Points.
-    """
+    """Imports coordinates from a .dat file and returns a corresponding
+    `Points` instance."""
     x, y = _import_dat(file_name)    
     return sm.Points(x, y, 
                           point_type = point_type)
 
 def import_wave(file_name, wave_type, offset=0):
-    """Importuje przebieg z danego pliku, przy czym wybiera odpowiednią
-    funkcję do formatu danego pliku.
-    """
+    """Imports a `Wave` instance from a given file."""
     extension = os.path.splitext(file_name)[1][1:]
     if extension == 'dat':
         import_func = _import_wave_dat
     else:
-        raise ValueError("Nieodpowiedni format plików")
+        raise ValueError("Invalid file format")
     return import_func(
         file_name, 
-        wave_type = wave_type, 
-        offset = offset)
+        wave_type=wave_type, 
+        offset=offset)
 
 def import_points(file_name, point_type):
-    """Importuje punkty z danego pliku, przy czym wybiera odpowiednią
-    funkcję do formatu danego pliku.
-    """
+    """Imports a `Points` instance from a given file."""
     extension = os.path.splitext(file_name)[1][1:]
     if extension == 'dat':
         import_func = _import_point_dat
     else:
-        raise ValueError("Nieodpowiedni format plików")
+        raise ValueError("Invalid file format")
     return import_func(
         file_name,
         point_type = point_type)
 
 def _export_dat(data_x,data_y,filename):
-    """Zapisuje dwie tablice współrzędnych w pliku .dat."""
+    """Writes two coordinate tables in a .dat file"""
     with open(filename, 'w') as csv_file:
         writer = csv.writer(csv_file, delimiter=' ')
         for x, y in zip(data_x, data_y):
             writer.writerow([x,y])
 
 def _export_line_dat(file_name, wave):
-    """Eksportuje Wave do pliku o formacie .dat."""
+    """Exports `Wave` to a .dat file."""
     data_x, data_y = wave.generate_coordinate_tables()
     _export_dat(data_x,data_y,file_name)
 
 def _export_point_dat(file_name, points):
-    """Eksportuje Points do pliku o formacie .dat."""
+    """Exports `Points` to a .dat file."""
     _export_dat(file_name, points.data_x, points.data_y)
 
 def export_line(file_name, wave):
-    """Eksportuje Wave do pliku, wykorzystując przy tym funkcję
-    odpowiednią dla pożądanego formatu.
+    """Exports `Wave` into a file with the format depending on
+    the extension.
     """
     extension = os.path.splitext(file_name)[1][1:]
     if extension == 'dat':
         export_func = _export_line_dat
     else:
-        raise ValueError("Nieodpowiedni format plików")
+        raise ValueError("Invalid file format")
     export_func(file_name, wave)
 
 def export_points(file_name, points):
-    """Eksportuje Points do pliku, wykorzystując przy tym funkcję
-    odpowiednią dla pożądanego formatu.
+    """Exports `Points` into a file with the format depending on
+    the extension.
     """
     extension = os.path.splitext(file_name)[1][1:]
     if extension == 'dat':
         export_func = _export_point_dat
     else:
-        raise ValueError("Nieodpowiedni format plików")
+        raise ValueError("Invalid file format")
     export_func(file_name, points)
 
-def is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
-   
-def import_data_from_modelflow(file_name):
+def _estimate_points_offset(align_points, reference_points,
+                            cross_correlation=False):
+    """Estimates the offset between two sets of points that describe
+    the same data. Returns the time in seconds that the align_points
+    need to be moved by.
+    
+    align_points must be longer than reference_points
+    """
+    if len(align_points) < len(reference_points):
+        raise ValueError("Points to align must have more data than refrence.")
+    if not cross_correlation:
+        align_data = align_points.data_y
+        reference_data = reference_points.data_y
+        differences = []
+        difference = 0
+        for i in range(0, len(align_data) - len(reference_data)):
+            difference = 0
+            for j in range (0, len(reference_data)):
+                 difference += abs(align_data[i+j] - reference_data[j])     
+            differences.append(difference)
+        offset = np.argmin(differences)
+        offset = align_points.data_x[offset] - reference_points.data_x[0]
+    else:
+        index_offset = np.argmin(np.correlate(align_points.data_y,
+                                              reference_points.data_y))
+        offset = align_points.data_x[index_offset] - reference_points.data_x[0]
+        # We need to account for the fact align_points and reference_points
+        # are off by 2x the time of the first value in align_points
+        offset -= align_points.data_x[0]*2
+
+    return -offset
+
+def _hr_from_r(time):
+    HR = [0] * (len(time) - 1)
+    for i in range(len(time) - 1):
+        HR[i] = round(60 / (time[i+1] - time[i]))
+    return HR
+
+def import_modelflow_data(file_name, reference_points, reference_points_type):
+    """Imports and aligns Finapres Modeflow data to already existing 
+    points.
+    
+    Args:
+        base_data - sm.Points to align to
+        base_data_type - can be 'sbp', 'dbp' or 'r'
+    """
+    if reference_points_type not in ['sbp', 'dbp', 'r']:
+        raise ValueError("Invlaid reference data type")
     x = []
-    y = []
-    names = []
+    y = None
+    names = None
+    # Data retrieval
     with open(file_name) as f:
-       if '.A00' in file_name:
-           flag = False
-           for line in f:
-               if "END preamble" in line:
-                  flag = True        
-               if flag:
-                   pom = line.split()              
-                   if len(pom) > 2:
-                       if is_number(pom[0]):
-                           x.append(float(pom[0]))  
-                           if (len(y)<len(pom)):
-                                 y = [[0 for i in range(1)] for j in range(len(pom))]
-                                 for i in range(1, len(pom)):
-                                     y[i-1][0]=(float(pom[i]))                                          
-                           else:
-                               for i in range(1, len(pom)):
-                                    y[i-1].append(float(pom[i]))
-                       else:
-                           if len (names)<1:
-                               names = pom
-       else:
-           i = 0
-           for line in f:
-               i = i + 1
-               if i == 8:
-                   pom = line.split(';')
-                   if '\n' in pom:
-                       del pom[pom.index('\n')]
-                   names = pom
-               if i > 8:
-                   pom = line.split(';') 
-                   if '\n' in pom:
-                       del pom[pom.index('\n')]
-                   if len(pom) > 2:
-                       if is_number(pom[0]):
-                           x.append(float(pom[0]))  
-                           if (len(y)<len(pom)):#W pierwszej iteracji tablica jest tworzona
-                                 y = [[0 for k in range(1)] for j in range(len(pom))]
-                                 for k in range(1, len(pom)):
-                                     if (is_number(pom[k])):
-                                         y[k-1][0]=(float(pom[k]))   
-                                     else:
-                                         y[k-1][0] = 0
-                           else:#W kolejnych uzupełniana
-                               for k in range(1, len(pom)):
-                                    if (is_number(pom[k])):
-                                         y[k-1].append(float(pom[k]))   
-                                    else:
-                                         y[k-1].append (0)
-       if len(y[len(y)-1])< len(y[1]):
-           del y[len(y)-1]
-    return x, y, names
-
-
-def import_signal_from_signal_express_file (file_name):
-    x = []
-    y = []
-    names = []
-    dt = 0
-    with open(file_name,encoding="CP1250") as f:
-        i = 1
+        data_section = False
         for line in f:
-            if (i == 1):
-                if 'channel names:' not in line:
-                    break;
-            if (i == 2):
-                pom = line.split ('	')
-                for name in pom:
-                    names.append (name[(name.rfind('-')+2):].replace('\n',''))
-            if (i == 6):
-                dt = float(line.replace (',','.'))
-            if (i > 7):
-                signals_value = line.split ('	')
-                nr = 0
-                if len(y) == 0:
-                    y = [[0 for k in range(1)] for j in range(len(pom))]
-                for value in signals_value:
-                    if (i == 8):
-                        y[nr][0]=(float(value.replace (',','.')))
-                    else:
-                        y[nr].append(float(value.replace (',','.')))
-                    nr = nr + 1
-            i= i + 1
-    for i in range(0,len(y[0])):
-        x.append (i*dt)
-    return x, y, names
+            if not data_section and "END preamble" in line:
+                data_section = True 
+                continue
+            if data_section:
+                data = line.split()
+                if len(data) > 2:
+                    if names is None:
+                        # trim " characters
+                        names = [name[1:-1] for name in data[1:]]
+                        continue
+                    try:
+                        x.append(float(data[0]))
+                        if y is None:
+                            y = [[float(str_)] for str_ in data[1:]]
+                        else:
+                            for i in range(1, len(data)):
+                                y[i-1].append(float(data[i]))
+                    except ValueError: # If values are strings
+                        continue
+    # Alignment and object initialization
+    # modelflow_data[0] -> fiSYS -> SBP
+    # modelflow_data[1] -> fiDIA -> DBP
+    # modelflow_data[6] -> HR -> can be calculated from R
+    points_list = []
+    hr_points = None
+    offset = 0
+    for y_vals, name in zip(y, names):
+        points = sm.Points(x, y_vals, name)
+        points_list.append(points)
+        if offset == 0:
+            if reference_points_type == 'sbp' and name =='fiSYS':
+                offset = _estimate_points_offset(points, reference_points)
+            elif reference_points_type == 'dbp' and name == 'fiDIA':
+                offset = _estimate_points_offset(points, reference_points)
+            elif reference_points_type == 'r' and name == 'HR':
+                hr_from_r = _hr_from_r(reference_points.data_x)
+                hr_points = sm.Points(reference_points.data_x, hr_from_r,
+                                      'wyznaczoneHRzR')
+                offset = _estimate_points_offset(points, hr_points)
+
+    for points in points_list:
+        points.move_in_time(offset)
+    
+    if hr_points is not None:
+        points_list.append(hr_points)
+        names.append('wyznaczoneHRzR')
+
+    return points_list, names

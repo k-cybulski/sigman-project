@@ -1,8 +1,15 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
-
+﻿# Visual Studio Code
 /.vs
 /procedures/__pycache__
 /QtSigman/__pycache__
 /sigman/__pycache__
+
+# IntelliJ
+.idea
+
+# Byte code
+__pycache__/
+*.py[cod]
+
+# pytest
+.pytest_cache/

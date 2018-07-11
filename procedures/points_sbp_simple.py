@@ -4,25 +4,21 @@ import numpy as np
 from sigman.analyzer import InvalidArgumentError
 
 procedure_type = 'points'
-description = """Procedura aplikująca prosty algorytm do odnalezienia 
-punktów SBP na wykresie BP. Działa on w następujący sposób:
-1) Normalizuje dane BP do zakresu <0;1>
-2) Oblicza graniczną wartość (threshold) znormalizowanego BP w oparciu
-    o ułamek <threshold_fraction> najwyższej wartości BP w czasie
-    <threshold_period> od początku / od ostatniego wykrycia SBP
-3) Na odcinkach na których wartość normalizowanego BP jest powyżej 
-    wartości granicznej znajduje najwyższą wartość wykresu BP i oznacza
-    go jako SBP. Czeka <safe_period> nim znowu możliwe będzie 
-    odnalezienie nowego SBP.
+description = (
 """
+Procedure applying a simple algorithm to find SBP points on a BP
+waveform. It searches for the highest values of the window integral
+over the squared derivative, and selects the highest value of the 
+waveform within them.
+""")
 author = 'kcybulski'
 arguments = {
-    'threshold_fraction':("Wartość graniczna całki zakresowej, powyżej "
-                          "której rozpatrywana jest możliwość istnienia "
-                          "SBP."),
-    'threshold_period':("Czas, na przestrzeni którego sprawdzane są "
-                        "maksymalne wartości całki zakresowej."),
-    'safe_period':"Czas, w którym nie można odnaleźć dwóch SBP obok siebie."}
+    'threshold_fraction':("Threshold of the window integral over which "
+                          "the waveform itself is considered."),
+    'threshold_period':("Period in which the threshold is calculated "
+                        "based on `threshold_fraction`*maximum value "
+                        "of the integral."),
+    'safe_period':"Period in which two SBPs cannot be found."}
 default_arguments = {
     'threshold_fraction':0.6,
     'threshold_period':2,
@@ -31,22 +27,13 @@ output_type = 'sbp'
 required_waves = ['bp']
 required_points = []
 
-def validate_arguments(waves, points, arguments):
-    """Sprawdza, czy podane argumenty są poprawne."""
-    # Wszystkie powinny być zwykłymi floatami
-    for key, item in arguments.items():
-        try:
-            float(item)
-        except:
-            error_message = key + " niewłaściwy"
-            return False, error_message
-    return True, ""
-
-def interpret_arguments(arguments):
-    """Konwertuje argumenty tekstowe w liczby."""
+def interpret_arguments(waves, points, arguments):
     output_arguments = {}
     for key, item in arguments.items():
-        output_arguments[key] = float(item)
+        try:
+            output_arguments[key] = float(item)
+        except:
+            raise InvalidArgumentError("{} is invalid.".format(arguments[key]))
     return output_arguments
 
 def procedure(waves, points, begin_time, end_time, settings):
@@ -56,7 +43,6 @@ def procedure(waves, points, begin_time, end_time, settings):
     data = wave.data_slice(begin_time, end_time)
     data = np.array(data)
 
-    # Normalizujemy dane do zakresu <0,1> by ułatwić odnajdywanie wartości granicznej
     normalized_data = data - np.min(data)
     normalized_data /= np.max(normalized_data)
 
@@ -64,7 +50,7 @@ def procedure(waves, points, begin_time, end_time, settings):
     sbp_x = []
     sbp_y = []
     begin_i = 0
-    average_period = 0 # Tempo obliczamy po 3 biciach
+    average_period = 0
     i = 0
     while i < len(data):
         if normalized_data[i] > threshold:
@@ -93,9 +79,5 @@ def procedure(waves, points, begin_time, end_time, settings):
     return sbp_x, sbp_y
 
 def execute(waves, points, begin_time, end_time, arguments):
-    """Sprawdza poprawność argumentów i wykonuje procedurę."""
-    valid, error_message = validate_arguments(waves, points, arguments)
-    if not valid:
-        raise InvalidArgumentError(error_message)
-    arguments = interpret_arguments(arguments)
+    arguments = interpret_arguments(waves, points, arguments)
     return procedure(waves, points, begin_time, end_time, arguments)

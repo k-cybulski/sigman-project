@@ -1,5 +1,5 @@
 """
-Moduł zajmujący się widgetem wizualizującym wykres.
+Module responsible for data visualization itself.
 """
 from enum import Enum
 
@@ -10,12 +10,9 @@ matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5 import NavigationToolbar2QT
 import matplotlib.patches as mPatches
-import sigman as sm
 
-class Axis(Enum):
-    Left = 1
-    Right = 2
-    Hidden = 3
+import sigman as sm
+from QtSigman.VisualObjects import VCollection, VWave, VPoints, VParameter
 
 class EditMode(Enum):
     Inactive = 1
@@ -23,7 +20,7 @@ class EditMode(Enum):
     Dynamic = 3 # Movement of existing points
 
 class PlotCanvas(FigureCanvas):
-    """Widget przedstawiający sam wykres."""
+    """Widget containing the plot itself."""
     
     def __init__(self, parent=None):
         figure = matplotlib.figure.Figure()
@@ -34,75 +31,73 @@ class PlotCanvas(FigureCanvas):
                                    QW.QSizePolicy.Expanding,
                                    QW.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
-        self.axisLeft = self.figure.add_subplot(1,1,1)
-        self.axisRight = self.axisLeft.twinx()
+        self.axes = []
+        self.axes.append(self.figure.add_subplot(1,1,1))
+        self.axes.append(self.axes[0].twinx())
 
-    def plotCompositeDataWrapper(self, compositeDataWrapper, beginTime, endTime):
-        """Rysuje lub tylko odświeża już narysowane dane z 
-        CompositeDataWrapper.
-        """
-
-        for dataDict in compositeDataWrapper.dataDicts:
-            for key, data in dataDict.items():
-                axis = data.axis
-                if axis is Axis.Hidden:
-                    continue
-                elif axis is Axis.Left:
-                    plot_axis = self.axisLeft
-                elif axis is Axis.Right:
-                    plot_axis = self.axisRight
-                data.plot(plot_axis, beginTime, endTime)
-            for plot_axis in [self.axisLeft, self.axisRight]:
-                plot_axis.relim()
-                plot_axis.autoscale(axis='y')
+    def plotVCollection(self, vCollection, beginTime=None, endTime=None):
+        """Plots all VObjects contained in a VCollection."""
+        for dict_ in [vCollection.waves,
+                        vCollection.points,
+                        vCollection.parameters]:
+            for vObject in dict_.values():
+                self.plotVObject(vObject)
+        self.rescaleAxes()
         self.draw()
 
-    def plotDataWaveComparison(self, waveDict, beginTime, endTime):
-        """Rysuje VisualDataWave z dict oraz podpisuje je zgodnie z ich
-        kluczem w dict.
+    def plotVObject(self, vObject, beginTime=None, endTime=None):
+        """Assigns an axis to a VObject and plots it. If it is hidden,
+        it merely redraws the plot."""
+        axis = vObject.axis
+        if axis >= 0:
+            mplAxis = self.axes[axis]
+            vObject.plot(mplAxis)
+        self.rescaleAxes()
+        self.draw()
+
+    def rescaleAxes(self):
+        """Rescales axes so the minimum and maximum values of objects
+        in each are at the same visual height.
         """
-        # Chcemy listę defaultowych kolorów matplotlib
-        prop_cycle = matplotlib.rcParams['axes.prop_cycle']
-        colors = prop_cycle.by_key()['color']
-        handles = []
-        for key, item in waveDict.items():
-            color = colors.pop(0)
-            colors.append(color)
-            handles.append(
-                mPatches.Patch(color = color, label = key))
-            item.plot(self.axisLeft, beginTime, endTime, 
-                      keepMplObject = False, color = color)
-        self.axisLeft.legend(handles = handles)
+        for mplAxis in self.axes:
+            mplAxis.relim()
+            mplAxis.autoscale(axis='y')
 
 class PlotToolbar(NavigationToolbar2QT):
     toolitems = [t for t in NavigationToolbar2QT.toolitems if
-                 t[0] in ('Pan', 'Zoom', 'Save')] # 'Home' do skorygowania
+                 t[0] in ('Pan', 'Zoom', 'Save')] # 'Home'should be fixed
     
     def __init__(self, canvas, parent):
         NavigationToolbar2QT.__init__(self, canvas, parent)
-        
-        self.editCheckBox = QW.QCheckBox("Tryb edycji")
+
+        self.parent = parent # we assume it has a vCollection
+
+        self.editCheckBox = QW.QCheckBox("Edit mode")
         self.addWidget(self.editCheckBox)
 
-        editTypes = ["Dodaj LPM/Usuń PPM",
-                    "Przesuń"]
+        editTypes = ["Add LMB/Delete RMB",
+                    "Move"]
         self.editTypeComboBox = QW.QComboBox()
         self.editTypeComboBox.addItems(editTypes)
         self.addWidget(self.editTypeComboBox)
 
-        self.selectedLabel = QW.QLabel("Wybrane punkty:")
+        self.selectedLabel = QW.QLabel("Chosen points:")
         self.addWidget(self.selectedLabel)
         
         self.selectedPointsComboBox = QW.QComboBox()
         self.addWidget(self.selectedPointsComboBox)
 
-    def updatePointComboBox(self, compositeDataWrapper):
+    def updatePointComboBox(self):
+        """Updates the combo box with points to edit and fills it up
+        with VPoints that are on a visible axis.
+        """
         selectedPoints = self.getSelectedPointType()
         self.selectedPointsComboBox.clear()
-        items = []
-        for key, item in compositeDataWrapper.points.items():
-            items.append(key)
-        self.selectedPointsComboBox.addItems(items)
+        keys = []
+        for key, item in self.parent.vCollection.points.items():
+            if item.axis >= 0:
+                keys.append(key)
+        self.selectedPointsComboBox.addItems(keys)
         found = self.selectedPointsComboBox.findText(selectedPoints)
         if found >= 0:
             self.selectedPointsComboBox.setCurrentIndex(found)
@@ -121,9 +116,9 @@ class PlotToolbar(NavigationToolbar2QT):
 
 
 class PlotWidget(QW.QWidget):
-    """Widget przedstawiający wykres wraz z paskiem nawigacji."""
+    """Widget showing the graph with the navigation toolbar."""
 
-    def __init__(self, compositeDataWrapper, parent=None):     
+    def __init__(self, vCollection, parent=None):     
         super(PlotWidget, self).__init__(parent)
 
         self.plotCanvas = PlotCanvas()
@@ -139,11 +134,69 @@ class PlotWidget(QW.QWidget):
         layout.addWidget(self.plotCanvas)
         layout.addWidget(self.plotToolbar)
 
-        self.compositeDataWrapper = compositeDataWrapper
+        self.vCollection = vCollection
+        for dict_ in [vCollection.waves,
+                      vCollection.points,
+                      vCollection.parameters]:
+            for key, vObject in dict_.items():
+                self.plotCanvas.plotVObject(vObject)
+                self._added(vObject, key)
+        self.vCollection.waveAdded.connect(self._waveAdded)
+        self.vCollection.pointsAdded.connect(self._pointsAdded)
+        self.vCollection.parameterAdded.connect(self._parameterAdded)
+
+        self.vCollection.pointsAdded.connect(self.plotToolbar.updatePointComboBox)
+        self.vCollection.pointsKeyChanged.connect(self.plotToolbar.updatePointComboBox)
+        self.vCollection.pointsDeleted.connect(self.plotToolbar.updatePointComboBox)
 
         self.dragging = False
         self.lastX = 0
         self.lastY = 0
+
+    @classmethod
+    def fromCompositeDataWrapper(cls, compositeDataWrapper, parent=None):
+        """Initializes a PlotWidget with a VCollection corresponding
+        to a CompositeDataWrapper.
+        """
+        vCollection = VCollection.fromCompositeDataWrapper(
+            compositeDataWrapper)
+        return cls(vCollection, parent=parent)
+    
+    @classmethod
+    def fromVCollection(cls, vCollection, parent=None, allHidden=False):
+        """Initializes a PlotWidget with a VCollection corresponding
+        to the given one.
+
+        Arguments:
+            allHidden   - if True all VObjects in the VCollection will
+                          be in the -1 axis.
+        """
+        outVCollection = VCollection.fromVCollection(vCollection, allHidden)
+        return cls(outVCollection, parent=parent)
+
+    def _waveAdded(self, vObject, key):
+        self.plotCanvas.plotVObject(vObject)
+        vObject.axisChanged.connect(
+            lambda: self.plotCanvas.plotVObject(vObject))
+
+    def _pointsAdded(self, vObject, key):
+        self.plotCanvas.plotVObject(vObject)
+        vObject.axisChanged.connect(
+            lambda: self.plotCanvas.plotVObject(vObject))
+        vObject.axisChanged.connect(self.plotToolbar.updatePointComboBox)
+
+    def _parameterAdded(self, vObject, key):
+        self.plotCanvas.plotVObject(vObject)
+        vObject.axisChanged.connect(
+            lambda: self.plotCanvas.plotVObject(vObject))
+    
+    def _added(self, vObject, key):
+        if isinstance(vObject, VWave):
+            self._waveAdded(vObject, key)
+        elif isinstance(vObject, VPoints):
+            self._pointsAdded(vObject, key)
+        elif isinstance(vObject, VParameter):
+            self._parameterAdded(vObject, key)
 
     def _getEventXY(self, event):
         """This method returns x and y coordinates of an event on the 
@@ -154,7 +207,7 @@ class PlotWidget(QW.QWidget):
         # matplotlib only returns xdata and ydata for the topmost axis
         # https://stackoverflow.com/questions/16672530/cursor-tracking-using-matplotlib-and-twinx/16672970#16672970
         selectedPoints = self.plotToolbar.getSelectedPointType()
-        visualPoints = self.compositeDataWrapper.points[selectedPoints]
+        visualPoints = self.vCollection.points[selectedPoints]
         ax = visualPoints.mplObject.axes
         if event.inaxes != ax:
             inv = ax.transData.inverted()
@@ -168,24 +221,21 @@ class PlotWidget(QW.QWidget):
         mode = self.plotToolbar.getEditMode()
         selectedPoints = self.plotToolbar.getSelectedPointType()
         if (selectedPoints
-                not in self.compositeDataWrapper.points):
+                not in self.vCollection.points):
             return
         if mode is EditMode.Static and event.button == 1:
             x, y = self._getEventXY(event)
-            self.compositeDataWrapper.points[
-                selectedPoints].add_point(x, y)
-            self.compositeDataWrapper.pointNumberChanged.emit()
+            self.vCollection.points[selectedPoints].data.add_point(x, y)
         else:
             # if a pick had been made on an object not on the topmost axis
             # it will not trigger; this is a workaround
-            self.compositeDataWrapper.points[
-                selectedPoints].mplObject.pick(event)
+            self.vCollection.points[selectedPoints].mplObject.pick(event)
 
     def handlePick(self, event):
         mode = self.plotToolbar.getEditMode()
         selectedPoints = self.plotToolbar.getSelectedPointType()
         if (selectedPoints 
-                not in self.compositeDataWrapper.points):
+                not in self.vCollection.points):
             return
         if mode is EditMode.Static and event.mouseevent.button == 3:
             points = event.artist
@@ -193,10 +243,8 @@ class PlotWidget(QW.QWidget):
                 xData = points.get_xdata()
                 yData = points.get_ydata()
                 ind = [event.ind[0]]
-                self.compositeDataWrapper.points[
-                    selectedPoints].delete_point(
-                        xData[ind], y=yData[ind])
-                self.compositeDataWrapper.pointNumberChanged.emit()
+                self.vCollection.points[selectedPoints].data.delete_point(
+                    xData[ind], y=yData[ind])
         if mode is EditMode.Dynamic and event.mouseevent.button == 1:
             points = event.artist
             if(points.get_label() == selectedPoints):
@@ -206,7 +254,6 @@ class PlotWidget(QW.QWidget):
                 self.lastX = xData[ind]
                 self.lastY = yData[ind]
                 self.dragging = True
-                self.compositeDataWrapper.pointChanged.emit()
 
     def handleMotion(self, event):
         mode = self.plotToolbar.getEditMode()
@@ -214,14 +261,12 @@ class PlotWidget(QW.QWidget):
         if(mode is EditMode.Dynamic and event.button == 1 and
                 self.dragging):
             x, y = self._getEventXY(event)
-            points = self.compositeDataWrapper.points[
-                selectedPoints]
+            points = self.vCollection.points[selectedPoints].data
             points.move_point(
                 self.lastX, self.lastY,
                 x, y)
             self.lastX = np.array([x])
             self.lastY = np.array([y])
-            self.compositeDataWrapper.pointChanged.emit()
 
     def handleRelease(self, event):
         mode = self.plotToolbar.getEditMode()
@@ -229,8 +274,7 @@ class PlotWidget(QW.QWidget):
         if(mode is EditMode.Dynamic and event.button == 1 and
                 self.dragging):
             x, y = self._getEventXY(event)
-            points = self.compositeDataWrapper.points[
-                selectedPoints]
+            points = self.vCollection.points[selectedPoints].data
             points.move_point(
                 self.lastX, self.lastY,
                 x, y)
@@ -240,12 +284,13 @@ class PlotWidget(QW.QWidget):
         if self.dragging:
             self.dragging = False
 
-    def updateCompositeData(self, compositeDataWrapper):
-        #TODO: Wykres powinien być tylko odświeżony nie resetując pozycji
-        # obserwatora
-        self.compositeDataWrapper = compositeDataWrapper
-        beginTime, endTime = compositeDataWrapper.calculate_complete_time_span()
-        self.plotCanvas.plotCompositeDataWrapper(compositeDataWrapper,
-                                                 beginTime, endTime)
-
-
+    def replaceVCollection(self, vCollection):
+        self.vCollection.remove()
+        self.vCollection = vCollection
+        for dict_ in [vCollection.waves,
+                      vCollection.points,
+                      vCollection.parameters]:
+            for key, vObject in dict_.items():
+                self.plotCanvas.plotVObject(vObject)
+                self._added(vObject, key)
+        self.plotCanvas.plotVCollection(vCollection)
