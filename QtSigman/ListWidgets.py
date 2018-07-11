@@ -6,6 +6,7 @@ from QtSigman import DataActions
 class DataListItemWidget(QW.QWidget):
     def __init__(self, parent=None):
         super(DataListItemWidget, self).__init__(parent)
+        self.vObject = None
         self.mainHBoxLayout = QW.QHBoxLayout()
         
         self.typeLabel = QW.QLabel()
@@ -25,6 +26,7 @@ class DataListItemWidget(QW.QWidget):
         """)
 
     def setInfo(self, vObject, key):
+        self.vObject = vObject
         self.typeLabel.setText(key)
 
 def _generateFunction(function, *args):
@@ -66,35 +68,29 @@ class DataListWidget(QW.QListWidget):
             self.setItemWidget(item, itemWidget)
 
     def contextMenuEvent(self, event):
+        #TODO: Hacks
         self.menu = QW.QMenu(self)
         row = []
+        items = [self.itemWidget(self.item(index)) for index in range(self.count())] #TODO: hack
         for i in self.selectionModel().selection().indexes():
             row, column = i.row(), i.column()
-        a = list(self.items)
-        if (type(row) is int):
-            if hasattr(a[row][1], 'offset'):
-                settingsFunction = DataActions.inputWaveSettings
-                datay = a[row][1].data
-                offset = a[row][1].offset
-                sampleLength = a[row][1].sample_length
-                time = a[row][1].complete_length
-                datax = np.arange (offset, offset+time,sampleLength)
-            else:
-                settingsFunction = DataActions.inputPointSettings
-                datax = a[row][1].data_x
-                datay = a[row][1].data_y
+        allNames = [item.typeLabel.text() for item in items]
+        metaFunction = _generateFunction(self.metaFunction,
+                                         items[row].vObject,
+                                         items[row].typeLabel.text(),
+                                         allNames)
 
+        renameAction = QW.QAction('Change metadata', self)
+        renameAction.triggered.connect(metaFunction)
+        self.menu.addAction(renameAction)
 
-            renameAction = QW.QAction('Zmień metainformacje', self)
-            renameAction.triggered.connect( generateMetadataButtonResponse(
-                        settingsFunction, self.CompositeDataWraper, a[row][0]))
-            self.menu.addAction(renameAction)
+        saveAction = QW.QAction('Save data', self)
+        saveAction.triggered.connect(lambda:
+                                     DataActions.saveData(items[row].vObject.data,
+                                                          items[row].typeLabel.text()))
+        self.menu.addAction(saveAction)
 
-            saveAction = QW.QAction('Zapisz dane', self)
-            saveAction.triggered.connect(lambda: DataActions.saveData (datax,datay,a[row][0]))
-            self.menu.addAction(saveAction)
-
-            self.menu.popup(QtGui.QCursor.pos())
+        self.menu.popup(QtGui.QCursor.pos())
 
 class VCollectionListWidget(QW.QWidget):
     """A widget containing three lists corresponding to data in a

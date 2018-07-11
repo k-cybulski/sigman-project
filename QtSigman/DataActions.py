@@ -58,28 +58,15 @@ def loadWave(forbiddenNames):
 
     return setOfWaves
 
-def saveData (data_x, data_y, key = ''):
-    #TODO: Docs
-    #TODO: Move to fm
+def saveData (data, key = ''):
     fileDialog = QW.QFileDialog()
     fileDialog.setFileMode(QW.QFileDialog.AnyFile)
     fileDialog.setDefaultSuffix('.dat')
 
     try:
-        path = fileDialog.getSaveFileName(directory = key+'.dat' )
+        path = fileDialog.getSaveFileName(directory=key+'.dat' )
         assert path[0] != ""
-        dataLen = 0;
-        if (len(data_x)>len(data_y)):
-            dataLen = len(data_y)
-        else:
-            dataLen = len(data_x)
-        with open(path[0],'w') as file:
-            for i in range (0,dataLen):
-                file.write(str(data_x[i]))
-                file.write ('  ')
-                file.write(str(data_y[i]))
-                file.write('\n')
-        file.close()
+        fm.export(path[0], data)
     except AssertionError:
         pass
 

@@ -105,7 +105,7 @@ class VWave(VObject):
     """Overrides VObject to accommodate sm.Wave as self.data."""
 
     def copy(self):
-        """Returns a VWave that references the same sm.Points, has the
+        """Returns a VWave that references the same sm.VWave, has the
         same color and axis.
         """
         return VWave(self.data, self.color, self.axis)
