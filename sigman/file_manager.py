@@ -76,7 +76,7 @@ def import_points(file_name, point_type):
         file_name,
         point_type = point_type)
 
-def _export_dat(data_x,data_y,filename):
+def _export_dat(data_x, data_y, filename):
     """Writes two coordinate tables in a .dat file"""
     with open(filename, 'w') as csv_file:
         writer = csv.writer(csv_file, delimiter=' ')
@@ -90,7 +90,7 @@ def _export_line_dat(file_name, wave):
 
 def _export_point_dat(file_name, points):
     """Exports `Points` to a .dat file."""
-    _export_dat(file_name, points.data_x, points.data_y)
+    _export_dat(points.data_x, points.data_y, file_name)
 
 def export_wave(file_name, wave):
     """Exports `Wave` into a file with the format depending on
