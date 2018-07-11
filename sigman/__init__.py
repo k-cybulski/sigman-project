@@ -168,6 +168,8 @@ class Wave:
             begin_x    - x value of the first point in the output array
         """
         # TODO: Rethink this; arguments seem shady
+        if end_time is None:
+            end_time = self.complete_length
         data = self.data_slice(begin_time, end_time)
         output_x = []
         output_y = []
