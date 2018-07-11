@@ -65,7 +65,8 @@ def saveData (data, key = ''):
 
     try:
         path = fileDialog.getSaveFileName(directory=key+'.dat' )
-        assert path[0] != ""
+        if path[0] == "":
+            raise ActionCancelledError
         fm.export(path[0], data)
     except AssertionError:
         pass
