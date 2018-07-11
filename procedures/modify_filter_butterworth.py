@@ -55,7 +55,7 @@ def interpret_arguments(wave, points, arguments):
         'Wn':Wn,
         'btype':btype}
 
-def procedure(wave, begin_time, end_time, arguments):
+def procedure(wave, points, begin_time, end_time, arguments):
     wn = 2*arguments['Wn'] / wave.sample_rate 
     b, a = butter(arguments['N'], wn, btype=arguments['btype'])
     data = wave.data_slice(begin_time, end_time)

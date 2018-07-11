@@ -376,9 +376,10 @@ class ProcedureWidget(QW.QWidget):
         if len(self.procedure.arguments) > 0:
             if self.procedure.procedure_type == 'modify':
                 wave = self.getSelectedWaves()['Waveform']
+                points = self.getSelectedPoints()
                 try:
                     self.procedure.interpret_arguments(
-                        wave, arguments)
+                        wave, points, arguments)
                 except InvalidArgumentError as e:
                     QW.QMessageBox.warning(self, "Invalid arguments",
                                            e.args[0])
