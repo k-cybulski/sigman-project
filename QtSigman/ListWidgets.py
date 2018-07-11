@@ -12,10 +12,6 @@ class DataListItemWidget(QW.QWidget):
         self.typeLabel = QW.QLabel()
         self.mainHBoxLayout.addWidget(self.typeLabel)
 
-        self.editMetaButton = QW.QPushButton()
-        self.editMetaButton.setText("Change metadata")
-        self.mainHBoxLayout.addWidget(self.editMetaButton)
-
         self.setLayout(self.mainHBoxLayout)
         self.setStyleSheet("""
         .QWidget {
@@ -58,9 +54,6 @@ class DataListWidget(QW.QListWidget):
         self.clear()
         for key, item in dict_.items():
             itemWidget = DataListItemWidget()
-            itemWidget.editMetaButton.clicked.connect(
-                _generateFunction(
-                    self.metaFunction, item, key, dict_.keys()))
             itemWidget.setInfo(item, key)
             item = QW.QListWidgetItem(self)
             item.setSizeHint(itemWidget.sizeHint())
