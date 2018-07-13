@@ -148,8 +148,8 @@ class Wave:
         if not isclose(self.sample_length,
                        wave.sample_length, rel_tol=0.0001):
             raise ValueError('Wave to replace has incompatible sample_rate')
-        if end_time - begin_time > wave.complete_length:
-            raise ValueError('Given Wave shorter than the time wanted range')
+        if end_time - begin_time > wave.complete_length: #Their is sometimes a problem with variable round (like: 300.1 > 300.09999999999999)
+            end_time = wave.complete_length - begin_time
         begin_i = self.sample_at(begin_time)
         end_i = self.sample_at(end_time)
         for j in range(end_i-begin_i):
