@@ -7,7 +7,7 @@ import os.path
 import pickle
 
 import numpy as np
-
+from QtSigman import DefaultColors
 import sigman as sm 
 
 def save_composite_data(file_name, composite_data):
@@ -226,3 +226,45 @@ def import_modelflow_data(file_name, reference_points, reference_points_type):
         names.append('wyznaczoneHRzR')
 
     return points_list, names
+
+
+def import_signal_from_signal_express_file (file_name):
+    """Import wave from signal express export Ascci file. First parse the head of the file next read all wave data.
+    """
+    x = []
+    y = []
+    names = []
+    dt = 0
+    with open(file_name,encoding="CP1250") as f:
+        i = 1
+        for line in f:
+            if (i == 1):
+                if 'channel names:' not in line:
+                    break;
+            if (i == 2):
+                pom = line.split ('	')
+                for name in pom:
+                    names.append (name[(name.rfind('-')+2):].replace('\n',''))
+            if (i == 6):
+                dt = float(line.replace (',','.'))
+            if (i > 7):
+                signals_value = line.split ('	')
+                nr = 0
+                if len(y) == 0:
+                    y = [[0 for k in range(1)] for j in range(len(pom))]
+                for value in signals_value:
+                    if (i == 8):
+                        y[nr][0]=(float(value.replace (',','.')))
+                    else:
+                        y[nr].append(float(value.replace (',','.')))
+                    nr = nr + 1
+            i= i + 1
+    setOfWaves = []
+    for i in range(len(names)):
+                wave = sm.Wave(y[i], dt, names[i], 0) #TODO: move to fm
+                wave.offset = 0
+                wave.type = names[i]
+                #TODO: Check whether the name is already taken
+                setOfWaves.append((wave, names[i],
+                                   DefaultColors.getColor(names[i]), -1))
+    return setOfWaves

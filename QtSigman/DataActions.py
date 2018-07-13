@@ -34,7 +34,7 @@ def loadWave(forbiddenNames):
         for filename in path[0]:
             title = filename.split("/")[-1]
             title = title.split (".")[0]
-            wave = fm.import_wave(filename, 'default')
+            wave = fm.import_wave(filename, title)
             dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
                 forbiddenNames=forbiddenNames,
                 title=title)
@@ -46,15 +46,9 @@ def loadWave(forbiddenNames):
                 raise ActionCancelledError
     elif path[1] == 'Signal express export(*)':
         for filename in path[0]:
-            x, y, name = fm.import_signal_from_signal_express_file(filename)
-            for i in range(len(name)):
-                wave = sm.Wave(y[i], x[i], name[i], 0) #TODO: move to fm
-                wave.offset = 0
-                wave.type = name[i]
-                #TODO: Check whether the name is already taken
-                setOfWaves.append((wave, name[i],
-                                   DefaultColors.getColor(name[i]), -1))
-                #TODO? Open up metadata dialog
+            setOfWaves = fm.import_signal_from_signal_express_file(filename)
+            
+               
 
     return setOfWaves
 
@@ -89,7 +83,7 @@ def loadPoints(forbiddenNames):
     for filename in path[0]:
         title = filename.split("/")[-1]
         title = title.split (".")[0]        
-        points = fm.import_points(filename, 'default')
+        points = fm.import_points(filename, title)
         dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
             forbiddenNames=forbiddenNames,
             title=title)
@@ -270,9 +264,9 @@ def executeMacro (compositeDataWraper, value):
             else:
                 dictType = p[2]
                 color=DefaultColors.getColor(p[2])
-                axis=Axis.Hidden 
-            compositeDataWraper.add_points(newPoints, dictType, 
-                                                color=color, axis=axis)
+                axis = -1 
+            setOfPoints.append(newPoints, dictType, 
+                                               color=color, axis=axis)
     if (len(wave)>0):
         for w in wave:
             compositeDataWraper.add_wave(w, w.type, 
