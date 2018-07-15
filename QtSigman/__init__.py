@@ -342,7 +342,7 @@ class QtSigmanWindow(QW.QMainWindow):
         path = "macros"    
         analize_List = os.listdir(path);
         for i in range (0,len(analize_List)):
-            self.analize_menu.addAction(analize_List[i], partial(DataActions.executeMacro,self.compositeDataWrapper,analize_List[i]))
+            self.analize_menu.addAction(analize_List[i], partial(self.executeMacros,analize_List[i]))
              
         self.menuBar().addMenu(self.analize_menu)
 
@@ -480,6 +480,18 @@ class QtSigmanWindow(QW.QMainWindow):
         except ActionCancelledError:
             pass
 
+    def executeMacros(self, macroName):
+        setOfPoints, setOfWaves = DataActions.executeMacro(self.compositeDataWrapper,macroName)
+        for i in range(len(setOfPoints)):
+            self.compositeDataWrapper.add_points(setOfPoints[i][0], setOfPoints[i][1])
+            self.plotTabWidget.currentWidget().vCollection.points[setOfPoints[i][1]].setSettings(
+                setOfPoints[i][2], setOfPoints[i][3])
+        for i in range(len(setOfWaves)):
+            self.compositeDataWrapper.add_wave(setOfWaves[i][0], setOfWaves[i][1])
+            self.plotTabWidget.currentWidget().vCollection.waves[
+                        setOfWaves[i][1]].setSettings(setOfWaves[i][2], setOfWaves[i][3])
+
+
     def quit(self):
         self.close()
 
@@ -493,6 +505,7 @@ GUI for the digital signal library sigman.
 Alpha version
                                                                 Krzysztof Cybulski 2018""")
 
+   
         
 
 

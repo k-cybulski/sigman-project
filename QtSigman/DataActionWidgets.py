@@ -580,7 +580,7 @@ class ModelflowImportDialog(QW.QDialog):
         self.pathLabel = QW.QLabel(path)
         gridLayout.addWidget(self.pathLabel,2,1)
         
-        self.changeButton = QW.QPushButton("Zmień")
+        self.changeButton = QW.QPushButton("Change")
         self.changeButton.clicked.connect(self.Change)
         gridLayout.addWidget(self.changeButton,2,2)
 
@@ -590,7 +590,10 @@ class ModelflowImportDialog(QW.QDialog):
 
         self.matchList = QW.QComboBox()
         
-        axisItems = ['SBP','DBP','R']
+        if '.A00' in path:
+            axisItems = ['SBP','DBP','R']
+        else:
+            axisItems = ['R']
         self.matchList.addItems(axisItems)
         self.matchList.setCurrentIndex(0)
         gridLayout.addWidget(self.matchList,4,1)
@@ -640,5 +643,11 @@ class ModelflowImportDialog(QW.QDialog):
          fileDialog = QW.QFileDialog()
          fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
          newpath = fileDialog.getOpenFileName(filter = fileFilter)
+         self.matchList.clear()
+         if '.A00' in newpath:
+            axisItems = ['SBP','DBP','R']
+         else:
+            axisItems = ['R']
+         self.matchList.addItems(axisItems)
          self.pathLabel.setText(newpath[0])
 

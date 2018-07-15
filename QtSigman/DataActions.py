@@ -7,7 +7,7 @@ from sigman import analyzer, EmptyPointsError
 import sigman as sm
 import importlib
 import QtSigman
-from QtSigman import DataActionWidgets, ImportModelflow, DefaultColors
+from QtSigman import DataActionWidgets,  DefaultColors
 from QtSigman.DataActionWidgets import DataActionStatus
 from QtSigman.VisualObjects import VWave
 
@@ -100,7 +100,9 @@ def loadModelflow(compositeDataWrapper):
     modelflowPoints and modelflowData.
     """
     #TODO: Update to most recent zyl functionality
-    fileFilter = "(*.A00)"
+    fileFilter = ('all_supported_files (*.csv *.A00);; '
+            'BeatScope (*.A00);; Finapres Nova (*.csv);; '
+            'all_files (*)')
     fileDialog = QW.QFileDialog()
     fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
 
@@ -252,6 +254,8 @@ def executeMacro (compositeDataWraper, value):
     path = "macros"
     macro = (importlib.import_module (path+'.'+value+'.start'))
     [points, wave] = macro.execute(compositeDataWraper)
+    setOfPoints = []
+    setOfWaves = []
     if (len(points)>0):
         for p in points:
             newPoints = sm.Points(p[0],p[1], p[2])
@@ -265,10 +269,9 @@ def executeMacro (compositeDataWraper, value):
                 dictType = p[2]
                 color=DefaultColors.getColor(p[2])
                 axis = -1 
-            setOfPoints.append(newPoints, dictType, 
-                                               color=color, axis=axis)
+            setOfPoints.append((newPoints, dictType, color, axis))
     if (len(wave)>0):
         for w in wave:
-            compositeDataWraper.add_wave(w, w.type, 
-                        color=DefaultColors.getColor(w.type), 
-                        axis=Axis.Hidden)
+            setOfWaves.append((w, w.type, DefaultColors.getColor(w.type), -1))
+             
+    return setOfPoints, setOfWaves

@@ -78,7 +78,7 @@ def import_points(file_name, point_type):
 
 def _export_dat(data_x, data_y, filename):
     """Writes two coordinate tables in a .dat file"""
-    with open(filename, 'w') as csv_file:
+    with open(filename, 'w', newline='') as csv_file:#fix extra line in file create on windows
         writer = csv.writer(csv_file, delimiter=' ')
         for x, y in zip(data_x, data_y):
             writer.writerow([x,y])
@@ -123,7 +123,7 @@ def export(file_name, object):
     elif isinstance(object, sm.Wave):
         export_wave(file_name, object)
 
-def _estimate_points_offset(align_points, reference_points,
+def _estimate_points_offset(reference_points,align_points,
                             cross_correlation=False):
     """Estimates the offset between two sets of points that describe
     the same data. Returns the time in seconds that the align_points
@@ -131,35 +131,53 @@ def _estimate_points_offset(align_points, reference_points,
     
     align_points must be longer than reference_points
     """
-    if len(align_points) < len(reference_points):
-        raise ValueError("Points to align must have more data than refrence.")
+    align_data = align_points.data_y
+    reference_data = reference_points.data_y
     if not cross_correlation:
-        align_data = align_points.data_y
-        reference_data = reference_points.data_y
         differences = []
         difference = 0
-        for i in range(0, len(align_data) - len(reference_data)):
-            difference = 0
-            for j in range (0, len(reference_data)):
-                 difference += abs(align_data[i+j] - reference_data[j])     
-            differences.append(difference)
-        offset = np.argmin(differences)
-        offset = align_points.data_x[offset] - reference_points.data_x[0]
+        if (len(reference_data)>len(align_data)):
+            for i in range(0,len(reference_data)-len(align_data)):
+                difference = 0
+                for j in range (0,len(align_data)):
+                     difference = difference + abs((reference_data[i+j]-align_data[j]))     
+                differences.append(difference)
+
+            offset = (np.argmin(differences))
+        else:
+            for i in range(0,len(align_data)-len(reference_data)):
+                difference = 0
+                for j in range (0,len(align_data)):
+                     if (i+j>= len(reference_data)):
+                         break
+                     difference = difference + abs((reference_data[i+j]-align_data[j]))     
+                differences.append(difference)
+
+            offset = (np.argmin(differences))
     else:
+        if len(align_data) < len(reference_data):
+            raise ValueError("Points to align must have more data than refrence.")
         index_offset = np.argmin(np.correlate(align_points.data_y,
                                               reference_points.data_y))
         offset = align_points.data_x[index_offset] - reference_points.data_x[0]
         # We need to account for the fact align_points and reference_points
         # are off by 2x the time of the first value in align_points
         offset -= align_points.data_x[0]*2
-
-    return -offset
+    time_offset = align_points.data_x[0] - reference_points.data_x[offset]
+    return time_offset
 
 def _hr_from_r(time):
     HR = [0] * (len(time) - 1)
     for i in range(len(time) - 1):
         HR[i] = round(60 / (time[i+1] - time[i]))
     return HR
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 def import_modelflow_data(file_name, reference_points, reference_points_type):
     """Imports and aligns Finapres Modeflow data to already existing 
@@ -176,27 +194,59 @@ def import_modelflow_data(file_name, reference_points, reference_points_type):
     names = None
     # Data retrieval
     with open(file_name) as f:
-        data_section = False
-        for line in f:
-            if not data_section and "END preamble" in line:
-                data_section = True 
-                continue
-            if data_section:
-                data = line.split()
-                if len(data) > 2:
-                    if names is None:
-                        # trim " characters
-                        names = [name[1:-1] for name in data[1:]]
-                        continue
-                    try:
-                        x.append(float(data[0]))
-                        if y is None:
-                            y = [[float(str_)] for str_ in data[1:]]
-                        else:
-                            for i in range(1, len(data)):
-                                y[i-1].append(float(data[i]))
-                    except ValueError: # If values are strings
-                        continue
+        if '.A00' in file_name:
+            data_section = False
+            for line in f:
+                if not data_section and "END preamble" in line:
+                    data_section = True 
+                    continue
+                if data_section:
+                    data = line.split()
+                    if len(data) > 2:
+                        if names is None:
+                            # trim " characters
+                            names = [name[1:-1] for name in data[1:]]
+                            continue
+                        try:
+                            x.append(float(data[0]))
+                            if y is None:
+                                y = [[float(str_)] for str_ in data[1:]]
+                            else:
+                                for i in range(1, len(data)):
+                                    y[i-1].append(float(data[i]))
+                        except ValueError: # If values are strings
+                            continue
+        else:
+           i = 0
+           for line in f:
+               i = i + 1
+               if i == 8:
+                   pom = line.split(';')
+                   if '\n' in pom:
+                       del pom[pom.index('\n')]
+                   pom[0] = 'HR'
+                   names = pom
+               if i > 8:
+                   pom = line.split(';') 
+                   if '\n' in pom:
+                       del pom[pom.index('\n')]
+                   if len(pom) > 2:
+                       if is_number(pom[0]):
+                           x.append(float(pom[0]))  
+                           if y is None:
+                                 y = [[0 for k in range(1)] for j in range(len(pom))]
+                                 for k in range(1, len(pom)):
+                                     if (is_number(pom[k])):
+                                         y[k][0]=(float(pom[k]))   
+                                     else:
+                                         y[k][0] = 0
+                           else:
+                               for k in range(1, len(pom)):
+                                    if (is_number(pom[k])):
+                                         y[k].append(float(pom[k]))   
+                                    else:
+                                         y[k].append (0)
+           y[0] =  _hr_from_r(x)         
     # Alignment and object initialization
     # modelflow_data[0] -> fiSYS -> SBP
     # modelflow_data[1] -> fiDIA -> DBP
@@ -215,15 +265,17 @@ def import_modelflow_data(file_name, reference_points, reference_points_type):
             elif reference_points_type == 'r' and name == 'HR':
                 hr_from_r = _hr_from_r(reference_points.data_x)
                 hr_points = sm.Points(reference_points.data_x, hr_from_r,
-                                      'wyznaczoneHRzR')
+                                      'HRfromR')
                 offset = _estimate_points_offset(points, hr_points)
+            
 
     for points in points_list:
         points.move_in_time(offset)
     
     if hr_points is not None:
         points_list.append(hr_points)
-        names.append('wyznaczoneHRzR')
+        names.append('HRfromR')
+
 
     return points_list, names
 
