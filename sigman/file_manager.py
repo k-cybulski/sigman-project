@@ -189,7 +189,6 @@ def import_modelflow_data(file_name, reference_points, reference_points_type):
     """
     if reference_points_type not in ['sbp', 'dbp', 'r']:
         raise ValueError("Invlaid reference data type")
-<<<<<<< HEAD
     x = []
     y = None
     names = None
