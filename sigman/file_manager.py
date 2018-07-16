@@ -76,21 +76,21 @@ def import_points(file_name, point_type):
         file_name,
         point_type = point_type)
 
-def _export_dat(data_x, data_y, filename):
+def _export_dat(file_name, data_x, data_y):
     """Writes two coordinate tables in a .dat file"""
-    with open(filename, 'w', newline='') as csv_file:#fix extra line in file create on windows
+    with open(file_name, 'w', newline='') as csv_file:#fix extra line in file create on windows
         writer = csv.writer(csv_file, delimiter=' ')
         for x, y in zip(data_x, data_y):
             writer.writerow([x,y])
 
-def _export_line_dat(file_name, wave):
+def _export_wave_dat(file_name, wave):
     """Exports `Wave` to a .dat file."""
     data_x, data_y = wave.generate_coordinate_tables()
-    _export_dat(data_x,data_y,file_name)
+    _export_dat(file_name, data_x, data_y)
 
 def _export_point_dat(file_name, points):
     """Exports `Points` to a .dat file."""
-    _export_dat(points.data_x, points.data_y, file_name)
+    _export_dat(file_name, points.data_x, points.data_y)
 
 def export_wave(file_name, wave):
     """Exports `Wave` into a file with the format depending on
@@ -98,7 +98,7 @@ def export_wave(file_name, wave):
     """
     extension = os.path.splitext(file_name)[1][1:]
     if extension == 'dat':
-        export_func = _export_line_dat
+        export_func = _export_wave_dat
     else:
         raise ValueError("Invalid file format")
     export_func(file_name, wave)
@@ -123,7 +123,7 @@ def export(file_name, object):
     elif isinstance(object, sm.Wave):
         export_wave(file_name, object)
 
-def _estimate_points_offset(reference_points,align_points,
+def _estimate_points_offset(reference_points, align_points,
                             cross_correlation=False):
     """Estimates the offset between two sets of points that describe
     the same data. Returns the time in seconds that the align_points
@@ -189,6 +189,7 @@ def import_modelflow_data(file_name, reference_points, reference_points_type):
     """
     if reference_points_type not in ['sbp', 'dbp', 'r']:
         raise ValueError("Invlaid reference data type")
+<<<<<<< HEAD
     x = []
     y = None
     names = None

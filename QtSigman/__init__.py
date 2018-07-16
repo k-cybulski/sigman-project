@@ -8,7 +8,6 @@ import os
 from PyQt5 import QtWidgets as QW
 from PyQt5 import QtCore as QC
 import sigman as sm
-from QtSigman import MplWidgets, DataActions, ListWidgets
 
 from QtSigman import MplWidgets, DataActions, ListWidgets, DefaultColors
 from QtSigman.DataActions import ActionCancelledError
@@ -490,7 +489,6 @@ class QtSigmanWindow(QW.QMainWindow):
             self.compositeDataWrapper.add_wave(setOfWaves[i][0], setOfWaves[i][1])
             self.plotTabWidget.currentWidget().vCollection.waves[
                         setOfWaves[i][1]].setSettings(setOfWaves[i][2], setOfWaves[i][3])
-
 
     def quit(self):
         self.close()

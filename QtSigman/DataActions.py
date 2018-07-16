@@ -49,7 +49,6 @@ def loadWave(forbiddenNames):
             setOfWaves = fm.import_signal_from_signal_express_file(filename)
             
                
-
     return setOfWaves
 
 def saveData (data, key = ''):
@@ -64,6 +63,8 @@ def saveData (data, key = ''):
         fm.export(path[0], data)
     except AssertionError:
         pass
+
+
 
 def loadPoints(forbiddenNames):
     """Imports sm.Points instances from files and opens up a dialog

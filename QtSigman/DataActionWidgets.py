@@ -260,13 +260,13 @@ class ProcedureWidget(QW.QWidget):
         self.descriptionWidget.setMinimumWidth(480)
         self.vBoxLayout.addWidget(self.descriptionWidget)
         
+        # modify procedures only have a single wave input
         if procedure.procedure_type == 'modify':
             requiredWaves = ["Waveform"]
             requiredPoints = []
-
-        if hasattr(procedure, 'required_waves'):
+        elif hasattr(procedure, 'required_waves'):
             requiredWaves = procedure.required_waves        
-        elif procedure.procedure_type != 'modify':
+        else:
             requiredWaves = []
 
         if hasattr(procedure, 'required_points'):
@@ -275,6 +275,8 @@ class ProcedureWidget(QW.QWidget):
             requiredPoints = []
 
 
+
+@Miwek
         self.waveArgumentWidgets = {}
         self.pointArgumentWidgets = {}
 

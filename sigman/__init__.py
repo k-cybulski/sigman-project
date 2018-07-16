@@ -144,7 +144,6 @@ class Wave:
             end_time   - end of the time range
             wave       - the given `Wave`
         """
-
         if not isclose(self.sample_length,
                        wave.sample_length, rel_tol=0.0001):
             raise ValueError('Wave to replace has incompatible sample_rate')
