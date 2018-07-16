@@ -156,7 +156,10 @@ class VPoints(VObject):
         if endTime is None:
             endTime = self.data.data_x[-1]
         
-        x, y = self.data.data_slice(beginTime, endTime)
+        slice_ = self.data.data_slice(beginTime, endTime)
+        if slice_ is None:
+            return
+        x, y = slice_
         if self.mplObject is None:
             self.mplObject, = mplAxis.plot(
                 x, y, color=self.color, label=self.data.type,
