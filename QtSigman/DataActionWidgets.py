@@ -274,9 +274,6 @@ class ProcedureWidget(QW.QWidget):
         else:
             requiredPoints = []
 
-
-
-@Miwek
         self.waveArgumentWidgets = {}
         self.pointArgumentWidgets = {}
 
