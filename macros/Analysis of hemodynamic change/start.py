@@ -80,6 +80,8 @@ class dialogBox (QW.QDialog):
              
        if (self.tableWidget.rowCount() == 1):
           punktyCzasowe = self.timePointsComboBox.currentText()
+          if punktyCzasowe == '':
+             return
           self.insertColumn (punktyCzasowe, data.points[punktyCzasowe].data_x, 0)
           self.timePointsComboBox.setEnabled(False)
 
@@ -150,10 +152,13 @@ class dialogBox (QW.QDialog):
        worksheet = workbook.add_worksheet()
        for i in range (0,self.tableWidget.rowCount()):
            for j in range (0,self.tableWidget.columnCount()):
-                if (i != 0 and (self.tableWidget.item(i,j).text()!= "NAN") and (self.tableWidget.item(i,j).text()!= "inf")):
-                    worksheet.write(i,j, float(self.tableWidget.item(i,j).text()))
-                else:
-                    worksheet.write(i,j, self.tableWidget.item(i,j).text())
+              try:
+                 if (i != 0 and (self.tableWidget.item(i,j).text()!= "NAN") and (self.tableWidget.item(i,j).text()!= "inf")):
+                     worksheet.write(i,j, float(self.tableWidget.item(i,j).text()))
+                 else:
+                     worksheet.write(i,j, self.tableWidget.item(i,j).text())
+              except:
+                 return
 
        workbook.close()
 

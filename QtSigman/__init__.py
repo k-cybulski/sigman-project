@@ -5,6 +5,7 @@ PyQt5 application providing a GUI to the `sigman` library.
 """
 from functools import partial
 import os
+import traceback
 from PyQt5 import QtWidgets as QW
 from PyQt5 import QtCore as QC
 import sigman as sm
@@ -480,15 +481,20 @@ class QtSigmanWindow(QW.QMainWindow):
             pass
 
     def executeMacros(self, macroName):
-        setOfPoints, setOfWaves = DataActions.executeMacro(self.compositeDataWrapper,macroName)
-        for i in range(len(setOfPoints)):
-            self.compositeDataWrapper.add_points(setOfPoints[i][0], setOfPoints[i][1])
-            self.plotTabWidget.currentWidget().vCollection.points[setOfPoints[i][1]].setSettings(
-                setOfPoints[i][2], setOfPoints[i][3])
-        for i in range(len(setOfWaves)):
-            self.compositeDataWrapper.add_wave(setOfWaves[i][0], setOfWaves[i][1])
-            self.plotTabWidget.currentWidget().vCollection.waves[
-                        setOfWaves[i][1]].setSettings(setOfWaves[i][2], setOfWaves[i][3])
+        try:
+            setOfPoints, setOfWaves = DataActions.executeMacro(self.compositeDataWrapper,macroName)
+            for i in range(len(setOfPoints)):
+                self.compositeDataWrapper.add_points(setOfPoints[i][0], setOfPoints[i][1])
+                self.plotTabWidget.currentWidget().vCollection.points[setOfPoints[i][1]].setSettings(
+                    setOfPoints[i][2], setOfPoints[i][3])
+            for i in range(len(setOfWaves)):
+                self.compositeDataWrapper.add_wave(setOfWaves[i][0], setOfWaves[i][1])
+                self.plotTabWidget.currentWidget().vCollection.waves[
+                            setOfWaves[i][1]].setSettings(setOfWaves[i][2], setOfWaves[i][3])
+        except:
+            QW.QMessageBox.warning(self, "Unhandled macro error",
+                                   traceback.format_exc())
+
 
     def quit(self):
         self.close()
