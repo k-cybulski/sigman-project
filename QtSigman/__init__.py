@@ -499,12 +499,9 @@ class QtSigmanWindow(QW.QMainWindow):
     def about(self):
         QW.QMessageBox.about(self, "About",
                                     """QtSigman
-GUI for the digital signal library sigman.
+GUI for the digital signal processing library sigman.
 Alpha version
-                                                                Krzysztof Cybulski 2018""")
-
-   
-        
+                                                                Sigman Project 2018""")
 
 
 def initialize():
