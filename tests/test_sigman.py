@@ -113,7 +113,7 @@ def test_deprecated_modify_procedure(bp_wave, butterworth):
     arguments = butterworth.default_arguments
     arguments['N'] = 3
     arguments['Wn'] = 30
-    filtered_wave = analyzer.modify_wave(bp_wave, 60, 70, butterworth,
+    filtered_wave = analyzer.modify_wave(bp_wave, None, 60, 70, butterworth,
                                          arguments)
     assert isclose(filtered_wave.value_at(5), 90.11, rel_tol=0.001)
     assert filtered_wave.complete_length == 10

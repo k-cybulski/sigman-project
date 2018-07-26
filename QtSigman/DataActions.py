@@ -5,9 +5,9 @@ from PyQt5 import QtWidgets as QW
 from sigman import file_manager as fm
 from sigman import analyzer, EmptyPointsError
 import sigman as sm
-
+import importlib
 import QtSigman
-from QtSigman import DataActionWidgets, ImportModelflow, DefaultColors
+from QtSigman import DataActionWidgets,  DefaultColors
 from QtSigman.DataActionWidgets import DataActionStatus
 from QtSigman.VisualObjects import VWave
 
@@ -20,7 +20,8 @@ def loadWave(forbiddenNames):
 
     Returns a list of tuples containg Wave, chosen dictType, color and axis.
     """
-    fileFilter = "dat (*.dat)"
+    fileFilter = ('dat (*.dat);;'
+                  'Signal express export(*)')
     fileDialog = QW.QFileDialog()
     fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
     path = fileDialog.getOpenFileNames(filter=fileFilter)
@@ -29,20 +30,41 @@ def loadWave(forbiddenNames):
         raise ActionCancelledError
 
     setOfWaves = []
-    for filename in path[0]:
-        title = filename.split("/")[-1]
-        title = title.split (".")[0]
-        wave = fm.import_wave(filename, 'default')
-        dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-            forbiddenNames=forbiddenNames,
-            title=title)
-        if status is DataActionStatus.Ok:
-            wave.offset = offset
-            wave.type = dictType
-            setOfWaves.append((wave, dictType, color, axis))
-        else:
-            raise ActionCancelledError
+    if path[1] == 'dat (*.dat)':
+        for filename in path[0]:
+            title = filename.split("/")[-1]
+            title = title.split (".")[0]
+            wave = fm.import_wave(filename, title)
+            dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
+                forbiddenNames=forbiddenNames,
+                title=title)
+            if status is DataActionStatus.Ok:
+                wave.offset = offset
+                wave.type = dictType
+                setOfWaves.append((wave, dictType, color, axis))
+            else:
+                raise ActionCancelledError
+    elif path[1] == 'Signal express export(*)':
+        for filename in path[0]:
+            setOfWaves = fm.import_signal_from_signal_express_file(filename)
+            
+               
     return setOfWaves
+
+def saveData (data, key = ''):
+    fileDialog = QW.QFileDialog()
+    fileDialog.setFileMode(QW.QFileDialog.AnyFile)
+    fileDialog.setDefaultSuffix('.dat')
+
+    try:
+        path = fileDialog.getSaveFileName(directory=key+'.dat' )
+        if path[0] == "":
+            raise ActionCancelledError
+        fm.export(path[0], data)
+    except AssertionError:
+        pass
+
+
 
 def loadPoints(forbiddenNames):
     """Imports sm.Points instances from files and opens up a dialog
@@ -62,7 +84,7 @@ def loadPoints(forbiddenNames):
     for filename in path[0]:
         title = filename.split("/")[-1]
         title = title.split (".")[0]        
-        points = fm.import_points(filename, 'default')
+        points = fm.import_points(filename, title)
         dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
             forbiddenNames=forbiddenNames,
             title=title)
@@ -78,7 +100,10 @@ def loadModelflow(compositeDataWrapper):
     """Import modelflow data and returns tuple consisting of
     modelflowPoints and modelflowData.
     """
-    fileFilter = "(*.A00)"
+    #TODO: Update to most recent zyl functionality
+    fileFilter = ('all_supported_files (*.csv *.A00);; '
+            'BeatScope (*.A00);; Finapres Nova (*.csv);; '
+            'all_files (*)')
     fileDialog = QW.QFileDialog()
     fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
 
@@ -192,10 +217,10 @@ def saveCompositeData(compositeData):
 def modifyWave(compositeDataWrapper):
     pr = DataActionWidgets.ProcedureDialog.getProcedure(
         'modify', compositeDataWrapper)
-    waveKey, beginTime, endTime, procedure, arguments, status = pr
+    waveKey, pointsDict, beginTime, endTime, procedure, arguments, status = pr
     if status is DataActionStatus.Ok:
         originalWave = compositeDataWrapper.waves[waveKey]
-        modifiedWave = analyzer.modify_wave(originalWave, 
+        modifiedWave = analyzer.modify_wave(originalWave, pointsDict,
                                             beginTime, endTime, 
                                             procedure, arguments)
         compositeDataWrapper.waves[waveKey].replace_slice(
@@ -224,3 +249,30 @@ def findPoints(compositeDataWrapper):
             raise ActionCancelledError
     else:
         raise ActionCancelledError
+
+def executeMacro (compositeDataWraper, value):
+    #TODO: Docs
+    path = "macros"
+    macro = (importlib.import_module (path+'.'+value+'.start'))
+    [points, wave] = macro.execute(compositeDataWraper)
+    setOfPoints = []
+    setOfWaves = []
+    if (len(points)>0):
+        for p in points:
+            newPoints = sm.Points(p[0],p[1], p[2])
+            if (p[2] in compositeDataWraper.points.keys()):            
+                dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
+                        forbiddenNames = compositeDataWraper.points.keys(),
+                        title=p[2])
+                if status is DataActionStatus.Cancel:
+                    return
+            else:
+                dictType = p[2]
+                color=DefaultColors.getColor(p[2])
+                axis = -1 
+            setOfPoints.append((newPoints, dictType, color, axis))
+    if (len(wave)>0):
+        for w in wave:
+            setOfWaves.append((w, w.type, DefaultColors.getColor(w.type), -1))
+             
+    return setOfPoints, setOfWaves

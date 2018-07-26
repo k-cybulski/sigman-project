@@ -1,18 +1,16 @@
 from PyQt5 import QtWidgets as QW
-
+from PyQt5 import QtGui
+import numpy as np
 from QtSigman import DataActions
 
 class DataListItemWidget(QW.QWidget):
     def __init__(self, parent=None):
         super(DataListItemWidget, self).__init__(parent)
+        self.vObject = None
         self.mainHBoxLayout = QW.QHBoxLayout()
         
         self.typeLabel = QW.QLabel()
         self.mainHBoxLayout.addWidget(self.typeLabel)
-
-        self.editMetaButton = QW.QPushButton()
-        self.editMetaButton.setText("Change metadata")
-        self.mainHBoxLayout.addWidget(self.editMetaButton)
 
         self.setLayout(self.mainHBoxLayout)
         self.setStyleSheet("""
@@ -24,6 +22,7 @@ class DataListItemWidget(QW.QWidget):
         """)
 
     def setInfo(self, vObject, key):
+        self.vObject = vObject
         self.typeLabel.setText(key)
 
 def _generateFunction(function, *args):
@@ -55,14 +54,36 @@ class DataListWidget(QW.QListWidget):
         self.clear()
         for key, item in dict_.items():
             itemWidget = DataListItemWidget()
-            itemWidget.editMetaButton.clicked.connect(
-                _generateFunction(
-                    self.metaFunction, item, key, dict_.keys()))
             itemWidget.setInfo(item, key)
             item = QW.QListWidgetItem(self)
             item.setSizeHint(itemWidget.sizeHint())
             self.addItem(item)
             self.setItemWidget(item, itemWidget)
+
+    def contextMenuEvent(self, event):
+        #TODO: Hacks
+        self.menu = QW.QMenu(self)
+        row = []
+        items = [self.itemWidget(self.item(index)) for index in range(self.count())] #TODO: hack
+        for i in self.selectionModel().selection().indexes():
+            row, column = i.row(), i.column()
+        allNames = [item.typeLabel.text() for item in items]
+        metaFunction = _generateFunction(self.metaFunction,
+                                         items[row].vObject,
+                                         items[row].typeLabel.text(),
+                                         allNames)
+
+        renameAction = QW.QAction('Change metadata', self)
+        renameAction.triggered.connect(metaFunction)
+        self.menu.addAction(renameAction)
+
+        saveAction = QW.QAction('Save data', self)
+        saveAction.triggered.connect(lambda:
+                                     DataActions.saveData(items[row].vObject.data,
+                                                          items[row].typeLabel.text()))
+        self.menu.addAction(saveAction)
+
+        self.menu.popup(QtGui.QCursor.pos())
 
 class VCollectionListWidget(QW.QWidget):
     """A widget containing three lists corresponding to data in a

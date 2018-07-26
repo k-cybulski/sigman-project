@@ -3,6 +3,9 @@ QtSigman
 ========
 PyQt5 application providing a GUI to the `sigman` library.
 """
+from functools import partial
+import os
+import traceback
 from PyQt5 import QtWidgets as QW
 from PyQt5 import QtCore as QC
 import sigman as sm
@@ -334,6 +337,15 @@ class QtSigmanWindow(QW.QMainWindow):
         self.procedure_menu.addAction('Find points', self.findPoints)
         self.menuBar().addMenu(self.procedure_menu)
 
+        #TODO: Clean
+        self.analize_menu = QW.QMenu('Macros', self)
+        path = "macros"    
+        analize_List = os.listdir(path);
+        for i in range (0,len(analize_List)):
+            self.analize_menu.addAction(analize_List[i], partial(self.executeMacros,analize_List[i]))
+             
+        self.menuBar().addMenu(self.analize_menu)
+
         self.help_menu = QW.QMenu('Help', self)
         self.help_menu.addAction('About', self.about)
         self.menuBar().addSeparator()
@@ -468,6 +480,22 @@ class QtSigmanWindow(QW.QMainWindow):
         except ActionCancelledError:
             pass
 
+    def executeMacros(self, macroName):
+        try:
+            setOfPoints, setOfWaves = DataActions.executeMacro(self.compositeDataWrapper,macroName)
+            for i in range(len(setOfPoints)):
+                self.compositeDataWrapper.add_points(setOfPoints[i][0], setOfPoints[i][1])
+                self.plotTabWidget.currentWidget().vCollection.points[setOfPoints[i][1]].setSettings(
+                    setOfPoints[i][2], setOfPoints[i][3])
+            for i in range(len(setOfWaves)):
+                self.compositeDataWrapper.add_wave(setOfWaves[i][0], setOfWaves[i][1])
+                self.plotTabWidget.currentWidget().vCollection.waves[
+                            setOfWaves[i][1]].setSettings(setOfWaves[i][2], setOfWaves[i][3])
+        except:
+            QW.QMessageBox.warning(self, "Unhandled macro error",
+                                   traceback.format_exc())
+
+
     def quit(self):
         self.close()
 
@@ -477,11 +505,9 @@ class QtSigmanWindow(QW.QMainWindow):
     def about(self):
         QW.QMessageBox.about(self, "About",
                                     """QtSigman
-GUI for the digital signal library sigman.
+GUI for the digital signal processing library sigman.
 Alpha version
-                                                                Krzysztof Cybulski 2018""")
-
-        
+                                                                Sigman Project 2018""")
 
 
 def initialize():

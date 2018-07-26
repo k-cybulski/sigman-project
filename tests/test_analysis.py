@@ -23,9 +23,10 @@ def filter_procedure():
     arguments = butterworth.default_arguments
     arguments['N'] = 3
     arguments['Wn'] = 30
-    return lambda wave, start, end: analyzer.modify_wave(wave, start, end,
-                                                         butterworth,
-                                                         arguments)
+    return lambda wave, points, start, end: analyzer.modify_wave(wave, points,
+                                                                 start, end,
+                                                                 butterworth,
+                                                                 arguments)
 
 @pytest.fixture
 def r_points_procedure():
@@ -45,12 +46,12 @@ def hr_procedure():
         {})
 
 def test_filter(messy_ecg_wave, filter_procedure):
-    filtered_wave = filter_procedure(messy_ecg_wave, 0, 30)
+    filtered_wave = filter_procedure(messy_ecg_wave, None, 0, 30)
     messy_ecg_wave.replace_slice(0, 30, filtered_wave)
 
 def test_full_analysis(messy_ecg_wave, filter_procedure, r_points_procedure,
                        hr_procedure):
-    filtered_wave = filter_procedure(messy_ecg_wave, 0,
+    filtered_wave = filter_procedure(messy_ecg_wave, None, 0,
                                      messy_ecg_wave.complete_length)
     points = r_points_procedure(filtered_wave, 0, filtered_wave.complete_length)
     heart_rate = hr_procedure(points, 0, filtered_wave.complete_length)

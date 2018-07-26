@@ -105,7 +105,7 @@ class VWave(VObject):
     """Overrides VObject to accommodate sm.Wave as self.data."""
 
     def copy(self):
-        """Returns a VWave that references the same sm.Points, has the
+        """Returns a VWave that references the same sm.VWave, has the
         same color and axis.
         """
         return VWave(self.data, self.color, self.axis)
@@ -156,7 +156,10 @@ class VPoints(VObject):
         if endTime is None:
             endTime = self.data.data_x[-1]
         
-        x, y = self.data.data_slice(beginTime, endTime)
+        slice_ = self.data.data_slice(beginTime, endTime)
+        if slice_ is None:
+            return
+        x, y = slice_
         if self.mplObject is None:
             self.mplObject, = mplAxis.plot(
                 x, y, color=self.color, label=self.data.type,

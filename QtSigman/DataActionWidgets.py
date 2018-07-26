@@ -30,8 +30,10 @@ class DataSettingsDialog(QW.QDialog):
         
         self.forbiddenNames = forbiddenNames
         self.dataActionStatus = DataActionStatus.Ok
-
-        self.setWindowTitle(title)
+        if (isinstance (title, str)):
+            self.setWindowTitle(title)
+        else:
+            self.setWindowTitle(title[0])
         gridLayout = QW.QGridLayout()
         self.setLayout(gridLayout)
 
@@ -258,12 +260,19 @@ class ProcedureWidget(QW.QWidget):
         self.descriptionWidget.setMinimumWidth(480)
         self.vBoxLayout.addWidget(self.descriptionWidget)
         
+        # modify procedures only have a single wave input
         if procedure.procedure_type == 'modify':
             requiredWaves = ["Waveform"]
             requiredPoints = []
+        elif hasattr(procedure, 'required_waves'):
+            requiredWaves = procedure.required_waves        
         else:
-            requiredWaves = procedure.required_waves
+            requiredWaves = []
+
+        if hasattr(procedure, 'required_points'):
             requiredPoints = procedure.required_points
+        else:
+            requiredPoints = []
 
         self.waveArgumentWidgets = {}
         self.pointArgumentWidgets = {}
@@ -366,9 +375,10 @@ class ProcedureWidget(QW.QWidget):
         if len(self.procedure.arguments) > 0:
             if self.procedure.procedure_type == 'modify':
                 wave = self.getSelectedWaves()['Waveform']
+                points = self.getSelectedPoints()
                 try:
                     self.procedure.interpret_arguments(
-                        wave, arguments)
+                        wave, points, arguments)
                 except InvalidArgumentError as e:
                     QW.QMessageBox.warning(self, "Invalid arguments",
                                            e.args[0])
@@ -524,9 +534,14 @@ class ProcedureDialog(QW.QDialog):
                 beginTime, endTime = selectedProcedureWidget.getTimeRange()
                 procedure = selectedProcedureWidget.procedure
                 arguments = selectedProcedureWidget.getArguments()
-                return wave, beginTime, endTime, procedure, arguments
+
+                if hasattr(procedure, 'required_points'):
+                    pointsDict = selectedProcedureWidget.getSelectedPoints()
+                else:
+                    pointsDict = []
+                return wave, pointsDict, beginTime, endTime, procedure, arguments 
             else:
-                return None, None, None, None, None
+                return None, None, None, None, None, None
         else:
             if self.dataActionStatus is DataActionStatus.Ok:
                 selectedProcedureWidget = self.procedureWidgetDict[self.selectedProcedureName]
@@ -564,7 +579,7 @@ class ModelflowImportDialog(QW.QDialog):
         self.pathLabel = QW.QLabel(path)
         gridLayout.addWidget(self.pathLabel,2,1)
         
-        self.changeButton = QW.QPushButton("Zmień")
+        self.changeButton = QW.QPushButton("Change")
         self.changeButton.clicked.connect(self.Change)
         gridLayout.addWidget(self.changeButton,2,2)
 
@@ -574,7 +589,10 @@ class ModelflowImportDialog(QW.QDialog):
 
         self.matchList = QW.QComboBox()
         
-        axisItems = ['SBP','DBP','R']
+        if '.A00' in path:
+            axisItems = ['SBP','DBP','R']
+        else:
+            axisItems = ['R']
         self.matchList.addItems(axisItems)
         self.matchList.setCurrentIndex(0)
         gridLayout.addWidget(self.matchList,4,1)
@@ -617,9 +635,18 @@ class ModelflowImportDialog(QW.QDialog):
         return self.listPoints.currentText()
 
     def Change(self):
-         fileFilter = "(*.A00)"
+         fileFilter = ('all_supported_files (*.csv *.A00);; '
+            'BeatScope (*.A00);; Finapres Nova (*.csv);; '
+            'all_files (*)')
+
          fileDialog = QW.QFileDialog()
          fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
          newpath = fileDialog.getOpenFileName(filter = fileFilter)
+         self.matchList.clear()
+         if '.A00' in newpath:
+            axisItems = ['SBP','DBP','R']
+         else:
+            axisItems = ['R']
+         self.matchList.addItems(axisItems)
          self.pathLabel.setText(newpath[0])
 

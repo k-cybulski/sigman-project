@@ -5,7 +5,7 @@
 .idea
 
 # Byte code
-__pycache__/
+*/__pycache__/
 *.py[cod]
 
 # pytest

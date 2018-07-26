@@ -17,7 +17,7 @@ arguments = {
 }
 default_arguments = {'N':'','Wn':'','btype':'lowpass'}
 
-def interpret_arguments(wave, arguments):
+def interpret_arguments(wave, points,  arguments):
     # N
     try:
         N = int(arguments['N'])
@@ -61,6 +61,7 @@ def procedure(wave, begin_time, end_time, arguments):
     data = wave.data_slice(begin_time, end_time)
     return filtfilt(b, a, data)
 
-def execute(wave, begin_time, end_time, arguments):
-    arguments = interpret_arguments(wave, arguments)
+def execute(wave, points, begin_time, end_time, arguments):
+    arguments = interpret_arguments(wave, points, arguments)
     return procedure(wave, begin_time, end_time, arguments)
+

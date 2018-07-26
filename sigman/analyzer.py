@@ -211,13 +211,13 @@ def import_procedures(type_filter="", package_prefix='procedures.',
 
 ### ~~~ Execution ~~~ ###
 
-def modify_wave(wave, begin_time, end_time, 
+def modify_wave(wave, points, begin_time, end_time, 
                 procedure, arguments, 
                 wave_type=None):
     """Runs a `modify` procedure and returns a Wave corresponding to its output."""
     if wave_type is None:
         wave_type = wave.type
-    modified_data = procedure.execute(wave, begin_time, end_time, arguments)
+    modified_data = procedure.execute(wave, points, begin_time, end_time, arguments)
     return sm.Wave(modified_data, 
                    len(modified_data)/(end_time-begin_time), wave_type)
     
