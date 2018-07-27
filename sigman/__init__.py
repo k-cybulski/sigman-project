@@ -168,7 +168,8 @@ class Wave:
         """
         # TODO: Rethink this; arguments seem shady
         if end_time is None:
-            end_time = self.complete_length
+            begin_time = self.offset
+            end_time = self.complete_length+self.offset
         data = self.data_slice(begin_time, end_time)
         output_x = []
         output_y = []

@@ -67,23 +67,26 @@ class DataListWidget(QW.QListWidget):
         items = [self.itemWidget(self.item(index)) for index in range(self.count())] #TODO: hack
         for i in self.selectionModel().selection().indexes():
             row, column = i.row(), i.column()
-        allNames = [item.typeLabel.text() for item in items]
-        metaFunction = _generateFunction(self.metaFunction,
-                                         items[row].vObject,
-                                         items[row].typeLabel.text(),
-                                         allNames)
 
-        renameAction = QW.QAction('Change metadata', self)
-        renameAction.triggered.connect(metaFunction)
-        self.menu.addAction(renameAction)
+        if row or row == 0:
+            #Check if somthing was selected ([] is false (nothing selected) but 0 is true (first element)
+            allNames = [item.typeLabel.text() for item in items]
+            metaFunction = _generateFunction(self.metaFunction,
+                                             items[row].vObject,
+                                             items[row].typeLabel.text(),
+                                             allNames)
 
-        saveAction = QW.QAction('Save data', self)
-        saveAction.triggered.connect(lambda:
-                                     DataActions.saveData(items[row].vObject.data,
-                                                          items[row].typeLabel.text()))
-        self.menu.addAction(saveAction)
+            renameAction = QW.QAction('Change metadata', self)
+            renameAction.triggered.connect(metaFunction)
+            self.menu.addAction(renameAction)
 
-        self.menu.popup(QtGui.QCursor.pos())
+            saveAction = QW.QAction('Save data', self)
+            saveAction.triggered.connect(lambda:
+                                         DataActions.saveData(items[row].vObject.data,
+                                                              items[row].typeLabel.text()))
+            self.menu.addAction(saveAction)
+
+            self.menu.popup(QtGui.QCursor.pos())
 
 class VCollectionListWidget(QW.QWidget):
     """A widget containing three lists corresponding to data in a

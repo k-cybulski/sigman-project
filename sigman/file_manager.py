@@ -86,6 +86,9 @@ def _export_dat(file_name, data_x, data_y):
 def _export_wave_dat(file_name, wave):
     """Exports `Wave` to a .dat file."""
     data_x, data_y = wave.generate_coordinate_tables()
+    if (wave.offset != 0):
+        data_xn = [x+wave.offset for x in data_x]
+        data_x = data_xn
     _export_dat(file_name, data_x, data_y)
 
 def _export_point_dat(file_name, points):
@@ -286,7 +289,7 @@ def import_signal_from_signal_express_file (file_name):
     x = []
     y = []
     names = []
-    dt = 0
+    sr = 0
     with open(file_name,encoding="CP1250") as f:
         i = 1
         for line in f:
@@ -299,6 +302,7 @@ def import_signal_from_signal_express_file (file_name):
                     names.append (name[(name.rfind('-')+2):].replace('\n',''))
             if (i == 6):
                 dt = float(line.replace (',','.'))
+                sr = 1 / dt
             if (i > 7):
                 signals_value = line.split ('	')
                 nr = 0
@@ -313,7 +317,7 @@ def import_signal_from_signal_express_file (file_name):
             i= i + 1
     setOfWaves = []
     for i in range(len(names)):
-                wave = sm.Wave(y[i], dt, names[i], 0) #TODO: move to fm
+                wave = sm.Wave(y[i], sr, names[i], 0) #TODO: move to fm
                 wave.offset = 0
                 wave.type = names[i]
                 #TODO: Check whether the name is already taken
