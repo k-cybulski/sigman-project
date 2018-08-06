@@ -35,15 +35,20 @@ def loadWave(forbiddenNames):
             title = filename.split("/")[-1]
             title = title.split (".")[0]
             wave = fm.import_wave(filename, title)
-            dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-                forbiddenNames=forbiddenNames,
-                title=title)
-            if status is DataActionStatus.Ok:
-                wave.offset = offset
-                wave.type = dictType
-                setOfWaves.append((wave, dictType, color, axis))
+            if (len(path[0])== 1):
+                dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
+                    forbiddenNames=forbiddenNames,
+                    title=title, dictType=title)
+                if status is DataActionStatus.Ok:
+                    wave.offset = offset
+                    wave.type = dictType
+                    setOfWaves.append((wave, dictType, color, axis))
+                else:
+                    raise ActionCancelledError
             else:
-                raise ActionCancelledError
+                wave.offset = 0
+                wave.type = title
+                setOfWaves.append((wave, title, DefaultColors.getColor(title), -1))
     elif path[1] == 'Signal express export(*)':
         for filename in path[0]:
             setOfWaves = fm.import_signal_from_signal_express_file(filename)
@@ -58,9 +63,8 @@ def saveData (data, key = ''):
 
     try:
         path = fileDialog.getSaveFileName(directory=key+'.dat' )
-        if path[0] == "":
-            raise ActionCancelledError
-        fm.export(path[0], data)
+        if path[0] is not "":
+            fm.export(path[0], data)
     except AssertionError:
         pass
 
@@ -85,15 +89,20 @@ def loadPoints(forbiddenNames):
         title = filename.split("/")[-1]
         title = title.split (".")[0]        
         points = fm.import_points(filename, title)
-        dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
-            forbiddenNames=forbiddenNames,
-            title=title)
-        if status is DataActionStatus.Ok:
-            points.move_in_time(offset)
-            points.type = dictType
-            setOfPoints.append((points, dictType, color, axis))
+        if (len(path[0])== 1):
+            dictType, color, axis, offset, status = DataActionWidgets.DataSettingsDialog.getDataSettings(
+                forbiddenNames=forbiddenNames,
+                title=title, dictType=title)
+            if status is DataActionStatus.Ok:
+                points.move_in_time(offset)
+                points.type = dictType
+                setOfPoints.append((points, dictType, color, axis))
+            else:
+                raise ActionCancelledError
         else:
-            raise ActionCancelledError
+           points.move_in_time(0)
+           points.type = title
+           setOfPoints.append((points, title, DefaultColors.getColor(title), -1))
     return setOfPoints
 
 def loadModelflow(compositeDataWrapper):
@@ -118,12 +127,9 @@ def loadModelflow(compositeDataWrapper):
         raise ActionCancelledError
     modelflowPoints = []
     if ex.result() == 1:
-        if ex.SelectedPointsType() == 0:
-            reference_data_type = 'sbp'
-        elif ex.SelectedPointsType() == 1:
-            reference_data_type = 'dbp'
-        else:
-            reference_data_type = 'r'
+       
+        reference_data_type = ex.SelectedPointsType()
+        
         out_points, out_names = fm.import_modelflow_data(
             ex.PathModelflow(), data_points, reference_data_type)
     else:

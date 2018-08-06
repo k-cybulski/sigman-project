@@ -40,7 +40,7 @@ def procedure(waves, points, begin_time, end_time, settings):
     for i in range(0,d):
         T = b.data_x[i]-a.data_x[i]
         if (T!= 0):
-            y = float(settings['Odległość'])/T
+            y = float(settings['distance'])/T
         else:
             y = 0
         r_x.append(a.data_x[i])

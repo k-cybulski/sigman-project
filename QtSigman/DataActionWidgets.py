@@ -590,9 +590,9 @@ class ModelflowImportDialog(QW.QDialog):
         self.matchList = QW.QComboBox()
         
         if '.A00' in path:
-            axisItems = ['SBP','DBP','R']
+            axisItems = ['sbp', 'dbp', 'r']
         else:
-            axisItems = ['R']
+            axisItems = ['r']
         self.matchList.addItems(axisItems)
         self.matchList.setCurrentIndex(0)
         gridLayout.addWidget(self.matchList,4,1)
@@ -629,7 +629,7 @@ class ModelflowImportDialog(QW.QDialog):
         return self.pathLabel.text()
 
     def SelectedPointsType(self):
-        return self.matchList.currentIndex()
+        return self.matchList.currentText()
 
     def SelectedPoints(self):
         return self.listPoints.currentText()
@@ -644,9 +644,9 @@ class ModelflowImportDialog(QW.QDialog):
          newpath = fileDialog.getOpenFileName(filter = fileFilter)
          self.matchList.clear()
          if '.A00' in newpath:
-            axisItems = ['SBP','DBP','R']
+            axisItems = ['sbp', 'dbp', 'r']
          else:
-            axisItems = ['R']
+            axisItems = ['r']
          self.matchList.addItems(axisItems)
          self.pathLabel.setText(newpath[0])
 
