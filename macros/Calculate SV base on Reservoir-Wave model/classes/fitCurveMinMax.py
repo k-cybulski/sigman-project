@@ -3,7 +3,7 @@ import copy
 from .calculateArea import calculateArea
 
 class fitCurveMinMax:
-    def fit (AP, minAP, Volume, minVolume):
+    def fit (AP, minAP, Volume, minVolume, endV):
 
         Pex = AP.copy ()
         Pex.type = "MinMax Pex"
@@ -33,7 +33,9 @@ class fitCurveMinMax:
                         pom = fitCurveMinMax.maximum(pressure[0:int(round((len(pressure)/2)))])
                         pom2 = fitCurveMinMax.minimum (pressure[0:int(round((len(pressure)*0.6)))],pom+5)
                         Ya = pressure[0]
-                        x2 = int(round((pom + pom2) /2))
+                        #int(round((pom + pom2) /2))
+                    
+                        x2 = int (( endV.data_x[i] -minVolume.data_x[i])/Volume.sample_length)
                         Yb = pressure[x2]
 
                         x1 = fitCurveMinMax.maximum(impedance[0:int(round((len(impedance)/2)))])
@@ -53,8 +55,13 @@ class fitCurveMinMax:
                             fitedCurve.data[indexPressure+j] = impedanceInCycle[j] * a + b
                         for j in range (0, len(pressure)):
                             Pex.data[indexPressure+j] = pressure[j]- fitedCurve.data [indexPressure+j]
-
-                        SV = calculateArea.calculate (Pex.data[(indexPressure+3):(indexPressure+len(pressure))],AP.sample_length)
+                        if len(pressure)>4:
+                            if ((indexPressure+len(pressure))<len(Pex.data)):
+                                SV = calculateArea.calculate (Pex.data[(indexPressure+3):(indexPressure+len(pressure))],AP.sample_length)
+                            else:
+                                SV = 0
+                        else:
+                            SV = 0
                         estimateSV.append (SV)
                     else:
                         if (len(estimateSV)>0):

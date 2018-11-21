@@ -11,18 +11,18 @@ from .classes.linearRegresionFitCurveInDiastole import linearRegresionFitCurveIn
 def execute (compositeDataWrapper):
     resultWaves = []
     points = []
-    AP, minAP, Volume, minV, state = dialogBox(compositeDataWrapper).show()
+    AP, minAP, Volume, minV, endV, state = dialogBox(compositeDataWrapper).show()
     if (len(AP)> 0):
         if state[0][0]:
-            fitedCurveMinMax,PexMinMax,fitParameterMinMax, estimateSV = fitCurveMinMax.fit(AP, minAP, Volume, minV)
+            fitedCurveMinMax,PexMinMax,fitParameterMinMax, estimateSV = fitCurveMinMax.fit(AP, minAP, Volume, minV, endV)
             resultWaves.append (fitedCurveMinMax)
             resultWaves.append (PexMinMax)
-            points.append (cratePoint(minAP.data_x, estimateSV, "MinMax Pole pod Pex (~SV)"))
+            points.append (cratePoint(minAP.data_x, estimateSV, "MinMax area from Pex (~SV)"))
         if state[1][0]:
             fitedCurveLinear,PexLinear,fitParameterLinear, estimateSV = linearRegresionFitCurveInDiastole.fit(AP, minAP, Volume, minV)
             resultWaves.append (fitedCurveLinear)
             resultWaves.append (PexLinear)
-            points.append (cratePoint(minAP.data_x, estimateSV, "linearRegresion Pole pod Pex (~SV)"))
+            points.append (cratePoint(minAP.data_x, estimateSV, "linearRegresion area from Pex (~SV)"))
 
         return points, resultWaves
 
@@ -81,27 +81,34 @@ class dialogBox (QW.QDialog):
         self.startVComboBox = QW.QComboBox()
         self.startVComboBox.addItems(compositeDataWrapper.points.keys())
         gridLayout.addWidget(self.startVComboBox,8,1)
+        
+        self.endVLabel = QW.QLabel("Points specifying the end of ejection in the volume signal:")
+        gridLayout.addWidget(self.endVLabel,9,1)
+
+        self.endVComboBox = QW.QComboBox()
+        self.endVComboBox.addItems(compositeDataWrapper.points.keys())
+        gridLayout.addWidget(self.endVComboBox,10,1)
 
         self.minMax = QW.QCheckBox('Fit base on beginning and end of the ejection', self)
         self.minMax.toggle()
-        gridLayout.addWidget(self.minMax,9,1)
+        gridLayout.addWidget(self.minMax,11,1)
         
         self.linearRegresion = QW.QCheckBox('Fit curve use linear regresion on diastolic', self)
         self.linearRegresion.toggle()
-        gridLayout.addWidget(self.linearRegresion,10,1)
+        gridLayout.addWidget(self.linearRegresion,12,1)
 
         self.baseOnC = QW.QCheckBox('Fit base on compliance', self)
         self.baseOnC.toggle()
-        gridLayout.addWidget(self.baseOnC,11,1)
+        gridLayout.addWidget(self.baseOnC,13,1)
 
 
 
 
 
-        self.changeButton = QW.QPushButton("Wylicz wartości")
-        #TODO: zablokować obliczenia gdy nie naciśnięto ok.
+        self.changeButton = QW.QPushButton("Compute")
+   
         self.changeButton.clicked.connect(self.endThisAndDo)
-        gridLayout.addWidget(self.changeButton,12,1)
+        gridLayout.addWidget(self.changeButton,14,1)
         
 
     def endThisAndDo(self):
@@ -124,6 +131,9 @@ class dialogBox (QW.QDialog):
            startVPoints = self.startVComboBox.currentText()
            minV = data.points[startVPoints]
 
+           stopVPoints = self.endVComboBox.currentText()
+           endV = data.points[stopVPoints]
+
            startAP = self.startAPComboBox.currentText()
            minAP = data.points[startAP]
            state = [[self.minMax.isChecked()],[self.linearRegresion.isChecked()],[self.baseOnC.isChecked()]]
@@ -132,9 +142,10 @@ class dialogBox (QW.QDialog):
             minAP = []
             Volume = []
             minV = []
+            endV = []
             state = [[False],[False],[False]]
            
-       return AP, minAP, Volume, minV, state
+       return AP, minAP, Volume, minV, endV, state
 
       
      

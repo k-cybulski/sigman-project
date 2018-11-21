@@ -21,7 +21,8 @@ def loadWave(forbiddenNames):
     Returns a list of tuples containg Wave, chosen dictType, color and axis.
     """
     fileFilter = ('dat (*.dat);;'
-                  'Signal express export(*)')
+                  'Signal express export(*);;'
+                  'AdInstruments text export(*)')
     fileDialog = QW.QFileDialog()
     fileDialog.setFileMode(QW.QFileDialog.ExistingFiles)
     path = fileDialog.getOpenFileNames(filter=fileFilter)
@@ -51,8 +52,10 @@ def loadWave(forbiddenNames):
                 setOfWaves.append((wave, title, DefaultColors.getColor(title), -1))
     elif path[1] == 'Signal express export(*)':
         for filename in path[0]:
-            setOfWaves = fm.import_signal_from_signal_express_file(filename)
-            
+            setOfWaves = fm.import_signal_from_signal_express_file(filename,type='SignalExpress')
+    elif path[1] == 'AdInstruments text export(*)':
+        for filename in path[0]:
+            setOfWaves = fm.import_signal_from_signal_express_file(filename,type='ADInstruments')        
                
     return setOfWaves
 
