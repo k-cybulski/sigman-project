@@ -20,7 +20,7 @@ default_arguments = {
     'Operation':'+',
     }
 output_type = 'Points'
-required_waves = ['']
+required_waves = []
 required_points = ['a',  'b']
 
 
@@ -38,15 +38,15 @@ def procedure(waves, points, begin_time, end_time, settings):
         d = len (a)-1
 
     for i in range(0,d):
-        if (settings['operacja']== '+'):
+        if (settings['Operation']== '+'):
             y = a.data_y[i]+b.data_y[i]
-        if (settings['operacja']== '-'):
+        if (settings['Operation']== '-'):
             y = a.data_y[i]-b.data_y[i]
-        if (settings['operacja']== '*'):
+        if (settings['Operation']== '*'):
             y = a.data_y[i]*b.data_y[i]
-        if (settings['operacja']== 'sqr'):
+        if (settings['Operation']== 'sqr'):
             y = np.sqrt(a.data_y[i])
-        if (settings['operacja']== '/'):
+        if (settings['Operation']== '/'):
             if (b.data_y[i] != 0):
                 y = a.data_y[i]/b.data_y[i]
             else:

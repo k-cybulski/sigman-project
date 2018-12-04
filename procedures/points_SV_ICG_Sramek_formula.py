@@ -1,50 +1,47 @@
 import numpy as np
-
+import math
 from sigman.analyzer import InvalidArgumentError
 
 procedure_type = 'points'
 description = (
-"""Procedure calculate pulse wave velocity PWV as:
-    PWV = L/t
-    L - distance between sensors - path of the pulse wave
-    t - time between points t[i] = b[i].data_x - a[i].data_x
+"""Procedure calculate stroke volume (SV) base on Sramek's formula:
+ SV = ((0,17*Height)^3/4,2)*(dz/dtmax)*ET/Z0
+ where:
+    Z0 - value of the Z0 
+    dz/dt max - maximum value of the ICG dz/dt signal
+    ET - ejection time (time between points B and X)
 """)
 author = 'mzylinski'
 arguments = {
-     'distance':"distance between sensors - path of the pulse wave"
-    
+     'height':'1.75'
     }
 default_arguments = {
-    'distance':'0.15',
+    'height':175
     }
-output_type = 'PWV'
+output_type = 'SV'
 required_waves = []
-required_points = ['a',  'b']
-
+required_points = ['dZ/dtmax',  'Z0', 'B_ICG','X_ICG']
 
 
 
 def procedure(waves, points, begin_time, end_time, settings):
-    a = points['a']
-    b = points['b']
-    
+    dZdtmax = points['dZ/dtmax']
+    z0 = points['Z0']
+    B = points['B_ICG']
+    X = points['X_ICG']
 
     r_x = []
     r_y = []
-  
-    if (len(a)>= len(b)):
-        d = len (b)-1
-    else:
-        d = len (a)-1
 
-    for i in range(0,d):
-        T = b.data_x[i]-a.data_x[i]
-        if (T!= 0):
-            y = float(settings['distance'])/T
-        else:
-            y = 0
-        r_x.append(a.data_x[i])
-        r_y.append(y)
+    height = float(settings['height'])
+    dim_cor = math.pow (0.17*height,3)/4.2
+    for i in range(0,len(B)-1):
+        ET =  X.data_x[i] - B.data_x[i]
+        
+        SV = dim_cor*dZdtmax.data_y[i]*ET/(z0.data_y[i])
+       
+        r_x.append(dZdtmax.data_x[i])
+        r_y.append(SV)
 
 
     return r_x, r_y

@@ -68,6 +68,7 @@ import glob
 import os
 
 import sigman as sm
+import numpy as np
 
 try:
     SIGMAN_ROOT = os.path.dirname(os.path.dirname(
@@ -218,6 +219,9 @@ def modify_wave(wave, points, begin_time, end_time,
     if wave_type is None:
         wave_type = wave.type
     modified_data = procedure.execute(wave, points, begin_time, end_time, arguments)
+  
+#    if isinstance(modified_data, np.ndarray):
+#        wave_type = 'kupa'
     return sm.Wave(modified_data, 
                    len(modified_data)/(end_time-begin_time), wave_type)
     

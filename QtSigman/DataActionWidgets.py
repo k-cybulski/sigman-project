@@ -260,10 +260,12 @@ class ProcedureWidget(QW.QWidget):
         self.descriptionWidget.setMinimumWidth(480)
         self.vBoxLayout.addWidget(self.descriptionWidget)
         
-        # modify procedures only have a single wave input
+        # modify signal procedure arbitrary have a single wave input
         if procedure.procedure_type == 'modify':
             requiredWaves = ["Waveform"]
             requiredPoints = []
+
+            
         elif hasattr(procedure, 'required_waves'):
             requiredWaves = procedure.required_waves        
         else:
@@ -283,6 +285,15 @@ class ProcedureWidget(QW.QWidget):
             self.requiredWavesWidget = DataArgumentCollectionWidget(
                 requiredWaves, self.compositeDataWrapper.waves.keys())
             self.vBoxLayout.addWidget(self.requiredWavesWidget)
+            
+            if procedure.procedure_type == 'modify':
+                resultTypeLayout = QW.QHBoxLayout()
+                resultTypeLabel = QW.QLabel("Result waveform's type:")
+                resultTypeLayout.addWidget(resultTypeLabel)
+                self.resultTypeEdit = QW.QLineEdit() 
+
+                resultTypeLayout.addWidget(self.resultTypeEdit)
+                self.vBoxLayout.addLayout(resultTypeLayout)
         
         if len(requiredPoints) > 0:
             requiredPointsLabel = QW.QLabel("Required points:")
@@ -330,9 +341,17 @@ class ProcedureWidget(QW.QWidget):
             text = str(begin) + ", " + str(end)
             self.timeRangeLineEdit.setText(text)
         else:
-            # if only points are required for the procedure we are not able to
-            # determine the maximum time range
-            pass
+          
+            points = self.getSelectedPoints()
+            if (points is not None):
+                key = list(points.keys())[0]
+                begin = points[key].data_x[0]
+                end = points[key].data_x[-1]
+                text = str(begin) + ", " + str(end)
+                self.timeRangeLineEdit.setText(text)
+            else:
+                pass
+
 
     def getTimeRange(self):
         vals = self.timeRangeLineEdit.text().strip().split(',')
@@ -340,6 +359,12 @@ class ProcedureWidget(QW.QWidget):
         for val in vals:
             outputValues.append(float(val))
         return outputValues
+
+    def getResultWaveType (self):
+        if (len(self.resultTypeEdit.text())>0):
+            return self.resultTypeEdit.text()
+        else:
+            return None
 
     def getArguments(self):
         return self.procedureArgumentsWidget.getArguments()
@@ -534,14 +559,14 @@ class ProcedureDialog(QW.QDialog):
                 beginTime, endTime = selectedProcedureWidget.getTimeRange()
                 procedure = selectedProcedureWidget.procedure
                 arguments = selectedProcedureWidget.getArguments()
-
+                resultWaveType = selectedProcedureWidget.getResultWaveType()
                 if hasattr(procedure, 'required_points'):
                     pointsDict = selectedProcedureWidget.getSelectedPoints()
                 else:
                     pointsDict = []
-                return wave, pointsDict, beginTime, endTime, procedure, arguments 
+                return wave, pointsDict, beginTime, endTime, procedure, arguments, resultWaveType 
             else:
-                return None, None, None, None, None, None
+                return None, None, None, None, None, None, None
         else:
             if self.dataActionStatus is DataActionStatus.Ok:
                 selectedProcedureWidget = self.procedureWidgetDict[self.selectedProcedureName]

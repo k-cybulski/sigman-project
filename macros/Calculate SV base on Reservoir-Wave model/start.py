@@ -97,9 +97,9 @@ class dialogBox (QW.QDialog):
         self.linearRegresion.toggle()
         gridLayout.addWidget(self.linearRegresion,12,1)
 
-        self.baseOnC = QW.QCheckBox('Fit base on compliance', self)
-        self.baseOnC.toggle()
-        gridLayout.addWidget(self.baseOnC,13,1)
+        #self.baseOnC = QW.QCheckBox('Fit base on compliance', self)
+        #self.baseOnC.toggle()
+        #gridLayout.addWidget(self.baseOnC,12,1)
 
 
 
@@ -108,7 +108,7 @@ class dialogBox (QW.QDialog):
         self.changeButton = QW.QPushButton("Compute")
    
         self.changeButton.clicked.connect(self.endThisAndDo)
-        gridLayout.addWidget(self.changeButton,14,1)
+        gridLayout.addWidget(self.changeButton,13,1)
         
 
     def endThisAndDo(self):
@@ -136,14 +136,14 @@ class dialogBox (QW.QDialog):
 
            startAP = self.startAPComboBox.currentText()
            minAP = data.points[startAP]
-           state = [[self.minMax.isChecked()],[self.linearRegresion.isChecked()],[self.baseOnC.isChecked()]]
+           state = [[self.minMax.isChecked()],[self.linearRegresion.isChecked()]]
        else:
             AP = []
             minAP = []
             Volume = []
             minV = []
             endV = []
-            state = [[False],[False],[False]]
+            state = [[False],[False]]
            
        return AP, minAP, Volume, minV, endV, state
 

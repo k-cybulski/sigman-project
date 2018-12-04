@@ -22,7 +22,7 @@ def removeMaxTau(TauByFit, max):
 
 def execute (compositeDataWrapper):
     global error, max
-    wave, R, Percent,WZ = dialogBox(compositeDataWrapper).show()
+    wave, R, Percent,WZ, nameWave = dialogBox(compositeDataWrapper).show()
     error = float (WZ)
     points = []
     if (len(Percent)>0):
@@ -30,24 +30,24 @@ def execute (compositeDataWrapper):
         points = []
         i = 0;
         for y in taus:
-            name = "tau " + Percent[i] + "%"
+            name = nameWave + " tau " + Percent[i] + "%"
             new = cratePoint(r_x, y, name)
             points.append(new)
             i = i + 1
 
   
-        new = cratePoint(r_x, P8, "P8_anal")
+        new = cratePoint(r_x, P8, nameWave + " P8_anal")
         points.append(new) 
 
-        new = cratePoint(r_x, gTau, "Tau_anal")
+        new = cratePoint(r_x, gTau, nameWave + " Tau_anal")
         points.append(new) 
 
-        new = cratePoint(r_x, P8byFit, "P8_fit")
+        new = cratePoint(r_x, P8byFit, nameWave + " P8_fit")
         points.append(new) 
 
         TauByFit = removeMaxTau(TauByFit, max)
 
-        new = cratePoint(r_x, TauByFit, "Tau_fit")
+        new = cratePoint(r_x, TauByFit, nameWave + " Tau_fit")
         points.append(new) 
 
     return points, []
@@ -297,6 +297,7 @@ class dialogBox (QW.QDialog):
        if (go ==1):
            values = self.valueComboBox.currentText()
            wave = data.waves[values]
+           nameWave = values
        
            TimePoints = self.timePointsComboBox.currentText()
            R = data.points[TimePoints]
@@ -311,7 +312,8 @@ class dialogBox (QW.QDialog):
             R = []
             Percent = []
             WZ= 0
-       return wave, R, Percent, WZ
+            nameWave = ""
+       return wave, R, Percent, WZ, nameWave
 
       
      

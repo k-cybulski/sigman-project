@@ -4,20 +4,21 @@ from sigman.analyzer import InvalidArgumentError
 
 procedure_type = 'points'
 description = (
-"""Procedure calculate pulse wave velocity PWV as:
-    PWV = L/t
-    L - distance between sensors - path of the pulse wave
-    t - time between points t[i] = b[i].data_x - a[i].data_x
+"""Procedure calculate difrence in time beatwin points:
+    y = t1/t2
+    y - result
+    t1, t2 - time of points a and b
+    result points time is taken as t1 (time of a points)
 """)
 author = 'mzylinski'
 arguments = {
-     'distance':"distance between sensors - path of the pulse wave"
+     
     
     }
 default_arguments = {
-    'distance':'0.15',
+    
     }
-output_type = 'PWV'
+output_type = 'time_diff'
 required_waves = []
 required_points = ['a',  'b']
 
@@ -38,11 +39,8 @@ def procedure(waves, points, begin_time, end_time, settings):
         d = len (a)-1
 
     for i in range(0,d):
-        T = b.data_x[i]-a.data_x[i]
-        if (T!= 0):
-            y = float(settings['distance'])/T
-        else:
-            y = 0
+        y = b.data_x[i]-a.data_x[i]
+
         r_x.append(a.data_x[i])
         r_y.append(y)
 

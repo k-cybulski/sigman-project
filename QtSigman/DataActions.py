@@ -226,14 +226,18 @@ def saveCompositeData(compositeData):
 def modifyWave(compositeDataWrapper):
     pr = DataActionWidgets.ProcedureDialog.getProcedure(
         'modify', compositeDataWrapper)
-    waveKey, pointsDict, beginTime, endTime, procedure, arguments, status = pr
+    waveKey, pointsDict, beginTime, endTime, procedure, arguments, resultType, status  = pr
     if status is DataActionStatus.Ok:
         originalWave = compositeDataWrapper.waves[waveKey]
         modifiedWave = analyzer.modify_wave(originalWave, pointsDict,
                                             beginTime, endTime, 
                                             procedure, arguments)
-        compositeDataWrapper.waves[waveKey].replace_slice(
-            beginTime, endTime, modifiedWave)
+        if (resultType is None):
+            compositeDataWrapper.waves[waveKey].replace_slice(
+                beginTime, endTime, modifiedWave)
+        else:
+            compositeDataWrapper.add_wave(modifiedWave,resultType)
+             
     else:
         raise ActionCancelledError
 

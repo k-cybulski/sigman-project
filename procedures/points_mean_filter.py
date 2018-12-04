@@ -4,47 +4,46 @@ from sigman.analyzer import InvalidArgumentError
 
 procedure_type = 'points'
 description = (
-"""Procedure calculate pulse wave velocity PWV as:
-    PWV = L/t
-    L - distance between sensors - path of the pulse wave
-    t - time between points t[i] = b[i].data_x - a[i].data_x
+"""Procedure step average points
 """)
 author = 'mzylinski'
 arguments = {
-     'distance':"distance between sensors - path of the pulse wave"
+     'N':"Number of sample to average"
     
     }
 default_arguments = {
-    'distance':'0.15',
+    'N':'15',
     }
-output_type = 'PWV'
+output_type = 'mean'
 required_waves = []
-required_points = ['a',  'b']
+required_points = ['a']
 
 
 
 
 def procedure(waves, points, begin_time, end_time, settings):
     a = points['a']
-    b = points['b']
-    
+
+    N = int(settings['N'])
+    n = 0
+    i = 0
+
+    sumMean = 0
 
     r_x = []
-    r_y = []
-  
-    if (len(a)>= len(b)):
-        d = len (b)-1
-    else:
-        d = len (a)-1
-
-    for i in range(0,d):
-        T = b.data_x[i]-a.data_x[i]
-        if (T!= 0):
-            y = float(settings['distance'])/T
+    r_y = []  
+    
+    while i < len(a.data_y):
+        sumMean = sumMean + a.data_y[i]
+        if (N == n):
+            sumMean = sumMean - a.data_y[i-N]
         else:
-            y = 0
+            n = n + 1
+
         r_x.append(a.data_x[i])
-        r_y.append(y)
+        r_y.append(sumMean/n)
+        i = i + 1
+        
 
 
     return r_x, r_y
